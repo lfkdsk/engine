@@ -21,3 +21,4 @@ Thumbs.db
 .idea
 pubspec.lock
 .vscode/
+shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h

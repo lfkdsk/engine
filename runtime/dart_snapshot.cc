@@ -59,6 +59,15 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMData(const Settings& settings) {
     }
   }
 
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+    // Create a empty snapshot if disable_load_lib_from_loaded_process is true in jit mode.
+    if (settings.disable_load_lib_from_loaded_process) {
+      return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartVmSnapshotData);
+    }
+#endif
+
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(
       loaded_process, DartSnapshot::kVMDataSymbol);
@@ -83,6 +92,15 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMInstructions(
       return source;
     }
   }
+
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+  // Create a empty snapshot if disable_load_lib_from_loaded_process is true in jit mode.
+  if (settings.disable_load_lib_from_loaded_process) {
+    return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartVmSnapshotInstructions);
+  }
+#endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(
@@ -109,6 +127,15 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateData(
     }
   }
 
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+  // Create a empty snapshot if disable_load_lib_from_loaded_process is true in jit mode.
+  if (settings.disable_load_lib_from_loaded_process) {
+    return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartIsolateSnapshotData);
+  }
+#endif
+
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(
       loaded_process, DartSnapshot::kIsolateDataSymbol);
@@ -133,6 +160,15 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateInstructions(
       return source;
     }
   }
+
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+  // Create a empty snapshot if disable_load_lib_from_loaded_process is true in jit mode.
+  if (settings.disable_load_lib_from_loaded_process) {
+    return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartIsolateSnapshotInstructions);
+  }
+#endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(

@@ -86,6 +86,13 @@ struct Settings {
   std::string assets_path;
   std::string flx_path;
 
+  // Library load settings supporting custom kernel settings.
+  // If there is a aot App.framework which only works in aot mode in bundle
+  // and the application_library_path is invalid,
+  // it will load it from loaded process finally although it's in jit mode and cause crash.
+  // To avoid this case, add a field to disable loading lib from loaded process.
+  bool disable_load_lib_from_loaded_process = false;
+
   std::string ToString() const;
 };
 

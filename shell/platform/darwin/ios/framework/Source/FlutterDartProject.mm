@@ -18,9 +18,30 @@
 
 static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
 
-static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
+static blink::Settings CreateEmptySettings() {
   auto command_line = shell::CommandLineFromNSProcessInfo();
 
+  auto settings = shell::SettingsFromCommandLine(command_line);
+
+  settings.task_observer_add = [](intptr_t key, fml::closure callback) {
+    fml::MessageLoop::GetCurrent().AddTaskObserver(key, std::move(callback));
+  };
+
+  settings.task_observer_remove = [](intptr_t key) {
+    fml::MessageLoop::GetCurrent().RemoveTaskObserver(key);
+  };
+
+  return settings;
+}
+
+static NSString * GetIcuDataPath(NSBundle* bundle = nil) {
+  NSBundle* engineBundle = [NSBundle bundleForClass:[FlutterViewController class]];
+
+  // Flutter ships the ICU data file in the the bundle of the engine. Look for it there.
+  return [engineBundle pathForResource:@"icudtl" ofType:@"dat"];
+}
+
+static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   // Precedence:
   // 1. Settings from the specified NSBundle.
   // 2. Settings passed explicitly via command-line arguments.
@@ -38,15 +59,7 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     bundle = mainBundle;
   }
 
-  auto settings = shell::SettingsFromCommandLine(command_line);
-
-  settings.task_observer_add = [](intptr_t key, fml::closure callback) {
-    fml::MessageLoop::GetCurrent().AddTaskObserver(key, std::move(callback));
-  };
-
-  settings.task_observer_remove = [](intptr_t key) {
-    fml::MessageLoop::GetCurrent().RemoveTaskObserver(key);
-  };
+  auto settings = CreateEmptySettings();
 
   // The command line arguments may not always be complete. If they aren't, attempt to fill in
   // defaults.
@@ -146,6 +159,58 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   if (self) {
     _precompiledDartBundle.reset([bundle retain]);
     _settings = DefaultSettingsForProcess(bundle);
+  }
+
+  return self;
+}
+
+- (instancetype)initAOTSettingsWithLibPath:(NSString *)libraryPath
+                                assetsPath:(NSString *)assetsPath {
+  if (!blink::DartVM::IsRunningPrecompiledCode()) {
+    NSLog(@"initAOTSettingsWithLibPath only work for aot mode");
+    return [self init];
+  }
+
+  self = [super init];
+
+  if (self) {
+    // TODO: _precompiledDartBundle is not used
+    // _precompiledDartBundle.reset(nil);
+    _settings = CreateEmptySettings();
+    NSString *icuDataPath = GetIcuDataPath();
+    if (icuDataPath.length > 0) {
+      _settings.icu_data_path = icuDataPath.UTF8String;
+    }
+
+    _settings.assets_path = assetsPath.UTF8String;
+    _settings.application_library_path = libraryPath.UTF8String;
+  }
+
+  return self;
+}
+
+- (instancetype)initKernalSettingsWithAssetsPath:(NSString *)assetsPath
+                applicationKernelAsset:(NSString *)applicationKernelAsset
+       disableLoadLibFromLoadedProcess:(BOOL)disableLoadLibFromLoadedProcess {
+  if (blink::DartVM::IsRunningPrecompiledCode()) {
+    NSLog(@"initKernalSettingsWithAssetsPath only work for jit mode");
+    return [self init];
+  }
+
+  self = [super init];
+
+  if (self) {
+    _precompiledDartBundle.reset(nil);
+
+    _settings = CreateEmptySettings();
+    NSString *icuDataPath = GetIcuDataPath();
+    if (icuDataPath.length > 0) {
+      _settings.icu_data_path = icuDataPath.UTF8String;
+    }
+
+    _settings.assets_path = assetsPath.UTF8String;
+    _settings.application_kernel_asset = applicationKernelAsset.UTF8String;
+    _settings.disable_load_lib_from_loaded_process = disableLoadLibFromLoadedProcess ? true : false;
   }
 
   return self;

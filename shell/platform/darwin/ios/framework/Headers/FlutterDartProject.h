@@ -19,7 +19,23 @@ FLUTTER_EXPORT
 /**
  * Initializes a Flutter Dart project from a bundle.
  */
-- (instancetype)initWithPrecompiledDartBundle:(NSBundle*)bundle NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithPrecompiledDartBundle:(NSBundle*)bundle;
+
+
+/**
+ * Initializes a Flutter Dart project with specific aot settings.
+ * Only for AOT mode.
+ */
+- (instancetype)initAOTSettingsWithLibPath:(NSString *)libraryPath
+                                assetsPath:(NSString *)assetsPath;
+
+/**
+ * Initializes a Flutter Dart project with specific kernel settings.
+ * Only for JIT mode.
+ */
+- (instancetype)initKernalSettingsWithAssetsPath:(NSString *)assetsPath
+                applicationKernelAsset:(NSString *)applicationKernelAsset
+       disableLoadLibFromLoadedProcess:(BOOL)disableLoadLibFromLoadedProcess;
 
 /**
  * Unavailable - use `init` instead.

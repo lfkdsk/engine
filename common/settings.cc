@@ -46,6 +46,7 @@ std::string Settings::ToString() const {
   stream << "icu_data_path: " << icu_data_path << std::endl;
   stream << "assets_dir: " << assets_dir << std::endl;
   stream << "assets_path: " << assets_path << std::endl;
+  stream << "disable_load_lib_from_loaded_process: " << disable_load_lib_from_loaded_process << std::endl;
   return stream.str();
 }
 
