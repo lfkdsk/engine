@@ -7,6 +7,7 @@
 
 #import <UIKit/UIKit.h>
 
+#include "FlutterClassDefine.h"
 #include "FlutterMacros.h"
 #include "FlutterPlugin.h"
 

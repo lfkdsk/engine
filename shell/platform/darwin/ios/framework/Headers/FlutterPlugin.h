@@ -8,6 +8,7 @@
 #import <UIKit/UIKit.h>
 #import <UserNotifications/UNUserNotificationCenter.h>
 
+#include "FlutterClassDefine.h"
 #include "FlutterBinaryMessenger.h"
 #include "FlutterChannels.h"
 #include "FlutterCodecs.h"

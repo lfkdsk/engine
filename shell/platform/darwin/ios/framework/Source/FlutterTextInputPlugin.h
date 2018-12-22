@@ -7,6 +7,7 @@
 
 #import <UIKit/UIKit.h>
 
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterChannels.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterTextInputDelegate.h"
 

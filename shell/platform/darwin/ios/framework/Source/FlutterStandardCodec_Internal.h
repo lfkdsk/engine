@@ -5,6 +5,7 @@
 #ifndef SHELL_PLATFORM_IOS_FRAMEWORK_SOURCE_FLUTTERSTANDARDCODECINTERNAL_H_
 #define SHELL_PLATFORM_IOS_FRAMEWORK_SOURCE_FLUTTERSTANDARDCODECINTERNAL_H_
 
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterCodecs.h"
 
 typedef NS_ENUM(NSInteger, FlutterStandardField) {

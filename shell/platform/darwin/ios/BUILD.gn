@@ -7,8 +7,10 @@ assert(is_ios)
 import("$flutter_root/common/config.gni")
 import("//build/config/ios/ios_sdk.gni")
 import("$flutter_root/shell/gpu/gpu.gni")
+import("config.gni")
 
-_flutter_framework_dir = "$root_out_dir/Flutter.framework"
+_flutter_framework_name = "${ios_framework_name}Flutter"
+_flutter_framework_dir = "$root_out_dir/$_flutter_framework_name.framework"
 
 shell_gpu_configuration("ios_gpu_configuration") {
   enable_software = true
@@ -20,6 +22,7 @@ shell_gpu_configuration("ios_gpu_configuration") {
 # from outside the Flutter engine source root.
 _flutter_framework_headers = [
   "framework/Headers/Flutter.h",
+  "framework/Headers/FlutterClassDefine.h",
   "framework/Headers/FlutterAppDelegate.h",
   "framework/Headers/FlutterBinaryMessenger.h",
   "framework/Headers/FlutterCallbackCache.h",
@@ -38,10 +41,38 @@ _flutter_framework_headers = [
 
 _flutter_framework_headers_copy_dir = "$_flutter_framework_dir/Headers"
 
+action("create_define_file") {
+  script = "$flutter_root/sky/tools/create_flutter_class_prefix.py"
+
+  stamp_file = "$target_out_dir/FlutterClassDefine.stamp"
+
+  inputs = [
+    "_FlutterClassDefineTpl.h",
+    "framework/Headers/FlutterClassDefine.h",
+  ]
+
+  args = [
+    "--placeholder",
+    "FlutterClassPrefix",
+    "--dist",
+    rebase_path("framework/Headers/FlutterClassDefine.h"),
+    "--prefix",
+    "$ios_framework_name",
+    "--tpl",
+    rebase_path("_FlutterClassDefineTpl.h"),
+    "--stamp",
+    rebase_path(stamp_file),
+  ]
+
+  outputs = [
+    stamp_file,
+  ]
+}
+
 shared_library("create_flutter_framework_dylib") {
   visibility = [ ":*" ]
 
-  output_name = "Flutter"
+  output_name = "$_flutter_framework_name"
 
   sources = [
     "framework/Source/FlutterAppDelegate.mm",
@@ -123,6 +154,9 @@ shared_library("create_flutter_framework_dylib") {
   } else {
     deps += [ "//third_party/dart/runtime:libdart_precompiled_runtime" ]
   }
+  if (ios_framework_name != "") {
+    deps += [ ":create_define_file" ]
+  }
 
   public_configs = [ "$flutter_root:config" ]
 
@@ -142,10 +176,10 @@ copy("copy_framework_dylib") {
   visibility = [ ":*" ]
 
   sources = [
-    "$root_out_dir/libFlutter.dylib",
+    "$root_out_dir/lib$_flutter_framework_name.dylib",
   ]
   outputs = [
-    "$_flutter_framework_dir/Flutter",
+    "$_flutter_framework_dir/$_flutter_framework_name",
   ]
 
   deps = [
@@ -159,7 +193,7 @@ action("copy_dylib_and_update_framework_install_name") {
   script = "$flutter_root/sky/tools/change_install_name.py"
 
   inputs = [
-    "$_flutter_framework_dir/Flutter",
+    "$_flutter_framework_dir/$_flutter_framework_name",
   ]
   outputs = [
     stamp_file,
@@ -167,9 +201,9 @@ action("copy_dylib_and_update_framework_install_name") {
 
   args = [
     "--dylib",
-    rebase_path("$_flutter_framework_dir/Flutter"),
+    rebase_path("$_flutter_framework_dir/$_flutter_framework_name"),
     "--install_name",
-    "@rpath/Flutter.framework/Flutter",
+    "@rpath/$_flutter_framework_name.framework/$_flutter_framework_name",
     "--stamp",
     rebase_path(stamp_file),
   ]
@@ -179,21 +213,40 @@ action("copy_dylib_and_update_framework_install_name") {
   ]
 }
 
-copy("copy_framework_info_plist") {
-  visibility = [ ":*" ]
+copy_framework_assets("copy_framework_info_plist") {
+
   sources = [
-    "framework/Info.plist",
+    "framework/Info.plist"
   ]
+
+  args = [
+    "--placeholder",
+    "Flutter",
+    "--replace",
+    "$_flutter_framework_name",
+    "--placeholder",
+    "io.flutter.flutter",
+    "--replace",
+    "io.flutter.$_flutter_framework_name",
+  ]
+
   outputs = [
     "$_flutter_framework_dir/Info.plist",
   ]
 }
 
-copy("copy_framework_module_map") {
-  visibility = [ ":*" ]
+copy_framework_assets("copy_framework_module_map") {
   sources = [
     "framework/module.modulemap",
   ]
+
+  args = [
+    "--placeholder",
+    "framework module Flutter",
+    "--replace",
+    "framework module $_flutter_framework_name",
+  ]
+
   outputs = [
     "$_flutter_framework_dir/Modules/module.modulemap",
   ]
@@ -205,14 +258,20 @@ action("copy_framework_headers") {
   sources = _flutter_framework_headers
   outputs = []
   foreach(header, _flutter_framework_headers) {
-    header_basename = rebase_path(header, "framework/headers")
-    outputs += [ "$_flutter_framework_headers_copy_dir/$header_basename" ]
+    if (header != "framework/Headers/Flutter.h") {
+      header_basename = rebase_path(header, "framework/headers")
+      outputs += [ "$_flutter_framework_headers_copy_dir/$header_basename" ]
+    }
   }
   args = [
-           "--location",
-           rebase_path("$_flutter_framework_headers_copy_dir"),
-           "--headers",
-         ] + rebase_path(_flutter_framework_headers)
+    "--tpl",
+    rebase_path("_FlutterClassDefineTpl.h"),
+    "--prefix",
+    "$ios_framework_name",
+    "--location",
+    rebase_path("$_flutter_framework_headers_copy_dir"),
+    "--headers",
+  ] + rebase_path(_flutter_framework_headers)
 }
 
 copy("copy_framework_icu") {
@@ -227,13 +286,20 @@ copy("copy_framework_icu") {
   ]
 }
 
-copy("copy_framework_podspec") {
-  visibility = [ ":*" ]
+copy_framework_assets("copy_framework_podspec") {
   sources = [
     "framework/Flutter.podspec",
   ]
+
+  args = [
+    "--placeholder",
+    "Flutter.framework",
+    "--replace",
+    "$_flutter_framework_name.framewok",
+  ]
+
   outputs = [
-    "$root_out_dir/Flutter.podspec",
+    "$root_out_dir/$_flutter_framework_name.podspec",
   ]
 }
 
@@ -258,6 +324,34 @@ shared_library("copy_and_verify_framework_headers") {
   ]
 }
 
+action("reset_define_file") {
+  script = "$flutter_root/sky/tools/create_flutter_class_prefix.py"
+
+  stamp_file = "$target_out_dir/FlutterClassDefine.reset.stamp"
+
+  inputs = [ "framework/Headers/FlutterClassDefine.h" ]
+
+  deps = [
+    ":copy_license"
+  ]
+
+  args = [
+   "--placeholder",
+    "FlutterClassPrefix",
+    "--dist",
+    rebase_path("framework/Headers/FlutterClassDefine.h"),
+    "--prefix=''",
+    "--tpl",
+    rebase_path("_FlutterClassDefineTpl.h"),
+    "--stamp",
+    rebase_path(stamp_file),
+  ]
+
+  outputs = [
+    stamp_file,
+  ]
+}
+
 group("flutter_framework") {
   deps = [
     ":copy_and_verify_framework_headers",
@@ -267,5 +361,6 @@ group("flutter_framework") {
     ":copy_framework_module_map",
     ":copy_framework_podspec",
     ":copy_license",
+    # ":reset_define_file",
   ]
 }
