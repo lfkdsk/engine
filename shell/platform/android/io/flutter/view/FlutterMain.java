@@ -251,17 +251,17 @@ public class FlutterMain {
             }
             if (sIsPrecompiledAsSharedLibrary) {
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_PATH + "=" +
-                        new File(PathUtils.getDataDirectory(applicationContext), sAotSharedLibraryPath));
+                        new File(PathUtils.getExternalStorageDirectory(applicationContext), sAotSharedLibraryPath));
             } else {
                 if (sIsPrecompiledAsBlobs) {
                     shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
-                            PathUtils.getDataDirectory(applicationContext));
+                            PathUtils.getExternalStorageDirectory(applicationContext));
                 } else {
                     shellArgs.add("--cache-dir-path=" +
                             PathUtils.getCacheDirectory(applicationContext));
 
                     shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
-                            PathUtils.getDataDirectory(applicationContext) + "/" + sFlutterAssetsDir);
+                            PathUtils.getExternalStorageDirectory(applicationContext) + "/" + sFlutterAssetsDir);
                 }
                 shellArgs.add("--" + AOT_VM_SNAPSHOT_DATA_KEY + "=" + sAotVmSnapshotData);
                 shellArgs.add("--" + AOT_VM_SNAPSHOT_INSTR_KEY + "=" + sAotVmSnapshotInstr);
@@ -273,7 +273,6 @@ public class FlutterMain {
                 shellArgs.add("--log-tag=" + sSettings.getLogTag());
             }
 
-            String appBundlePath = findAppBundlePath(applicationContext);
             String appBundlePath = findAppBundlePath(applicationContext);
             String appStoragePath = PathUtils.getFilesDir(applicationContext);
             String engineCachesPath = PathUtils.getCacheDirectory(applicationContext);
@@ -394,7 +393,7 @@ public class FlutterMain {
     }
 
     public static String findAppBundlePath(Context applicationContext) {
-        String dataDirectory = PathUtils.getDataDirectory(applicationContext);
+        String dataDirectory = PathUtils.getExternalStorageDirectory(applicationContext);
         File appBundle = new File(dataDirectory, sFlutterAssetsDir);
         return appBundle.exists() ? appBundle.getPath() : null;
     }
