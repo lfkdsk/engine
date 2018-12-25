@@ -216,6 +216,16 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   return self;
 }
 
+#pragma mark - Settings setters
+
+- (void)enableObservatory:(BOOL)enableObservatory {
+  if (enableObservatory) {
+    _settings.enable_observatory = true;
+  } else {
+    _settings.enable_observatory = false;
+  }
+}
+
 #pragma mark - Settings accessors
 
 - (const blink::Settings&)settings {

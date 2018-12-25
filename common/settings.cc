@@ -25,6 +25,10 @@ std::string Settings::ToString() const {
          << std::endl;
   stream << "application_library_path: " << application_library_path
          << std::endl;
+  stream << "application_kernel_asset: " << application_kernel_asset
+         << std::endl;
+  stream << "application_kernel_list_asset: " << application_kernel_list_asset
+         << std::endl;
   stream << "temp_directory_path: " << temp_directory_path << std::endl;
   stream << "dart_flags:" << std::endl;
   for (const auto& dart_flag : dart_flags) {
@@ -36,16 +40,22 @@ std::string Settings::ToString() const {
   stream << "endless_trace_buffer: " << endless_trace_buffer << std::endl;
   stream << "enable_dart_profiling: " << enable_dart_profiling << std::endl;
   stream << "disable_dart_asserts: " << disable_dart_asserts << std::endl;
-  stream << "enable_observatory: " << enable_observatory << std::endl;
+  stream << "advisory_script_uri: " << advisory_script_uri << std::endl;
+  stream << "disable_dart_asserts: " << disable_dart_asserts << std::endl;
+  stream << "advisory_script_entrypoint: " << advisory_script_entrypoint << std::endl;
   stream << "observatory_port: " << observatory_port << std::endl;
   stream << "ipv6: " << ipv6 << std::endl;
   stream << "use_test_fonts: " << use_test_fonts << std::endl;
   stream << "enable_software_rendering: " << enable_software_rendering
          << std::endl;
+  stream << "skia_deterministic_rendering_on_cpu: " << skia_deterministic_rendering_on_cpu
+         << std::endl;
+  stream << "verbose_logging: " << verbose_logging << std::endl;
   stream << "log_tag: " << log_tag << std::endl;
   stream << "icu_data_path: " << icu_data_path << std::endl;
   stream << "assets_dir: " << assets_dir << std::endl;
   stream << "assets_path: " << assets_path << std::endl;
+  stream << "flx_path: " << flx_path << std::endl;
   stream << "disable_load_lib_from_loaded_process: " << disable_load_lib_from_loaded_process << std::endl;
   return stream.str();
 }

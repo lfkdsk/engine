@@ -43,6 +43,11 @@ FLUTTER_EXPORT
 - (instancetype)initFromDefaultSourceForConfiguration FLUTTER_UNAVAILABLE("Use -init instead.");
 
 /**
+ * Config observatory, only for JIT mode.
+ */
+- (void)enableObservatory:(BOOL)enableObservatory;
+
+/**
  * Returns the file name for the given asset.
  * The returned file name can be used to access the asset in the application's main bundle.
  *
