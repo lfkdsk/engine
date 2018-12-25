@@ -16,6 +16,9 @@ def get_out_dir(args):
     else:
         target_dir = ['host']
 
+    if args.ios_framework_name:
+      target_dir.append(args.ios_framework_name.lower())
+
     runtime_mode = args.runtime_mode
     if args.dynamic and runtime_mode in ['profile', 'release']:
         target_dir.append('dynamic')
