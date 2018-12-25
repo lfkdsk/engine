@@ -100,7 +100,7 @@ public class FlutterMain {
         }
 
         @SafeVarargs
-        ImmutableSetBuilder<T> add(T... elements) {
+        final ImmutableSetBuilder<T> add(T... elements) {
             for (T element : elements) {
                 set.add(element);
             }

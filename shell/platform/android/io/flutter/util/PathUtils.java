@@ -23,16 +23,4 @@ public final class PathUtils {
     public static String getExternalStorageDirectory(Context applicationContext) {
         return Environment.getRootDirectory().getPath();
     }
-
-    public static boolean isSdcardWritable() {
-        try {
-            String state = Environment.getExternalStorageState();
-            return Environment.MEDIA_MOUNTED.equals(state);
-        } catch (Exception e) {
-            if (Logger.debug()) {
-                e.printStackTrace();
-            }
-            return false;
-        }
-    }
 }
