@@ -21,7 +21,7 @@ public final class PathUtils {
     }
 
     public static String getExternalStorageDirectory(Context applicationContext) {
-        return Environment.getExternalStorageDirectory().getPath();
+        return Environment.getRootDirectory().getPath();
     }
 
     public static boolean isSdcardWritable() {
