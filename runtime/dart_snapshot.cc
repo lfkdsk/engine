@@ -59,6 +59,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMData(const Settings& settings) {
     }
   }
 
+#if defined(OS_IOS)
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
@@ -66,6 +67,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMData(const Settings& settings) {
     if (settings.disable_load_lib_from_loaded_process) {
       return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartVmSnapshotData);
     }
+#endif
 #endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
@@ -93,6 +95,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMInstructions(
     }
   }
 
+#if defined(OS_IOS)
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
@@ -100,6 +103,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMInstructions(
   if (settings.disable_load_lib_from_loaded_process) {
     return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartVmSnapshotInstructions);
   }
+#endif
 #endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
@@ -127,6 +131,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateData(
     }
   }
 
+#if defined(OS_IOS)
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
@@ -134,6 +139,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateData(
   if (settings.disable_load_lib_from_loaded_process) {
     return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartIsolateSnapshotData);
   }
+#endif
 #endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
@@ -161,6 +167,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateInstructions(
     }
   }
 
+#if defined(OS_IOS)
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
     FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
@@ -168,6 +175,7 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateInstructions(
   if (settings.disable_load_lib_from_loaded_process) {
     return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartIsolateSnapshotInstructions);
   }
+#endif
 #endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
