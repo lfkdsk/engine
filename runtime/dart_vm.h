@@ -40,6 +40,10 @@ class DartVM : public fml::RefCountedThreadSafe<DartVM> {
 
   static bool IsKernelMapping(const fml::FileMapping* mapping);
 
+  static const char* VersionString() {
+      return Dart_VersionString();
+  }
+
   const Settings& GetSettings() const;
 
   const DartSnapshot& GetVMSnapshot() const;
