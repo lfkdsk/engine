@@ -7,6 +7,7 @@
 
 #include <Foundation/Foundation.h>
 
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 #include "flutter/fml/macros.h"
 #include "flutter/fml/make_copyable.h"
 #include "flutter/fml/platform/darwin/scoped_block.h"

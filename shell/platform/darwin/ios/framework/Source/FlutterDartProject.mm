@@ -4,6 +4,7 @@
 
 #define FML_USED_ON_EMBEDDER
 
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterDartProject_Internal.h"
 
 #include "flutter/common/task_runners.h"

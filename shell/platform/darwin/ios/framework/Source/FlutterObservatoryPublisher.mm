@@ -5,6 +5,7 @@
 #define FML_USED_ON_EMBEDDER
 
 #import <TargetConditionals.h>
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 
 // NSNetService works fine on physical devices, but doesn't expose the services to regular mDNS
 // queries on the Simulator.  We can work around this by using the lower level C API, but that's

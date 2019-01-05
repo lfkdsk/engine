@@ -10,6 +10,8 @@
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
 #include "flutter/shell/common/vsync_waiter.h"
 
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 @class VSyncClient;
 
 namespace shell {
