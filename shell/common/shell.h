@@ -63,6 +63,8 @@ class Shell final : public PlatformView::Delegate,
     return blink::DartVM::VersionString();
   }
 
+  static void Shutdown(bool shutdown_vm);
+
   ~Shell();
 
   const blink::Settings& GetSettings() const;

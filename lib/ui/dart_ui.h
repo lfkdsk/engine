@@ -14,6 +14,8 @@ class DartUI {
   static void InitForGlobal();
   static void InitForIsolate(bool is_root_isolate);
 
+  static void CleanupForGlobal();
+
  private:
   FML_DISALLOW_IMPLICIT_CONSTRUCTORS(DartUI);
 };

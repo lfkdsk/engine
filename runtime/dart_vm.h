@@ -44,6 +44,8 @@ class DartVM : public fml::RefCountedThreadSafe<DartVM> {
       return Dart_VersionString();
   }
 
+  static void Shutdown();
+
   const Settings& GetSettings() const;
 
   const DartSnapshot& GetVMSnapshot() const;
