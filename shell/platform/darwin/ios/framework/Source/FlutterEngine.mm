@@ -63,6 +63,10 @@
   int64_t _nextTextureId;
 }
 
++ (NSString *)getVMVersion {
+  return [NSString stringWithFormat:@"%s", shell::Shell::GetDartVMVersion()];
+}
+
 - (instancetype)initWithName:(NSString*)labelPrefix project:(FlutterDartProject*)projectOrNil {
   self = [super init];
   NSAssert(self, @"Super init cannot be nil");

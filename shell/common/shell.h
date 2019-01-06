@@ -59,6 +59,10 @@ class Shell final : public PlatformView::Delegate,
       CreateCallback<PlatformView> on_create_platform_view,
       CreateCallback<Rasterizer> on_create_rasterizer);
 
+  static const char* GetDartVMVersion() {
+    return blink::DartVM::VersionString();
+  }
+
   ~Shell();
 
   const blink::Settings& GetSettings() const;

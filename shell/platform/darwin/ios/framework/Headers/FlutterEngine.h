@@ -41,6 +41,12 @@
 FLUTTER_EXPORT
 @interface FlutterEngine
     : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterPluginRegistry>
+
+/**
+ * Get Dart VM runtime version.
+ */
++ (NSString *)getVMVersion;
+
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
