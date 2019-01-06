@@ -1,0 +1,32 @@
+# Copyright 2013 The Flutter Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+declare_args() {
+  ios_framework_name = ""
+}
+
+template("copy_framework_assets") {
+  assert(defined(invoker.sources), "sources must be defined for $target_name")
+  assert(defined(invoker.outputs), "outputs must be defined for $target_name")
+  assert(defined(invoker.args), "args must be defined for $target_name")
+  action(target_name) {
+    visibility = [ ":*" ]
+
+    script = "$flutter_root/sky/tools/copy_framework_assets.py"
+
+    source_file = invoker.sources
+    output_file = invoker.outputs
+
+    sources = invoker.sources
+
+    args = [
+      "--tpl",
+      rebase_path(source_file[0]),
+      "--dist",
+      rebase_path(output_file[0]),
+    ] + invoker.args
+
+    outputs = invoker.outputs
+  }
+}

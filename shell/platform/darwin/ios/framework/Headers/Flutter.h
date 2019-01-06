@@ -48,6 +48,7 @@
  November 29, 2017: Added a BREAKING CHANGES section.
  */
 
+#include "FlutterClassDefine.h"
 #include "FlutterAppDelegate.h"
 #include "FlutterBinaryMessenger.h"
 #include "FlutterCallbackCache.h"

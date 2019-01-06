@@ -5,6 +5,7 @@
 #ifndef FLUTTER_FLUTTERCODECS_H_
 #define FLUTTER_FLUTTERCODECS_H_
 
+#include "FlutterClassDefine.h"
 #import <Foundation/Foundation.h>
 #include "FlutterMacros.h"
 

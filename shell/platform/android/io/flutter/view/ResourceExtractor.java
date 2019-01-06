@@ -9,6 +9,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 import io.flutter.util.PathUtils;
 import org.json.JSONException;
@@ -31,6 +32,15 @@ import java.util.zip.ZipFile;
 class ResourceExtractor {
     private static final String TAG = "ResourceExtractor";
     private static final String TIMESTAMP_PREFIX = "res_timestamp-";
+
+    @SuppressWarnings("deprecation")
+    static long getVersionCode(PackageInfo packageInfo) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return packageInfo.getLongVersionCode();
+        } else {
+            return packageInfo.versionCode;
+        }
+    }
 
     private class ExtractTask extends AsyncTask<Void, Void, Void> {
         private static final int BUFFER_SIZE = 16 * 1024;
@@ -87,20 +97,19 @@ class ResourceExtractor {
                         output.getParentFile().mkdirs();
                     }
 
-                    try (InputStream is = manager.open(asset)) {
-                        try (OutputStream os = new FileOutputStream(output)) {
-                            if (buffer == null) {
-                                buffer = new byte[BUFFER_SIZE];
-                            }
-
-                            int count = 0;
-                            while ((count = is.read(buffer, 0, BUFFER_SIZE)) != -1) {
-                                os.write(buffer, 0, count);
-                            }
-
-                            os.flush();
-                            Log.i(TAG, "Extracted baseline resource " + asset);
+                    try (InputStream is = manager.open(asset);
+                         OutputStream os = new FileOutputStream(output)) {
+                        if (buffer == null) {
+                            buffer = new byte[BUFFER_SIZE];
                         }
+
+                        int count = 0;
+                        while ((count = is.read(buffer, 0, BUFFER_SIZE)) != -1) {
+                            os.write(buffer, 0, count);
+                        }
+
+                        os.flush();
+                        Log.i(TAG, "Extracted baseline resource " + asset);
                     }
 
                 } catch (FileNotFoundException fnfe) {
@@ -158,20 +167,19 @@ class ResourceExtractor {
                     output.getParentFile().mkdirs();
                 }
 
-                try (InputStream is = zipFile.getInputStream(entry)) {
-                    try (OutputStream os = new FileOutputStream(output)) {
-                        if (buffer == null) {
-                            buffer = new byte[BUFFER_SIZE];
-                        }
-
-                        int count = 0;
-                        while ((count = is.read(buffer, 0, BUFFER_SIZE)) != -1) {
-                            os.write(buffer, 0, count);
-                        }
-
-                        os.flush();
-                        Log.i(TAG, "Extracted override resource " + asset);
+                try (InputStream is = zipFile.getInputStream(entry);
+                     OutputStream os = new FileOutputStream(output)) {
+                    if (buffer == null) {
+                        buffer = new byte[BUFFER_SIZE];
                     }
+
+                    int count = 0;
+                    while ((count = is.read(buffer, 0, BUFFER_SIZE)) != -1) {
+                        os.write(buffer, 0, count);
+                    }
+
+                    os.flush();
+                    Log.i(TAG, "Extracted override resource " + asset);
 
                 } catch (FileNotFoundException fnfe) {
                     continue;
@@ -204,25 +212,23 @@ class ResourceExtractor {
             }
 
             String expectedTimestamp =
-                    TIMESTAMP_PREFIX + packageInfo.versionCode + "-" + packageInfo.lastUpdateTime;
+                    TIMESTAMP_PREFIX + getVersionCode(packageInfo) + "-" + packageInfo.lastUpdateTime;
 
             if (updateManifest != null) {
-                String baselineVersion = updateManifest.optString("baselineVersion", null);
-                if (baselineVersion == null) {
-                    Log.w(TAG, "Invalid update manifest: baselineVersion");
-                }
-
-                String updateVersion = updateManifest.optString("updateVersion", null);
-                if (updateVersion == null) {
-                    Log.w(TAG, "Invalid update manifest: updateVersion");
-                }
-
-                if (baselineVersion != null && updateVersion != null) {
-                    if (!baselineVersion.equals(Integer.toString(packageInfo.versionCode))) {
-                        Log.w(TAG, "Outdated update file for " + packageInfo.versionCode);
+                String buildNumber = updateManifest.optString("buildNumber", null);
+                if (buildNumber == null) {
+                    Log.w(TAG, "Invalid update manifest: buildNumber");
+                } else {
+                    String patchNumber = updateManifest.optString("patchNumber", null);
+                    if (!buildNumber.equals(Long.toString(getVersionCode(packageInfo)))) {
+                        Log.w(TAG, "Outdated update file for " + getVersionCode(packageInfo));
                     } else {
                         final File updateFile = new File(FlutterMain.getUpdateInstallationPath());
-                        expectedTimestamp += "-" + updateVersion + "-" + updateFile.lastModified();
+                        if (patchNumber != null) {
+                            expectedTimestamp += "-" + patchNumber + "-" + updateFile.lastModified();
+                        } else {
+                            expectedTimestamp += "-" + updateFile.lastModified();
+                        }
                     }
                 }
             }
@@ -332,7 +338,7 @@ class ResourceExtractor {
 
     ResourceExtractor(Context context) {
         mContext = context;
-        mResources = new HashSet<String>();
+        mResources = new HashSet<>();
     }
 
     ResourceExtractor addResource(String resource) {

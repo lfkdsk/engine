@@ -8,6 +8,8 @@
 
 #include "flutter/shell/platform/darwin/common/buffer_conversions.h"
 
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 namespace shell {
 
 PlatformMessageRouter::PlatformMessageRouter() = default;

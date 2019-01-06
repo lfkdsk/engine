@@ -6,6 +6,7 @@
 #define SHELL_PLATFORM_IOS_FRAMEWORK_SOURCE_FLUTTERTEXTINPUTDELEGATE_H_
 
 #import <Foundation/Foundation.h>
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 
 typedef NS_ENUM(NSInteger, FlutterTextInputAction) {
   FlutterTextInputActionUnspecified,

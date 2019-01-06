@@ -237,17 +237,21 @@ fml::RefPtr<DartVM> DartVM::ForProcess(Settings settings) {
   return ForProcess(settings, nullptr, nullptr, nullptr);
 }
 
-static std::once_flag gVMInitialization;
-static std::mutex gVMMutex;
-static fml::RefPtr<DartVM> gVM;
+struct VMInitGuard {
+  std::once_flag initialization;
+  std::mutex mutex;
+  fml::RefPtr<DartVM> vm;
+};
+
+static VMInitGuard* gVMInitialization = new VMInitGuard();
 
 fml::RefPtr<DartVM> DartVM::ForProcess(
     Settings settings,
     fml::RefPtr<DartSnapshot> vm_snapshot,
     fml::RefPtr<DartSnapshot> isolate_snapshot,
     fml::RefPtr<DartSnapshot> shared_snapshot) {
-  std::lock_guard<std::mutex> lock(gVMMutex);
-  std::call_once(gVMInitialization, [settings,          //
+  std::lock_guard<std::mutex> lock(gVMInitialization->mutex);
+  std::call_once(gVMInitialization->initialization, [settings,          //
                                      vm_snapshot,       //
                                      isolate_snapshot,  //
                                      shared_snapshot    //
@@ -269,18 +273,23 @@ fml::RefPtr<DartVM> DartVM::ForProcess(
     if (!shared_snapshot) {
       shared_snapshot = DartSnapshot::Empty();
     }
-    gVM = fml::MakeRefCounted<DartVM>(settings,                     //
+    gVMInitialization->vm = fml::MakeRefCounted<DartVM>(settings,                     //
                                       std::move(vm_snapshot),       //
                                       std::move(isolate_snapshot),  //
                                       std::move(shared_snapshot)    //
     );
   });
-  return gVM;
+  return gVMInitialization->vm;
 }
 
 fml::RefPtr<DartVM> DartVM::ForProcessIfInitialized() {
-  std::lock_guard<std::mutex> lock(gVMMutex);
-  return gVM;
+  std::lock_guard<std::mutex> lock(gVMInitialization->mutex);
+  return gVMInitialization->vm;
+}
+
+void DartVM::Shutdown() {
+  delete gVMInitialization;
+  gVMInitialization = new VMInitGuard();
 }
 
 DartVM::DartVM(const Settings& settings,
@@ -428,6 +437,7 @@ DartVM::DartVM(const Settings& settings,
 }
 
 DartVM::~DartVM() {
+  FML_DLOG(INFO) << "Deconstruct DartVM";
   if (Dart_CurrentIsolate() != nullptr) {
     Dart_ExitIsolate();
   }
@@ -437,6 +447,8 @@ DartVM::~DartVM() {
                    << result << "\".";
     free(result);
   }
+  dart::bin::CleanupDartIo();
+  DartUI::CleanupForGlobal();
 }
 
 const Settings& DartVM::GetSettings() const {

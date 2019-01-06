@@ -6,6 +6,7 @@
 #define FLUTTER_FLUTTEROBSERVATORYPUBLISHER_H_
 
 #import <Foundation/Foundation.h>
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 
 @interface FlutterObservatoryPublisher : NSObject
 

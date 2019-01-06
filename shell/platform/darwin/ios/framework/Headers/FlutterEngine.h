@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#include "FlutterClassDefine.h"
 #include "FlutterBinaryMessenger.h"
 #include "FlutterDartProject.h"
 #include "FlutterMacros.h"
@@ -40,6 +41,17 @@
 FLUTTER_EXPORT
 @interface FlutterEngine
     : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterPluginRegistry>
+
+/**
+ * Get Dart VM runtime version.
+ */
++ (NSString *)getVMVersion;
+
+/**
+ * Shutdown engine to release memory.
+ */
++ (void)shutdownWithVM:(BOOL)shutdownVM;
+
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
@@ -96,6 +108,8 @@ FLUTTER_EXPORT
  * @return YES if the call succeeds in creating and running a Flutter Engine instance; NO otherwise.
  */
 - (BOOL)runWithEntrypoint:(NSString*)entrypoint libraryURI:(NSString*)uri;
+
+- (void)reset;
 
 /**
  * Sets the `FlutterViewController` for this instance.  The FlutterEngine must be

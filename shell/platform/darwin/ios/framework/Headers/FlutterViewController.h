@@ -8,6 +8,7 @@
 #import <UIKit/UIKit.h>
 #include <sys/cdefs.h>
 
+#include "FlutterClassDefine.h"
 #include "FlutterBinaryMessenger.h"
 #include "FlutterDartProject.h"
 #include "FlutterEngine.h"

@@ -4,6 +4,7 @@
 
 #define FML_USED_ON_EMBEDDER
 
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
 #import "flutter/shell/platform/darwin/ios/framework/Source/FlutterEngine_Internal.h"
 
 #include <memory>
@@ -62,6 +63,14 @@
   int64_t _nextTextureId;
 }
 
++ (NSString *)getVMVersion {
+  return [NSString stringWithFormat:@"%s", shell::Shell::GetDartVMVersion()];
+}
+
++ (void)shutdownWithVM:(BOOL)shutdownVM {
+  shell::Shell::Shutdown(shutdownVM);
+}
+
 - (instancetype)initWithName:(NSString*)labelPrefix project:(FlutterDartProject*)projectOrNil {
   self = [super init];
   NSAssert(self, @"Super init cannot be nil");
@@ -85,8 +94,28 @@
 }
 
 - (void)dealloc {
+  FML_LOG(INFO) << "FlutterEngine dealloc";
   [_pluginPublications release];
   [super dealloc];
+}
+
+- (void)reset {
+  [self resetChannels];
+  _shell.reset();
+  _threadHost.Reset();
+  _publisher.reset();
+  _platformViewsController.reset();
+}
+
+- (void)resetChannels {
+  _localizationChannel.reset();
+  _navigationChannel.reset();
+  _platformChannel.reset();
+  _platformViewsChannel.reset();
+  _textInputChannel.reset();
+  _lifecycleChannel.reset();
+  _systemChannel.reset();
+  _settingsChannel.reset();
 }
 
 - (shell::Shell&)shell {

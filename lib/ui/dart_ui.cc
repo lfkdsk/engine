@@ -106,4 +106,9 @@ void DartUI::InitForIsolate(bool is_root_isolate) {
                                           get_native_function, get_symbol));
 }
 
+void DartUI::CleanupForGlobal() {
+  delete g_natives;
+  g_natives = NULL;
+}
+
 }  // namespace blink
