@@ -658,6 +658,11 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(JJ)V",
           .fnPtr = reinterpret_cast<void*>(&shell::UnregisterTexture),
       },
+      {
+          .name = "nativeShutDown",
+          .signature = "(Z)V",
+          .fnPtr = reinterpret_cast<void*>(&Shell::Shutdown)
+      }
   };
 
   if (env->RegisterNatives(g_flutter_jni_class->obj(), flutter_jni_methods,
