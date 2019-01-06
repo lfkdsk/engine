@@ -55,6 +55,11 @@ FLUTTER_EXPORT
 - (void)enableObservatory:(BOOL)enableObservatory;
 
 /**
+ * Config log verbose
+ */
+- (void)enableLogVerbose:(BOOL)enableLogVerbose;
+
+/**
  * Returns the file name for the given asset.
  * The returned file name can be used to access the asset in the application's main bundle.
  *

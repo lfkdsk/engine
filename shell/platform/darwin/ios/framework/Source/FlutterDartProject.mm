@@ -235,11 +235,11 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 #pragma mark - Settings setters
 
 - (void)enableObservatory:(BOOL)enableObservatory {
-  if (enableObservatory) {
-    _settings.enable_observatory = true;
-  } else {
-    _settings.enable_observatory = false;
-  }
+  _settings.enable_observatory = enableObservatory;
+}
+
+- (void)enableLogVerbose:(BOOL)enableLogVerbose {
+  _settings.verbose_logging = enableLogVerbose;
 }
 
 #pragma mark - Settings accessors

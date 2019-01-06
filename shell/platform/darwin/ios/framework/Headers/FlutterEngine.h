@@ -48,6 +48,11 @@ FLUTTER_EXPORT
 + (NSString *)getVMVersion;
 
 /**
+ * Shutdown engine to release memory.
+ */
++ (void)shutdownWithVM:(BOOL)shutdownVM;
+
+/**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
  * If the FlutterDartProject is not specified, the FlutterEngine will attempt to locate
@@ -103,6 +108,8 @@ FLUTTER_EXPORT
  * @return YES if the call succeeds in creating and running a Flutter Engine instance; NO otherwise.
  */
 - (BOOL)runWithEntrypoint:(NSString*)entrypoint libraryURI:(NSString*)uri;
+
+- (void)reset;
 
 /**
  * Sets the `FlutterViewController` for this instance.  The FlutterEngine must be
