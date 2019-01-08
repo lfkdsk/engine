@@ -49,6 +49,9 @@ def filter_header(file_path, dist_path, prefix, classes):
   content = re.sub(r'(%s)+' % prefix, prefix, content)
   # Fix replaced include.
   content = content.replace('#include "%s' % prefix, '#include "')
+  content = content.replace('#include "Flutter', '#include "%sFlutter' % prefix)
+  content = content.replace('#import "Flutter', '#import "%sFlutter' % prefix)
+  content = content.replace('FLUTTER_', '%sFLUTTER_' % prefix.upper())
 
   dist_file = open(dist_path, 'w')
   dist_file.write(content)
@@ -83,7 +86,7 @@ def main():
 
   # Copy all files specified in the args.
   for header_file in args.headers:
-    filter_header(header_file, os.path.join(args.location, os.path.basename(header_file)), args.prefix, classes)
+    filter_header(header_file, os.path.join(args.location, args.prefix + os.path.basename(header_file)), args.prefix, classes)
 
 if __name__ == '__main__':
   sys.exit(main())

@@ -241,9 +241,9 @@ copy_framework_assets("copy_framework_module_map") {
 
   args = [
     "--placeholder",
-    "framework module Flutter",
+    "Flutter",
     "--replace",
-    "framework module $_flutter_framework_name",
+    "$_flutter_framework_name",
   ]
 
   outputs = [
@@ -254,11 +254,14 @@ copy_framework_assets("copy_framework_module_map") {
 action("copy_framework_headers") {
   script = "$flutter_root/sky/tools/install_framework_headers.py"
   visibility = [ ":*" ]
-  sources = _flutter_framework_headers
+  headers = []
+  sources = []
   outputs = []
   foreach(header, _flutter_framework_headers) {
-    if (header != "framework/Headers/Flutter.h") {
+    if (header != "framework/Headers/FlutterClassDefine.h") {
       header_basename = rebase_path(header, "framework/headers")
+      sources += [ header ]
+      headers += [ header ]
       outputs += [ "$_flutter_framework_headers_copy_dir/$header_basename" ]
     }
   }
@@ -269,7 +272,7 @@ action("copy_framework_headers") {
     "--location",
     rebase_path("$_flutter_framework_headers_copy_dir"),
     "--headers",
-  ] + rebase_path(_flutter_framework_headers)
+  ] + rebase_path(headers)
 }
 
 copy("copy_framework_icu") {
@@ -311,14 +314,32 @@ copy("copy_license") {
   ]
 }
 
+copy_framework_assets("copy_umbrella_import") {
+  sources = [
+    "framework/Source/FlutterUmbrellaImport.m",
+  ]
+
+  outputs = [
+    "$target_gen_dir/FlutterUmbrellaImport.m"
+  ]
+
+  args = [
+    "--placeholder",
+    "Flutter.h",
+    "--replace",
+    "${_flutter_framework_name}.h",
+  ]
+}
+
 shared_library("copy_and_verify_framework_headers") {
   visibility = [ ":*" ]
   include_dirs = [ "$_flutter_framework_headers_copy_dir" ]
   sources = [
-    "framework/Source/FlutterUmbrellaImport.m",
+    "$target_gen_dir/FlutterUmbrellaImport.m",
   ]
   deps = [
     ":copy_framework_headers",
+    ":copy_umbrella_import",
   ]
 }
 
