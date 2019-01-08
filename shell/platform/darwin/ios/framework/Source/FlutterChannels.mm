@@ -9,7 +9,7 @@
 #pragma mark - Basic message channel
 
 @implementation FlutterBasicMessageChannel {
-  fml::WeakPtr<NSObject<FlutterBinaryMessenger>> _messenger;
+  NSObject<FlutterBinaryMessenger>* _messenger;
   NSString* _name;
   NSObject<FlutterMessageCodec>* _codec;
 }
@@ -34,21 +34,20 @@
   self = [super init];
   NSAssert(self, @"Super init cannot be nil");
   _name = [name retain];
-  std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>> factory =
-    std::make_unique<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>(messenger);
-  _messenger = factory->GetWeakPtr();
+  _messenger = messenger;
   _codec = [codec retain];
   return self;
 }
 
 - (void)dealloc {
   [_name release];
+  _messenger = nil;
   [_codec release];
   [super dealloc];
 }
 
 - (void)sendMessage:(id)message {
-  [_messenger.get() sendOnChannel:_name message:[_codec encode:message]];
+  [_messenger sendOnChannel:_name message:[_codec encode:message]];
 }
 
 - (void)sendMessage:(id)message reply:(FlutterReply)callback {
@@ -56,12 +55,12 @@
     if (callback)
       callback([_codec decode:data]);
   };
-  [_messenger.get() sendOnChannel:_name message:[_codec encode:message] binaryReply:reply];
+  [_messenger sendOnChannel:_name message:[_codec encode:message] binaryReply:reply];
 }
 
 - (void)setMessageHandler:(FlutterMessageHandler)handler {
   if (!handler) {
-    [_messenger.get() setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
+    [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
     return;
   }
   FlutterBinaryMessageHandler messageHandler = ^(NSData* message, FlutterBinaryReply callback) {
@@ -69,7 +68,7 @@
       callback([_codec encode:reply]);
     });
   };
-  [_messenger.get() setMessageHandlerOnChannel:_name binaryMessageHandler:messageHandler];
+  [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:messageHandler];
 }
 @end
 
@@ -151,7 +150,7 @@
 NSObject const* FlutterMethodNotImplemented = [NSObject new];
 
 @implementation FlutterMethodChannel {
-  fml::WeakPtr<NSObject<FlutterBinaryMessenger>> _messenger;
+  NSObject<FlutterBinaryMessenger>* _messenger;
   NSString* _name;
   NSObject<FlutterMethodCodec>* _codec;
 }
@@ -175,15 +174,14 @@ NSObject const* FlutterMethodNotImplemented = [NSObject new];
   self = [super init];
   NSAssert(self, @"Super init cannot be nil");
   _name = [name retain];
-  std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>> factory =
-    std::make_unique<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>(messenger);
-  _messenger = factory->GetWeakPtr();
+  _messenger = messenger;
   _codec = [codec retain];
   return self;
 }
 
 - (void)dealloc {
   [_name release];
+  _messenger = nil;
   [_codec release];
   [super dealloc];
 }
@@ -192,7 +190,7 @@ NSObject const* FlutterMethodNotImplemented = [NSObject new];
   FlutterMethodCall* methodCall = [FlutterMethodCall methodCallWithMethodName:method
                                                                     arguments:arguments];
   NSData* message = [_codec encodeMethodCall:methodCall];
-  [_messenger.get() sendOnChannel:_name message:message];
+  [_messenger sendOnChannel:_name message:message];
 }
 
 - (void)invokeMethod:(NSString*)method arguments:(id)arguments result:(FlutterResult)callback {
@@ -204,12 +202,12 @@ NSObject const* FlutterMethodNotImplemented = [NSObject new];
       callback((data == nil) ? FlutterMethodNotImplemented : [_codec decodeEnvelope:data]);
     }
   };
-  [_messenger.get() sendOnChannel:_name message:message binaryReply:reply];
+  [_messenger sendOnChannel:_name message:message binaryReply:reply];
 }
 
 - (void)setMethodCallHandler:(FlutterMethodCallHandler)handler {
   if (!handler) {
-    [_messenger.get() setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
+    [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
     return;
   }
   FlutterBinaryMessageHandler messageHandler = ^(NSData* message, FlutterBinaryReply callback) {
@@ -223,7 +221,7 @@ NSObject const* FlutterMethodNotImplemented = [NSObject new];
         callback([_codec encodeSuccessEnvelope:result]);
     });
   };
-  [_messenger.get() setMessageHandlerOnChannel:_name binaryMessageHandler:messageHandler];
+  [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:messageHandler];
 }
 @end
 
@@ -232,7 +230,7 @@ NSObject const* FlutterMethodNotImplemented = [NSObject new];
 NSObject const* FlutterEndOfEventStream = [NSObject new];
 
 @implementation FlutterEventChannel {
-  fml::WeakPtr<NSObject<FlutterBinaryMessenger>> _messenger;
+  NSObject<FlutterBinaryMessenger>* _messenger;
   NSString* _name;
   NSObject<FlutterMethodCodec>* _codec;
 }
@@ -255,22 +253,21 @@ NSObject const* FlutterEndOfEventStream = [NSObject new];
   self = [super init];
   NSAssert(self, @"Super init cannot be nil");
   _name = [name retain];
-  std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>> factory =
-    std::make_unique<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>(messenger);
-  _messenger = factory->GetWeakPtr();
+  _messenger = messenger;
   _codec = [codec retain];
   return self;
 }
 
 - (void)dealloc {
   [_name release];
+  _messenger = nil;
   [_codec release];
   [super dealloc];
 }
 
 - (void)setStreamHandler:(NSObject<FlutterStreamHandler>*)handler {
   if (!handler) {
-    [_messenger.get() setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
+    [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
     return;
   }
   __block FlutterEventSink currentSink = nil;
@@ -285,12 +282,12 @@ NSObject const* FlutterEndOfEventStream = [NSObject new];
       }
       currentSink = ^(id event) {
         if (event == FlutterEndOfEventStream)
-          [_messenger.get() sendOnChannel:_name message:nil];
+          [_messenger sendOnChannel:_name message:nil];
         else if ([event isKindOfClass:[FlutterError class]])
-          [_messenger.get() sendOnChannel:_name
+          [_messenger sendOnChannel:_name
                             message:[_codec encodeErrorEnvelope:(FlutterError*)event]];
         else
-          [_messenger.get() sendOnChannel:_name message:[_codec encodeSuccessEnvelope:event]];
+          [_messenger sendOnChannel:_name message:[_codec encodeSuccessEnvelope:event]];
       };
       FlutterError* error = [handler onListenWithArguments:call.arguments eventSink:currentSink];
       if (error)
@@ -315,6 +312,6 @@ NSObject const* FlutterEndOfEventStream = [NSObject new];
       callback(nil);
     }
   };
-  [_messenger.get() setMessageHandlerOnChannel:_name binaryMessageHandler:messageHandler];
+  [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:messageHandler];
 }
 @end
