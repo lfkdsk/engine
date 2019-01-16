@@ -46,6 +46,8 @@ def get_out_dir(args):
     if args.enable_vulkan:
         target_dir.append('vulkan')
 
+    target_dir.append('_test')
+
     return os.path.join('out', '_'.join(target_dir))
 
 def to_command_line(gn_args):
@@ -67,9 +69,9 @@ def to_gn_args(args):
     if args.simulator:
         if args.target_os == 'android':
             raise Exception('--simulator is not supported on Android')
-        elif args.target_os == 'ios':
-            if args.runtime_mode != 'debug':
-                raise Exception('iOS simulator only supports the debug runtime mode')
+        # elif args.target_os == 'ios':
+        #     if args.runtime_mode != 'debug':
+        #         raise Exception('iOS simulator only supports the debug runtime mode')
 
     if args.target_os != 'android' and args.enable_vulkan:
       raise Exception('--enable-vulkan is only supported on Android')
@@ -110,9 +112,9 @@ def to_gn_args(args):
         gn_args['target_os'] = 'android'
     elif args.target_os == 'ios':
         gn_args['target_os'] = 'ios'
-        gn_args['use_ios_simulator'] = args.simulator
-        if not args.simulator:
-          aot = True
+        gn_args['use_ios_simulator'] = True
+        # if not args.simulator:
+        aot = True
     elif args.target_os is not None:
         gn_args['target_os'] = args.target_os
     else:
