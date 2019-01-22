@@ -393,7 +393,10 @@ public class FlutterMain {
     }
 
     public static String findAppBundlePath(Context applicationContext) {
-        String dataDirectory = PathUtils.getExternalStorageDirectory(applicationContext);
+        // String dataDirectory = PathUtils.getExternalStorageDirectory(applicationContext);
+        // File appBundle = new File(dataDirectory, sFlutterAssetsDir);
+        // return appBundle.exists() ? appBundle.getPath() : null;
+        String dataDirectory = PathUtils.getDataDirectory(applicationContext);
         File appBundle = new File(dataDirectory, sFlutterAssetsDir);
         return appBundle.exists() ? appBundle.getPath() : null;
     }
@@ -409,11 +412,7 @@ public class FlutterMain {
      * through the {@link android.content.res.AssetManager} API.
      *
      * @param asset the name of the asset. The name can be hierarchical
-<<<<<<< HEAD
      * @return the filename to be used with {@link AssetManager}
-=======
-     * @return      the filename to be used with {@link android.content.res.AssetManager}
->>>>>>> c6ce91f215395f516caddbf10785409477d65232
      */
     public static String getLookupKeyForAsset(String asset) {
         return fromFlutterAssets(asset);
@@ -426,11 +425,7 @@ public class FlutterMain {
      *
      * @param asset       the name of the asset. The name can be hierarchical
      * @param packageName the name of the package from which the asset originates
-<<<<<<< HEAD
      * @return the file name to be used with {@link AssetManager}
-=======
-     * @return            the file name to be used with {@link android.content.res.AssetManager}
->>>>>>> c6ce91f215395f516caddbf10785409477d65232
      */
     public static String getLookupKeyForAsset(String asset, String packageName) {
         return getLookupKeyForAsset(
