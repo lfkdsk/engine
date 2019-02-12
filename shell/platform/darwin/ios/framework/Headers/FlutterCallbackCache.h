@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-#include "FlutterClassDefine.h"
+
 #include "FlutterMacros.h"
 
 /**

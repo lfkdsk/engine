@@ -5,7 +5,7 @@
 #ifndef SHELL_PLATFORM_IOS_FRAMEWORK_SOURCE_FLUTTERDARTPROJECT_INTERNAL_H_
 #define SHELL_PLATFORM_IOS_FRAMEWORK_SOURCE_FLUTTERDARTPROJECT_INTERNAL_H_
 
-#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 #include "flutter/common/settings.h"
 #include "flutter/shell/common/engine.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterDartProject.h"

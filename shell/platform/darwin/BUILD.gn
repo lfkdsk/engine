@@ -17,7 +17,6 @@ source_set("flutter_channels") {
   sources = [
     "common/buffer_conversions.h",
     "common/buffer_conversions.mm",
-    "ios/framework/Headers/FlutterClassDefine.h",
     "ios/framework/Headers/FlutterBinaryMessenger.h",
     "ios/framework/Headers/FlutterChannels.h",
     "ios/framework/Headers/FlutterCodecs.h",

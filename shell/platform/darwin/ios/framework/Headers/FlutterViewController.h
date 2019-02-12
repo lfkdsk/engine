@@ -8,7 +8,7 @@
 #import <UIKit/UIKit.h>
 #include <sys/cdefs.h>
 
-#include "FlutterClassDefine.h"
+
 #include "FlutterBinaryMessenger.h"
 #include "FlutterDartProject.h"
 #include "FlutterEngine.h"
@@ -142,6 +142,11 @@ FLUTTER_EXPORT
  * @return `YES` if successful, `NO` otherwise.
  */
 - (BOOL)loadDefaultSplashScreenView;
+
+/**
+ * Get observatory uri.
+ */
+- (NSString *)observatoryUri;
 
 /**
  * Controls whether the created view will be opaque or not.

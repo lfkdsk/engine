@@ -60,6 +60,8 @@ class DartVM : public fml::RefCountedThreadSafe<DartVM> {
 
   ServiceProtocol& GetServiceProtocol();
 
+  std::string GetObservatoryUri() const;
+
  private:
   const Settings settings_;
   const fml::RefPtr<DartSnapshot> vm_snapshot_;

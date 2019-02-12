@@ -4,7 +4,7 @@
 
 #define FML_USED_ON_EMBEDDER
 
-#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterDartProject_Internal.h"
 
 #include "flutter/common/task_runners.h"
@@ -240,6 +240,30 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 
 - (void)enableLogVerbose:(BOOL)enableLogVerbose {
   _settings.verbose_logging = enableLogVerbose;
+}
+
+/**
+ * Set observatory port.
+ */
+- (void)setObservatoryPort:(NSUInteger)port {
+  _settings.observatory_port = port;
+}
+
+/**
+ * Set observatory host.
+ */
+- (void)setObservatoryHost:(NSString *)host {
+  if (host == nil) {
+    return;
+  }
+  _settings.observatory_host = host.UTF8String;
+}
+
+/**
+ * Config ipv6 setting.
+ */
+- (void)enableIPV6:(BOOL)useIPV6 {
+  _settings.ipv6 = useIPV6;
 }
 
 #pragma mark - Settings accessors

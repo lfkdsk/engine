@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 #include "FlutterStandardCodec_Internal.h"
 
 #pragma mark - Codec for basic message channel

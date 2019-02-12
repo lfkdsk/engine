@@ -5,7 +5,7 @@
 #ifndef FLUTTER_FLUTTERCHANNELS_H_
 #define FLUTTER_FLUTTERCHANNELS_H_
 
-#include "FlutterClassDefine.h"
+
 #include "FlutterBinaryMessenger.h"
 #include "FlutterCodecs.h"
 

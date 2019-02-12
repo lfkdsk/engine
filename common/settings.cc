@@ -14,6 +14,16 @@ Settings::Settings(const Settings& other) = default;
 
 Settings::~Settings() = default;
 
+std::string Settings::GetObservatoryHost() const {
+  std::string observatory_host;
+  if (!this->observatory_host.empty()) {
+    observatory_host = this->observatory_host;
+  } else {
+    observatory_host = ipv6 ? "::1" : "127.0.0.1";
+  }
+  return observatory_host;
+}
+
 std::string Settings::ToString() const {
   std::stringstream stream;
   stream << "Settings: " << std::endl;
@@ -43,6 +53,7 @@ std::string Settings::ToString() const {
   stream << "advisory_script_uri: " << advisory_script_uri << std::endl;
   stream << "disable_dart_asserts: " << disable_dart_asserts << std::endl;
   stream << "advisory_script_entrypoint: " << advisory_script_entrypoint << std::endl;
+  stream << "observatory_host: " << observatory_host << std::endl;
   stream << "observatory_port: " << observatory_port << std::endl;
   stream << "ipv6: " << ipv6 << std::endl;
   stream << "use_test_fonts: " << use_test_fonts << std::endl;

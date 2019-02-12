@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include "flutter/fml/memory/weak_ptr.h"
-#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterChannels.h"
 
 #pragma mark - Basic message channel

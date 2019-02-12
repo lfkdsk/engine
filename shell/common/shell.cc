@@ -424,6 +424,10 @@ blink::DartVM& Shell::GetDartVM() const {
   return *vm_;
 }
 
+std::string Shell::GetObservatoryUri() const {
+  return vm_->GetObservatoryUri();
+}
+
 // |shell::PlatformView::Delegate|
 void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
   FML_DCHECK(is_setup_);

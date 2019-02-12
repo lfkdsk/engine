@@ -8,7 +8,7 @@
 #include "flutter/flow/embedded_views.h"
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
 #include "flutter/shell/common/shell.h"
-#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterBinaryMessenger.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterChannels.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterPlatformViews.h"

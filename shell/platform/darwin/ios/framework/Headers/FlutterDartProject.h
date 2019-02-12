@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-#include "FlutterClassDefine.h"
+
 #include "FlutterMacros.h"
 
 /**
@@ -55,9 +55,24 @@ FLUTTER_EXPORT
 - (void)enableObservatory:(BOOL)enableObservatory;
 
 /**
- * Config log verbose
+ * Config log verbose.
  */
 - (void)enableLogVerbose:(BOOL)enableLogVerbose;
+
+/**
+ * Set observatory port.
+ */
+- (void)setObservatoryPort:(NSUInteger)port;
+
+/**
+ * Set observatory host.
+ */
+- (void)setObservatoryHost:(NSString *)host;
+
+/**
+ * Config ipv6 setting.
+ */
+- (void)enableIPV6:(BOOL)useIPV6;
 
 /**
  * Returns the file name for the given asset.

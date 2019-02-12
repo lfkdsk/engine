@@ -8,7 +8,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-#include "FlutterClassDefine.h"
+
 #include "FlutterBinaryMessenger.h"
 #include "FlutterDartProject.h"
 #include "FlutterMacros.h"
@@ -109,7 +109,15 @@ FLUTTER_EXPORT
  */
 - (BOOL)runWithEntrypoint:(NSString*)entrypoint libraryURI:(NSString*)uri;
 
+/**
+ * Reset objects to prevent cycle references which will cause memory leak.
+ */
 - (void)reset;
+
+/**
+ * Get observatory uri.
+ */
+- (NSString *)observatoryUri;
 
 /**
  * Sets the `FlutterViewController` for this instance.  The FlutterEngine must be

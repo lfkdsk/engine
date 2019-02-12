@@ -22,7 +22,6 @@ shell_gpu_configuration("ios_gpu_configuration") {
 # from outside the Flutter engine source root.
 _flutter_framework_headers = [
   "framework/Headers/Flutter.h",
-  "framework/Headers/FlutterClassDefine.h",
   "framework/Headers/FlutterAppDelegate.h",
   "framework/Headers/FlutterBinaryMessenger.h",
   "framework/Headers/FlutterCallbackCache.h",
@@ -40,33 +39,6 @@ _flutter_framework_headers = [
 ]
 
 _flutter_framework_headers_copy_dir = "$_flutter_framework_dir/Headers"
-
-action("create_define_file") {
-  script = "$flutter_root/sky/tools/create_flutter_class_prefix.py"
-
-  stamp_file = "$target_out_dir/FlutterClassDefine.stamp"
-
-  inputs = [
-    "_FlutterClassDefineTpl.h",
-    "framework/Headers/FlutterClassDefine.h",
-  ]
-
-  args = [
-    "--placeholder",
-    "FlutterClassPrefix",
-    "--dist",
-    rebase_path("framework/Headers/FlutterClassDefine.h"),
-    "--prefix=$ios_framework_name",
-    "--tpl",
-    rebase_path("_FlutterClassDefineTpl.h"),
-    "--stamp",
-    rebase_path(stamp_file),
-  ]
-
-  outputs = [
-    stamp_file,
-  ]
-}
 
 shared_library("create_flutter_framework_dylib") {
   visibility = [ ":*" ]
@@ -153,13 +125,11 @@ shared_library("create_flutter_framework_dylib") {
   } else {
     deps += [ "//third_party/dart/runtime:libdart_precompiled_runtime" ]
   }
-  if (ios_framework_name != "") {
-    deps += [ ":create_define_file" ]
-  }
 
   public_configs = [ "$flutter_root:config" ]
 
   defines = [ "FLUTTER_FRAMEWORK" ]
+  defines += prefixed_defines
 
   libs = [
     "CoreMedia.framework",
@@ -258,21 +228,19 @@ action("copy_framework_headers") {
   sources = []
   outputs = []
   foreach(header, _flutter_framework_headers) {
-    if (header != "framework/Headers/FlutterClassDefine.h") {
-      header_basename = rebase_path(header, "framework/headers")
-      sources += [ header ]
-      headers += [ header ]
-      outputs += [ "$_flutter_framework_headers_copy_dir/$header_basename" ]
-    }
+    header_basename = rebase_path(header, "framework/headers")
+    sources += [ header ]
+    headers += [ header ]
+    outputs += [ "$_flutter_framework_headers_copy_dir/$header_basename" ]
   }
   args = [
-    "--tpl",
-    rebase_path("_FlutterClassDefineTpl.h"),
     "--prefix=$ios_framework_name",
     "--location",
     rebase_path("$_flutter_framework_headers_copy_dir"),
     "--headers",
-  ] + rebase_path(headers)
+  ] + rebase_path(headers) + [
+    "--classes"
+  ] + prefixed_classes
 }
 
 copy("copy_framework_icu") {
@@ -343,34 +311,6 @@ shared_library("copy_and_verify_framework_headers") {
   ]
 }
 
-action("reset_define_file") {
-  script = "$flutter_root/sky/tools/create_flutter_class_prefix.py"
-
-  stamp_file = "$target_out_dir/FlutterClassDefine.reset.stamp"
-
-  inputs = [ "framework/Headers/FlutterClassDefine.h" ]
-
-  deps = [
-    ":copy_license"
-  ]
-
-  args = [
-   "--placeholder",
-    "FlutterClassPrefix",
-    "--dist",
-    rebase_path("framework/Headers/FlutterClassDefine.h"),
-    "--prefix=",
-    "--tpl",
-    rebase_path("_FlutterClassDefineTpl.h"),
-    "--stamp",
-    rebase_path(stamp_file),
-  ]
-
-  outputs = [
-    stamp_file,
-  ]
-}
-
 group("flutter_framework") {
   deps = [
     ":copy_and_verify_framework_headers",
@@ -380,6 +320,5 @@ group("flutter_framework") {
     ":copy_framework_module_map",
     ":copy_framework_podspec",
     ":copy_license",
-    # ":reset_define_file",
   ]
 }

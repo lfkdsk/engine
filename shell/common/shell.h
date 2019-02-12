@@ -79,6 +79,8 @@ class Shell final : public PlatformView::Delegate,
 
   blink::DartVM& GetDartVM() const;
 
+  std::string GetObservatoryUri() const;
+
   bool IsSetup() const;
 
   Rasterizer::Screenshot Screenshot(Rasterizer::ScreenshotType type,

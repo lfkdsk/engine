@@ -4,7 +4,7 @@
 
 #define FML_USED_ON_EMBEDDER
 
-#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 #import "flutter/shell/platform/darwin/ios/framework/Source/FlutterEngine_Internal.h"
 
 #include <memory>
@@ -101,10 +101,16 @@
 
 - (void)reset {
   [self resetChannels];
+  self.platformView->SetSemanticsEnabled(false);
   _shell.reset();
   _threadHost.Reset();
   _publisher.reset();
   _platformViewsController.reset();
+}
+
+- (NSString *)observatoryUri {
+  return [NSString stringWithCString:_shell->GetObservatoryUri().c_str()
+                            encoding:[NSString defaultCStringEncoding]];
 }
 
 - (void)resetChannels {

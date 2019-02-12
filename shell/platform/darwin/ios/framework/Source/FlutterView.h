@@ -9,7 +9,7 @@
 
 #include <memory>
 
-#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterClassDefine.h"
+
 #import "FlutterPlatformViews_Internal.h"
 
 #include "flutter/fml/memory/weak_ptr.h"
