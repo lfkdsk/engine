@@ -14,6 +14,7 @@ import io.flutter.embedding.engine.renderer.FlutterRenderer.RenderSurface;
 import io.flutter.plugin.common.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ public class FlutterNativeView implements BinaryMessenger {
     private FlutterJNI mFlutterJNI;
     private final Context mContext;
     private boolean applicationIsRunning;
+    private static AtomicInteger counter = new AtomicInteger(0);
 
     public FlutterNativeView(Context context) {
         this(context, false);
@@ -46,6 +48,8 @@ public class FlutterNativeView implements BinaryMessenger {
         attach(this, isBackgroundView);
         assertAttached();
         mMessageHandlers = new HashMap<>();
+
+        counter.incrementAndGet();
     }
 
     public void detach() {
@@ -57,9 +61,15 @@ public class FlutterNativeView implements BinaryMessenger {
     public void destroy() {
         mPluginRegistry.destroy();
         mFlutterView = null;
+        counter.decrementAndGet();
+
+        // if (counter.get() == 0) {
+        //     nativeShutDown(true);
+        // }
+
+        // mFlutterJNI.nativeShutDown(true);
         mFlutterJNI.detachFromNativeAndReleaseResources();
         applicationIsRunning = false;
-        mFlutterJNI.nativeShutDown(true);
     }
 
     public FlutterPluginRegistry getPluginRegistry() {

@@ -256,6 +256,7 @@ fml::RefPtr<DartVM> DartVM::ForProcess(
                                      isolate_snapshot,  //
                                      shared_snapshot    //
   ]() mutable {
+    FML_LOG(ERROR) << settings.ToString();
     if (!vm_snapshot) {
       vm_snapshot = DartSnapshot::VMSnapshotFromSettings(settings);
     }

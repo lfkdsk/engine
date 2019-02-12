@@ -92,7 +92,7 @@ public class FlutterJNI {
 
   @UiThread
   public static native String nativeGetObservatoryUri();
-  
+
   private Long nativePlatformViewId;
   private FlutterRenderer.RenderSurface renderSurface;
   private PlatformMessageHandler platformMessageHandler;
@@ -500,7 +500,7 @@ public class FlutterJNI {
       int position
   );
 
-  public native void nativeShutDown(boolean shutDown);
+  public static native void nativeShutDown(boolean shutDown);
 
   //------ End from FlutterNativeView ----
 

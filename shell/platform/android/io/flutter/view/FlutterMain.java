@@ -15,6 +15,7 @@ import io.flutter.util.PathUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -83,6 +84,10 @@ public class FlutterMain {
     private static boolean sIsPrecompiledAsSharedLibrary;
     private static Settings sSettings;
     private static String sIcuDataPath;
+
+    public static String sFlutterOuterAssetPath;
+    public static String sFlutterOuterDataPath;
+    public static boolean sFlutterInExtPosition = false;
 
     private static final class ImmutableSetBuilder<T> {
         static <T> ImmutableSetBuilder<T> newInstance() {
@@ -251,17 +256,21 @@ public class FlutterMain {
             }
             if (sIsPrecompiledAsSharedLibrary) {
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_PATH + "=" +
-                        new File(PathUtils.getExternalStorageDirectory(applicationContext), sAotSharedLibraryPath));
+                        new File(sFlutterInExtPosition
+                        ? PathUtils.getExternalStorageDirectory(applicationContext)
+                        : PathUtils.getDataDirectory(applicationContext),
+                        sAotSharedLibraryPath
+                        ));
             } else {
                 if (sIsPrecompiledAsBlobs) {
                     shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
-                            PathUtils.getExternalStorageDirectory(applicationContext));
+                        (sFlutterInExtPosition ? sFlutterOuterDataPath : PathUtils.getDataDirectory(applicationContext)));
                 } else {
                     shellArgs.add("--cache-dir-path=" +
                             PathUtils.getCacheDirectory(applicationContext));
 
                     shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
-                            PathUtils.getExternalStorageDirectory(applicationContext) + "/" + sFlutterAssetsDir);
+                        (sFlutterInExtPosition ? sFlutterOuterAssetPath :PathUtils.getDataDirectory(applicationContext) + "/" + sFlutterAssetsDir));
                 }
                 shellArgs.add("--" + AOT_VM_SNAPSHOT_DATA_KEY + "=" + sAotVmSnapshotData);
                 shellArgs.add("--" + AOT_VM_SNAPSHOT_INSTR_KEY + "=" + sAotVmSnapshotInstr);
@@ -335,7 +344,9 @@ public class FlutterMain {
 
         String icuAssetPath = SHARED_ASSET_DIR + File.separator + SHARED_ASSET_ICU_DATA;
         sResourceExtractor.addResource(icuAssetPath);
-        sIcuDataPath = PathUtils.getDataDirectory(applicationContext) + File.separator + icuAssetPath;
+        sIcuDataPath = !sFlutterInExtPosition
+            ? PathUtils.getDataDirectory(applicationContext) + File.separator + icuAssetPath
+            : sFlutterOuterDataPath + File.separator + icuAssetPath;
 
         sResourceExtractor
                 .addResource(fromFlutterAssets(sFlx))
@@ -393,7 +404,7 @@ public class FlutterMain {
     }
 
     public static String findAppBundlePath(Context applicationContext) {
-        String dataDirectory = PathUtils.getExternalStorageDirectory(applicationContext);
+        String dataDirectory = !sFlutterInExtPosition ? PathUtils.getDataDirectory(applicationContext) : sFlutterOuterDataPath;
         File appBundle = new File(dataDirectory, sFlutterAssetsDir);
         return appBundle.exists() ? appBundle.getPath() : null;
     }
@@ -409,11 +420,7 @@ public class FlutterMain {
      * through the {@link android.content.res.AssetManager} API.
      *
      * @param asset the name of the asset. The name can be hierarchical
-<<<<<<< HEAD
      * @return the filename to be used with {@link AssetManager}
-=======
-     * @return      the filename to be used with {@link android.content.res.AssetManager}
->>>>>>> c6ce91f215395f516caddbf10785409477d65232
      */
     public static String getLookupKeyForAsset(String asset) {
         return fromFlutterAssets(asset);
@@ -426,11 +433,7 @@ public class FlutterMain {
      *
      * @param asset       the name of the asset. The name can be hierarchical
      * @param packageName the name of the package from which the asset originates
-<<<<<<< HEAD
      * @return the file name to be used with {@link AssetManager}
-=======
-     * @return            the file name to be used with {@link android.content.res.AssetManager}
->>>>>>> c6ce91f215395f516caddbf10785409477d65232
      */
     public static String getLookupKeyForAsset(String asset, String packageName) {
         return getLookupKeyForAsset(

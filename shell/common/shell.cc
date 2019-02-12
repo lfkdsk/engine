@@ -263,7 +263,7 @@ std::unique_ptr<Shell> Shell::Create(
 }
 
 void Shell::Shutdown(bool shutdown_vm) {
-  minikin::Layout::purgeCaches();
+  // minikin::Layout::purgeCaches();
   if (shutdown_vm) {
     blink::DartVM::Shutdown();
   }
