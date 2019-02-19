@@ -404,14 +404,7 @@ public class FlutterMain {
     }
 
     public static String findAppBundlePath(Context applicationContext) {
-<<<<<<< Updated upstream
         String dataDirectory = !sFlutterInExtPosition ? PathUtils.getDataDirectory(applicationContext) : sFlutterOuterDataPath;
-=======
-        // String dataDirectory = PathUtils.getExternalStorageDirectory(applicationContext);
-        // File appBundle = new File(dataDirectory, sFlutterAssetsDir);
-        // return appBundle.exists() ? appBundle.getPath() : null;
-        String dataDirectory = PathUtils.getDataDirectory(applicationContext);
->>>>>>> Stashed changes
         File appBundle = new File(dataDirectory, sFlutterAssetsDir);
         return appBundle.exists() ? appBundle.getPath() : null;
     }
