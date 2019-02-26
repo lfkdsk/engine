@@ -487,6 +487,9 @@ class RuntimeController final : public WindowClient {
   void Render(Scene* scene) override;
 
   // |WindowClient|
+  void AddNextFrameCallback(fml::closure callback) override;
+
+  // |WindowClient|
   void UpdateSemantics(SemanticsUpdate* update) override;
 
   // |WindowClient|

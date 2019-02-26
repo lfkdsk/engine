@@ -4,6 +4,7 @@
 
 #include "flutter/lib/ui/window/window.h"
 
+#include "flutter/fml/make_copyable.h"
 #include "flutter/lib/ui/compositing/scene.h"
 #include "flutter/lib/ui/ui_dart_state.h"
 #include "flutter/lib/ui/window/platform_message_response_dart.h"
@@ -93,6 +94,30 @@ void ReportUnhandledException(Dart_NativeArguments args) {
 
   UIDartState::Current()->ReportUnhandledException(std::move(error_name),
                                                    std::move(stack_trace));
+}
+
+void AddNextFrameCallback(Dart_Handle callback) {
+  UIDartState* dart_state = UIDartState::Current();
+  if (!dart_state->window()) {
+    return;
+  }
+  dart_state->window()->client()->AddNextFrameCallback(fml::MakeCopyable(
+      [callback = std::make_unique<tonic::DartPersistentValue>(
+          tonic::DartState::Current(), callback),
+       ui_task_runner = dart_state->GetTaskRunners().GetUITaskRunner()]() mutable {
+        ui_task_runner->PostTask(fml::MakeCopyable([callback = std::move(callback)](){
+          std::shared_ptr<tonic::DartState> dart_state_ = callback->dart_state().lock();
+          if (!dart_state_) {
+            return;
+          }
+          tonic::DartState::Scope scope(dart_state_);
+          tonic::DartInvokeVoid(callback->value());
+        }));
+  }));
+}
+
+void _AddNextFrameCallback(Dart_NativeArguments args) {
+  tonic::DartCall(&AddNextFrameCallback, args);
 }
 
 Dart_Handle SendPlatformMessage(Dart_Handle window,
@@ -440,8 +465,10 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_getPersistentIsolateData", GetPersistentIsolateData, 1, true},
       {"Window_computePlatformResolvedLocale", _ComputePlatformResolvedLocale,
        2, true},
-      // BD ADD: 
+      // BD ADD: START
       {"Window_getEngineMainEnterMicros", GetEngineMainEnterMicros, 1, true},
+      {"Window_addNextFrameCallback", _AddNextFrameCallback, 2, true},
+      // END  
   });
 }
 
