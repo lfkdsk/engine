@@ -4,6 +4,7 @@
 
 #include "flutter/lib/ui/window/window.h"
 
+#include "flutter/fml/make_copyable.h"
 #include "flutter/lib/ui/compositing/scene.h"
 #include "flutter/lib/ui/ui_dart_state.h"
 #include "flutter/lib/ui/window/platform_message_response_dart.h"

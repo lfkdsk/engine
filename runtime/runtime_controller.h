@@ -486,6 +486,7 @@ class RuntimeController final : public WindowClient {
   // |WindowClient|
   void Render(Scene* scene) override;
 
+
   // |WindowClient|
   void UpdateSemantics(SemanticsUpdate* update) override;
 
@@ -508,6 +509,10 @@ class RuntimeController final : public WindowClient {
   // |WindowClient|
   std::unique_ptr<std::vector<std::string>> ComputePlatformResolvedLocale(
       const std::vector<std::string>& supported_locale_data) override;
+
+  // BD ADD:
+  // |WindowClient|
+  void AddNextFrameCallback(fml::closure callback) override;
 
   // BD ADD:
   int64_t GetEngineMainEnterMicros() override;

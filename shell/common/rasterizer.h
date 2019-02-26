@@ -381,6 +381,9 @@ class Rasterizer final : public SnapshotDelegate {
   ///
   void SetNextFrameCallback(const fml::closure& callback);
 
+  // BD ADD:
+  void AddNextFrameCallback(fml::closure callback);
+
   //----------------------------------------------------------------------------
   /// @brief      Returns a pointer to the compositor context used by this
   ///             rasterizer. This pointer will never be `nullptr`.
@@ -447,6 +450,9 @@ class Rasterizer final : public SnapshotDelegate {
   fml::TaskRunnerAffineWeakPtrFactory<Rasterizer> weak_factory_;
   fml::RefPtr<fml::RasterThreadMerger> raster_thread_merger_;
   std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch_;
+
+  // BD ADD:
+  std::vector<fml::closure> next_frame_callbacks_;
 
   // |SnapshotDelegate|
   sk_sp<SkImage> MakeRasterSnapshot(sk_sp<SkPicture> picture,
