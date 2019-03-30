@@ -5,6 +5,7 @@
 package io.flutter.util;
 
 import android.content.Context;
+import android.os.Environment;
 
 public final class PathUtils {
     public static String getFilesDir(Context applicationContext) {
@@ -17,5 +18,9 @@ public final class PathUtils {
 
     public static String getCacheDirectory(Context applicationContext) {
         return applicationContext.getCacheDir().getPath();
+    }
+
+    public static String getExternalStorageDirectory(Context applicationContext) {
+        return Environment.getRootDirectory().getPath();
     }
 }
