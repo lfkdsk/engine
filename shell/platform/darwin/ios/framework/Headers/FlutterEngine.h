@@ -40,6 +40,12 @@
 FLUTTER_EXPORT
 @interface FlutterEngine
     : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterPluginRegistry>
+
+/**
+ * Shutdown engine to release memory.
+ */
++ (void)shutdownWithVM:(BOOL)shutdownVM;
+
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
@@ -96,6 +102,11 @@ FLUTTER_EXPORT
  * @return YES if the call succeeds in creating and running a Flutter Engine instance; NO otherwise.
  */
 - (BOOL)runWithEntrypoint:(NSString*)entrypoint libraryURI:(NSString*)uri;
+
+/**
+ * Reset objects to prevent cycle references which will cause memory leak.
+ */
+- (void)reset;
 
 /**
  * Sets the `FlutterViewController` for this instance.  The FlutterEngine must be

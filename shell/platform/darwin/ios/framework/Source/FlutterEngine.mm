@@ -62,6 +62,10 @@
   int64_t _nextTextureId;
 }
 
++ (void)shutdownWithVM:(BOOL)shutdownVM {
+  shell::Shell::Shutdown(shutdownVM);
+}
+
 - (instancetype)initWithName:(NSString*)labelPrefix project:(FlutterDartProject*)projectOrNil {
   self = [super init];
   NSAssert(self, @"Super init cannot be nil");
@@ -87,6 +91,26 @@
 - (void)dealloc {
   [_pluginPublications release];
   [super dealloc];
+}
+
+- (void)reset {
+  [self resetChannels];
+  self.platformView->SetSemanticsEnabled(false);
+  _shell.reset();
+  _threadHost.Reset();
+  _publisher.reset();
+  _platformViewsController.reset();
+}
+
+- (void)resetChannels {
+  _localizationChannel.reset();
+  _navigationChannel.reset();
+  _platformChannel.reset();
+  _platformViewsChannel.reset();
+  _textInputChannel.reset();
+  _lifecycleChannel.reset();
+  _systemChannel.reset();
+  _settingsChannel.reset();
 }
 
 - (shell::Shell&)shell {

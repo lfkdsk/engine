@@ -429,6 +429,7 @@
 
 - (void)dealloc {
   [[NSNotificationCenter defaultCenter] removeObserver:self];
+  [_engine.get() reset];
   [super dealloc];
 }
 
