@@ -16,6 +16,9 @@ def get_out_dir(args):
     else:
         target_dir = ['host']
 
+    if args.ios_framework_name:
+      target_dir.append(args.ios_framework_name.lower())
+
     runtime_mode = args.runtime_mode
     if args.dynamic and runtime_mode in ['profile', 'release']:
         target_dir.append('dynamic')
@@ -227,6 +230,9 @@ def to_gn_args(args):
     if args.arm_float_abi:
       gn_args['arm_float_abi'] = args.arm_float_abi
 
+    if args.ios_framework_name:
+      gn_args['ios_framework_name'] = args.ios_framework_name
+
     return gn_args
 
 def parse_args(args):
@@ -271,6 +277,7 @@ def parse_args(args):
   parser.add_argument('--coverage', default=False, action='store_true')
 
   parser.add_argument('--out-dir', default='', type=str)
+  parser.add_argument('--ios-framework-name', type=str)
 
   return parser.parse_args(args)
 

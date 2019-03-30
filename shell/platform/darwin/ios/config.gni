@@ -1,0 +1,115 @@
+# Copyright 2013 The Flutter Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+declare_args() {
+  ios_framework_name = ""
+}
+
+prefixed_classes = [
+  "DelayingGestureRecognizer",
+  "FlutterAppDelegate",
+  "FlutterAppLifeCycleProvider",
+  "FlutterBasicMessageChannel",
+  "FlutterBinaryCodec",
+  "FlutterBinaryMessenger",
+  "FlutterBinaryMessageHandler",
+  "FlutterBinaryReply",
+  "FlutterCallbackCache",
+  "FlutterCallbackInformation",
+  "FlutterCustomAccessibilityAction",
+  "FlutterDartProject",
+  "FlutterEndOfEventStream",
+  "FlutterEngine",
+  "FlutterEngineRegistrar",
+  "FlutterError",
+  "FlutterEventChannel",
+  "FlutterEventSink",
+  "FlutterHeadlessDartRunner",
+  "FlutterHeadlessDartRunnerCallback",
+  "FlutterInactiveTextInput",
+  "FlutterJSONMessageCodec",
+  "FlutterJSONMethodCodec",
+  "FlutterMessageCodec",
+  "FlutterMessageHandler",
+  "FlutterMethodCall",
+  "FlutterMethodCallHandler",
+  "FlutterMethodChannel",
+  "FlutterMethodCodec",
+  "FlutterMethodNotImplemented",
+  "FlutterObservatoryPublisher",
+  "FlutterOverlayView",
+  "FlutterPlatformPlugin",
+  "FlutterPlatformView",
+  "FlutterPlatformViewFactory",
+  "FlutterPlugin",
+  "FlutterPluginAppLifeCycleDelegate",
+  "FlutterPluginRegistrar",
+  "FlutterPluginRegistry",
+  "FlutterReply",
+  "FlutterResult",
+  "FlutterSemanticsObject",
+  "FlutterStandardBigInteger",
+  "FlutterStandardDataType",
+  "FlutterStandardDataTypeUInt8",
+  "FlutterStandardDataTypeInt32",
+  "FlutterStandardDataTypeInt64",
+  "FlutterStandardDataTypeFloat64",
+  "FlutterStandardMessageCodec",
+  "FlutterStandardMethodCodec",
+  "FlutterStandardReader",
+  "FlutterStandardReaderWriter",
+  "FlutterStandardTypedData",
+  "FlutterStandardWriter",
+  "FlutterStreamHandler",
+  "FlutterStringCodec",
+  "FlutterTextInputPlugin",
+  "FlutterTextInputView",
+  "FlutterTextInputViewAccessibilityHider",
+  "FlutterTextInputViewAccessibilityHider",
+  "FlutterTextPosition",
+  "FlutterTextRange",
+  "FlutterTexture",
+  "FlutterTextureRegistry",
+  "FlutterTouchInterceptingView",
+  "FlutterView",
+  "FlutterViewController",
+  "ForwardingGestureRecognizer",
+  "SemanticsObject",
+  "SemanticsObjectContainer",
+  "TextInputSemanticsObject",
+  "VSyncClient",
+]
+
+prefixed_defines = []
+
+if (ios_framework_name != "") {
+  foreach(cls, prefixed_classes) {
+    prefixed_defines += [ "$cls=${ios_framework_name}${cls}" ]
+  }
+}
+
+template("copy_file_with_str_replace") {
+  assert(defined(invoker.sources), "sources must be defined for $target_name")
+  assert(defined(invoker.outputs), "outputs must be defined for $target_name")
+  assert(defined(invoker.args), "args must be defined for $target_name")
+  action(target_name) {
+    visibility = [ ":*" ]
+
+    script = "$flutter_root/sky/tools/copy_file_with_str_replace.py"
+
+    source_file = invoker.sources
+    output_file = invoker.outputs
+
+    sources = invoker.sources
+
+    args = [
+      "--tpl",
+      rebase_path(source_file[0]),
+      "--dist",
+      rebase_path(output_file[0]),
+    ] + invoker.args
+
+    outputs = invoker.outputs
+  }
+}
