@@ -300,6 +300,10 @@
 
 #pragma mark - Properties
 
+- (NSString *)observatoryUri {
+  return [_engine.get() observatoryUri];
+}
+
 - (FlutterView*)flutterView {
   return _flutterView;
 }

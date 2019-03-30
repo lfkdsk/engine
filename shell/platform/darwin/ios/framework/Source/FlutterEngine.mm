@@ -62,6 +62,10 @@
   int64_t _nextTextureId;
 }
 
++ (NSString *)getVMVersion {
+  return [NSString stringWithFormat:@"%s", shell::Shell::GetDartVMVersion()];
+}
+
 + (void)shutdownWithVM:(BOOL)shutdownVM {
   shell::Shell::Shutdown(shutdownVM);
 }
@@ -89,6 +93,7 @@
 }
 
 - (void)dealloc {
+  FML_LOG(INFO) << "FlutterEngine dealloc";
   [_pluginPublications release];
   [super dealloc];
 }
@@ -100,6 +105,11 @@
   _threadHost.Reset();
   _publisher.reset();
   _platformViewsController.reset();
+}
+
+- (NSString *)observatoryUri {
+  return [NSString stringWithCString:_shell->GetObservatoryUri().c_str()
+                            encoding:[NSString defaultCStringEncoding]];
 }
 
 - (void)resetChannels {
