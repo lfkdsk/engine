@@ -18,12 +18,60 @@ FLUTTER_EXPORT
 /**
  * Initializes a Flutter Dart project from a bundle.
  */
-- (instancetype)initWithPrecompiledDartBundle:(NSBundle*)bundle NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithPrecompiledDartBundle:(NSBundle*)bundle;
+
+
+/**
+ * Initializes a Flutter Dart project with specific aot settings.
+ * Only for AOT mode.
+ */
+- (instancetype)initAOTSettingsWithLibPath:(NSString *)libraryPath
+                                assetsPath:(NSString *)assetsPath;
+
+/**
+ * Initializes a Flutter Dart project with specific kernel settings.
+ * Only for JIT mode.
+ */
+- (instancetype)initKernalSettingsWithAssetsPath:(NSString *)assetsPath
+                      applicationKernelAssetPath:(NSString *)applicationKernelAssetPath;
+
+/**
+ * Initializes a Flutter Dart project with specific core snapshot settings.
+ * Only for JIT mode.
+ */
+- (instancetype)initCoreSnapshotSettingsWithAssetsPath:(NSString *)assetsPath
+                                        vmSnapshotPath:(NSString *)vmSnapshotPath
+                                   isolateSnapshotPath:(NSString *)isolateSnapshotPath;
 
 /**
  * Unavailable - use `init` instead.
  */
 - (instancetype)initFromDefaultSourceForConfiguration FLUTTER_UNAVAILABLE("Use -init instead.");
+
+/**
+ * Config observatory, only for JIT mode.
+ */
+- (void)enableObservatory:(BOOL)enableObservatory;
+
+/**
+ * Config log verbose.
+ */
+- (void)enableLogVerbose:(BOOL)enableLogVerbose;
+
+/**
+ * Set observatory port.
+ */
+- (void)setObservatoryPort:(NSUInteger)port;
+
+/**
+ * Set observatory host.
+ */
+- (void)setObservatoryHost:(NSString *)host;
+
+/**
+ * Config ipv6 setting.
+ */
+- (void)enableIPV6:(BOOL)useIPV6;
 
 /**
  * Returns the file name for the given asset.

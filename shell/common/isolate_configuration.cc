@@ -55,6 +55,19 @@ class KernelIsolateConfiguration : public IsolateConfiguration {
   FML_DISALLOW_COPY_AND_ASSIGN(KernelIsolateConfiguration);
 };
 
+class CoreSnapshotIsolateConfiguration final : public IsolateConfiguration {
+ public:
+  CoreSnapshotIsolateConfiguration() = default;
+
+  // |shell::IsolateConfiguration|
+  bool DoPrepareIsolate(blink::DartIsolate& isolate) override {
+    return isolate.PrepareForRunningFromCoreSnapshot();
+  }
+
+ private:
+  FML_DISALLOW_COPY_AND_ASSIGN(CoreSnapshotIsolateConfiguration);
+};
+
 class KernelListIsolateConfiguration final : public IsolateConfiguration {
  public:
   KernelListIsolateConfiguration(
@@ -153,6 +166,12 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::InferFromSettings(
     return nullptr;
   }
 
+  if (!settings.vm_snapshot_data_path.empty() &&
+      settings.application_kernel_asset.empty() &&
+      settings.application_kernel_list_asset.empty()) {
+    return CreateForCoreSnapshot();
+  }
+
   if (settings.application_kernel_asset.empty() &&
       settings.application_kernel_list_asset.empty()) {
     FML_DLOG(ERROR) << "application_kernel_asset or "
@@ -189,6 +208,11 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::InferFromSettings(
 std::unique_ptr<IsolateConfiguration>
 IsolateConfiguration::CreateForAppSnapshot() {
   return std::make_unique<AppSnapshotIsolateConfiguration>();
+}
+
+std::unique_ptr<IsolateConfiguration>
+IsolateConfiguration::CreateForCoreSnapshot() {
+  return std::make_unique<CoreSnapshotIsolateConfiguration>();
 }
 
 std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForKernel(

@@ -17,9 +17,30 @@
 
 static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
 
-static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
+static blink::Settings CreateEmptySettings() {
   auto command_line = shell::CommandLineFromNSProcessInfo();
 
+  auto settings = shell::SettingsFromCommandLine(command_line);
+
+  settings.task_observer_add = [](intptr_t key, fml::closure callback) {
+    fml::MessageLoop::GetCurrent().AddTaskObserver(key, std::move(callback));
+  };
+
+  settings.task_observer_remove = [](intptr_t key) {
+    fml::MessageLoop::GetCurrent().RemoveTaskObserver(key);
+  };
+
+  return settings;
+}
+
+static NSString * GetIcuDataPath(NSBundle* bundle = nil) {
+  NSBundle* engineBundle = [NSBundle bundleForClass:[FlutterViewController class]];
+
+  // Flutter ships the ICU data file in the the bundle of the engine. Look for it there.
+  return [engineBundle pathForResource:@"icudtl" ofType:@"dat"];
+}
+
+static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   // Precedence:
   // 1. Settings from the specified NSBundle.
   // 2. Settings passed explicitly via command-line arguments.
@@ -37,15 +58,7 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     bundle = mainBundle;
   }
 
-  auto settings = shell::SettingsFromCommandLine(command_line);
-
-  settings.task_observer_add = [](intptr_t key, fml::closure callback) {
-    fml::MessageLoop::GetCurrent().AddTaskObserver(key, std::move(callback));
-  };
-
-  settings.task_observer_remove = [](intptr_t key) {
-    fml::MessageLoop::GetCurrent().RemoveTaskObserver(key);
-  };
+  auto settings = CreateEmptySettings();
 
   // The command line arguments may not always be complete. If they aren't, attempt to fill in
   // defaults.
@@ -148,6 +161,108 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   }
 
   return self;
+}
+
+- (instancetype)initAOTSettingsWithLibPath:(NSString *)libraryPath
+                                assetsPath:(NSString *)assetsPath {
+  if (!blink::DartVM::IsRunningPrecompiledCode()) {
+    NSLog(@"initAOTSettingsWithLibPath only work for aot mode");
+    return [self init];
+  }
+
+  self = [super init];
+
+  if (self) {
+    // TODO: _precompiledDartBundle is not used
+    // _precompiledDartBundle.reset(nil);
+    _settings = CreateEmptySettings();
+    NSString *icuDataPath = GetIcuDataPath();
+    if (icuDataPath.length > 0) {
+      _settings.icu_data_path = icuDataPath.UTF8String;
+    }
+
+    _settings.assets_path = assetsPath.UTF8String;
+    _settings.application_library_path = libraryPath.UTF8String;
+  }
+
+  return self;
+}
+
+- (instancetype)initKernalSettingsWithAssetsPath:(NSString *)assetsPath
+                      applicationKernelAssetPath:(NSString *)applicationKernelAssetPath {
+  self = [super init];
+
+  if (self) {
+    _precompiledDartBundle.reset(nil);
+
+    _settings = CreateEmptySettings();
+    NSString *icuDataPath = GetIcuDataPath();
+    if (icuDataPath.length > 0) {
+      _settings.icu_data_path = icuDataPath.UTF8String;
+    }
+
+    _settings.assets_path = assetsPath.UTF8String;
+    _settings.application_kernel_asset = applicationKernelAssetPath.UTF8String;
+    _settings.use_symbol_snapshot = true;
+  }
+
+  return self;
+}
+
+- (instancetype)initCoreSnapshotSettingsWithAssetsPath:(NSString *)assetsPath
+                                        vmSnapshotPath:(NSString *)vmSnapshotPath
+                                   isolateSnapshotPath:(NSString *)isolateSnapshotPath {
+  self = [super init];
+
+  if (self) {
+    _precompiledDartBundle.reset(nil);
+
+    _settings = CreateEmptySettings();
+    NSString *icuDataPath = GetIcuDataPath();
+    if (icuDataPath.length > 0) {
+      _settings.icu_data_path = icuDataPath.UTF8String;
+    }
+
+    _settings.assets_path = assetsPath.UTF8String;
+    _settings.vm_snapshot_data_path = vmSnapshotPath.UTF8String;
+    _settings.isolate_snapshot_data_path = isolateSnapshotPath.UTF8String;
+  }
+
+  return self;
+}
+
+#pragma mark - Settings setters
+
+- (void)enableObservatory:(BOOL)enableObservatory {
+  _settings.enable_observatory = enableObservatory;
+}
+
+- (void)enableLogVerbose:(BOOL)enableLogVerbose {
+  _settings.verbose_logging = enableLogVerbose;
+}
+
+/**
+ * Set observatory port.
+ */
+- (void)setObservatoryPort:(NSUInteger)port {
+  _settings.observatory_port = port;
+}
+
+/**
+ * Set observatory host.
+ */
+- (void)setObservatoryHost:(NSString *)host {
+  if (host == nil) {
+    return;
+  }
+  _settings.observatory_host = host.UTF8String;
+}
+
+/**
+ * Config ipv6 setting.
+ */
+- (void)enableIPV6:(BOOL)useIPV6 {
+  _settings.ipv6 = useIPV6;
 }
 
 #pragma mark - Settings accessors

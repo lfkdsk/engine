@@ -28,6 +28,8 @@ class IsolateConfiguration {
 
   static std::unique_ptr<IsolateConfiguration> CreateForAppSnapshot();
 
+  static std::unique_ptr<IsolateConfiguration> CreateForCoreSnapshot();
+
   static std::unique_ptr<IsolateConfiguration> CreateForKernel(
       std::unique_ptr<fml::Mapping> kernel);
 
