@@ -7,8 +7,10 @@ assert(is_ios)
 import("$flutter_root/common/config.gni")
 import("//build/config/ios/ios_sdk.gni")
 import("$flutter_root/shell/gpu/gpu.gni")
+import("config.gni")
 
-_flutter_framework_dir = "$root_out_dir/Flutter.framework"
+_flutter_framework_name = "${ios_framework_name}Flutter"
+_flutter_framework_dir = "$root_out_dir/$_flutter_framework_name.framework"
 
 shell_gpu_configuration("ios_gpu_configuration") {
   enable_software = true
@@ -41,7 +43,7 @@ _flutter_framework_headers_copy_dir = "$_flutter_framework_dir/Headers"
 shared_library("create_flutter_framework_dylib") {
   visibility = [ ":*" ]
 
-  output_name = "Flutter"
+  output_name = "$_flutter_framework_name"
 
   sources = [
     "framework/Source/FlutterAppDelegate.mm",
@@ -127,6 +129,7 @@ shared_library("create_flutter_framework_dylib") {
   public_configs = [ "$flutter_root:config" ]
 
   defines = [ "FLUTTER_FRAMEWORK" ]
+  defines += prefixed_defines
 
   libs = [
     "CoreMedia.framework",
@@ -142,10 +145,10 @@ copy("copy_framework_dylib") {
   visibility = [ ":*" ]
 
   sources = [
-    "$root_out_dir/libFlutter.dylib",
+    "$root_out_dir/lib$_flutter_framework_name.dylib",
   ]
   outputs = [
-    "$_flutter_framework_dir/Flutter",
+    "$_flutter_framework_dir/$_flutter_framework_name",
   ]
 
   deps = [
@@ -159,7 +162,7 @@ action("copy_dylib_and_update_framework_install_name") {
   script = "$flutter_root/sky/tools/change_install_name.py"
 
   inputs = [
-    "$_flutter_framework_dir/Flutter",
+    "$_flutter_framework_dir/$_flutter_framework_name",
   ]
   outputs = [
     stamp_file,
@@ -167,9 +170,9 @@ action("copy_dylib_and_update_framework_install_name") {
 
   args = [
     "--dylib",
-    rebase_path("$_flutter_framework_dir/Flutter"),
+    rebase_path("$_flutter_framework_dir/$_flutter_framework_name"),
     "--install_name",
-    "@rpath/Flutter.framework/Flutter",
+    "@rpath/$_flutter_framework_name.framework/$_flutter_framework_name",
     "--stamp",
     rebase_path(stamp_file),
   ]
@@ -179,21 +182,40 @@ action("copy_dylib_and_update_framework_install_name") {
   ]
 }
 
-copy("copy_framework_info_plist") {
-  visibility = [ ":*" ]
+copy_file_with_str_replace("copy_framework_info_plist") {
+
   sources = [
-    "framework/Info.plist",
+    "framework/Info.plist"
   ]
+
+  args = [
+    "--placeholder",
+    "Flutter",
+    "--replace",
+    "$_flutter_framework_name",
+    "--placeholder",
+    "io.flutter.flutter",
+    "--replace",
+    "io.flutter.$_flutter_framework_name",
+  ]
+
   outputs = [
     "$_flutter_framework_dir/Info.plist",
   ]
 }
 
-copy("copy_framework_module_map") {
-  visibility = [ ":*" ]
+copy_file_with_str_replace("copy_framework_module_map") {
   sources = [
     "framework/module.modulemap",
   ]
+
+  args = [
+    "--placeholder",
+    "Flutter",
+    "--replace",
+    "$_flutter_framework_name",
+  ]
+
   outputs = [
     "$_flutter_framework_dir/Modules/module.modulemap",
   ]
@@ -202,17 +224,23 @@ copy("copy_framework_module_map") {
 action("copy_framework_headers") {
   script = "$flutter_root/sky/tools/install_framework_headers.py"
   visibility = [ ":*" ]
-  sources = _flutter_framework_headers
+  headers = []
+  sources = []
   outputs = []
   foreach(header, _flutter_framework_headers) {
     header_basename = rebase_path(header, "framework/headers")
+    sources += [ header ]
+    headers += [ header ]
     outputs += [ "$_flutter_framework_headers_copy_dir/$header_basename" ]
   }
   args = [
-           "--location",
-           rebase_path("$_flutter_framework_headers_copy_dir"),
-           "--headers",
-         ] + rebase_path(_flutter_framework_headers)
+    "--prefix=$ios_framework_name",
+    "--location",
+    rebase_path("$_flutter_framework_headers_copy_dir"),
+    "--headers",
+  ] + rebase_path(headers) + [
+    "--classes"
+  ] + prefixed_classes
 }
 
 copy("copy_framework_icu") {
@@ -227,13 +255,20 @@ copy("copy_framework_icu") {
   ]
 }
 
-copy("copy_framework_podspec") {
-  visibility = [ ":*" ]
+copy_file_with_str_replace("copy_framework_podspec") {
   sources = [
     "framework/Flutter.podspec",
   ]
+
+  args = [
+    "--placeholder",
+    "Flutter.framework",
+    "--replace",
+    "$_flutter_framework_name.framewok",
+  ]
+
   outputs = [
-    "$root_out_dir/Flutter.podspec",
+    "$root_out_dir/$_flutter_framework_name.podspec",
   ]
 }
 
@@ -247,14 +282,32 @@ copy("copy_license") {
   ]
 }
 
+copy_file_with_str_replace("copy_umbrella_import") {
+  sources = [
+    "framework/Source/FlutterUmbrellaImport.m",
+  ]
+
+  outputs = [
+    "$target_gen_dir/FlutterUmbrellaImport.m"
+  ]
+
+  args = [
+    "--placeholder",
+    "Flutter.h",
+    "--replace",
+    "${_flutter_framework_name}.h",
+  ]
+}
+
 shared_library("copy_and_verify_framework_headers") {
   visibility = [ ":*" ]
   include_dirs = [ "$_flutter_framework_headers_copy_dir" ]
   sources = [
-    "framework/Source/FlutterUmbrellaImport.m",
+    "$target_gen_dir/FlutterUmbrellaImport.m",
   ]
   deps = [
     ":copy_framework_headers",
+    ":copy_umbrella_import",
   ]
 }
 
