@@ -64,6 +64,10 @@
   BOOL _allowHeadlessExecution;
 }
 
++ (void)shutdownWithVM:(BOOL)shutdownVM {
+  shell::Shell::Shutdown(shutdownVM);
+}
+
 - (instancetype)initWithName:(NSString*)labelPrefix project:(FlutterDartProject*)projectOrNil {
   return [self initWithName:labelPrefix project:projectOrNil allowHeadlessExecution:YES];
 }
@@ -155,6 +159,7 @@
 
 - (void)destroyContext {
   [self resetChannels];
+  self.platformView->SetSemanticsEnabled(false);
   _shell.reset();
   _threadHost.Reset();
 }

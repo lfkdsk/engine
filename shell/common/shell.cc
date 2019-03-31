@@ -27,6 +27,7 @@
 #include "flutter/shell/common/skia_event_tracer_impl.h"
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/common/vsync_waiter.h"
+#include "flutter/third_party/txt/src/minikin/Layout.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
 #include "third_party/skia/include/core/SkGraphics.h"
 #include "third_party/tonic/common/log.h"
@@ -253,6 +254,13 @@ std::unique_ptr<Shell> Shell::Create(
       });
   latch.Wait();
   return shell;
+}
+
+void Shell::Shutdown(bool shutdown_vm) {
+  minikin::Layout::purgeCaches();
+  if (shutdown_vm) {
+    blink::DartVM::Shutdown();
+  }
 }
 
 Shell::Shell(blink::TaskRunners task_runners, blink::Settings settings)

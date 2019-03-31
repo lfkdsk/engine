@@ -59,6 +59,8 @@ class Shell final : public PlatformView::Delegate,
       CreateCallback<PlatformView> on_create_platform_view,
       CreateCallback<Rasterizer> on_create_rasterizer);
 
+  static void Shutdown(bool shutdown_vm);
+
   ~Shell();
 
   const blink::Settings& GetSettings() const;

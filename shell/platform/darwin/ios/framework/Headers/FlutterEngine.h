@@ -40,6 +40,12 @@
 FLUTTER_EXPORT
 @interface FlutterEngine
     : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterPluginRegistry>
+
+/**
+ * Shutdown engine to release memory.
+ */
++ (void)shutdownWithVM:(BOOL)shutdownVM;
+
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
