@@ -307,6 +307,34 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
 }
 
 FML_WARN_UNUSED_RESULT
+bool DartIsolate::PrepareForRunningFromCoreSnapshot() {
+  TRACE_EVENT0("flutter", "DartIsolate::PrepareForRunningFromCoreSnapshot");
+  if (phase_ != Phase::LibrariesSetup) {
+    return false;
+  }
+
+  if (DartVM::IsRunningPrecompiledCode()) {
+    return false;
+  }
+
+  tonic::DartState::Scope scope(this);
+
+  if (Dart_IsNull(Dart_RootLibrary())) {
+    return false;
+  }
+
+  if (!MarkIsolateRunnable()) {
+    return false;
+  }
+
+  child_isolate_preparer_ = [](DartIsolate* isolate) {
+    return isolate->PrepareForRunningFromCoreSnapshot();
+  };
+  phase_ = Phase::Ready;
+  return true;
+}
+
+FML_WARN_UNUSED_RESULT
 bool DartIsolate::PrepareForRunningFromKernel(
     std::shared_ptr<const fml::Mapping> mapping,
     bool last_piece) {

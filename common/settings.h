@@ -113,6 +113,9 @@ struct Settings {
   std::string assets_path;
   std::string flx_path;
 
+  // Use inline symbol snapshot in iOS dynamic release mode.
+  bool use_symbol_snapshot;
+
   std::string ToString() const;
 };
 

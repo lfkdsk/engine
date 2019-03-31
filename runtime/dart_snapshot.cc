@@ -63,6 +63,16 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMData(const Settings& settings) {
     }
   }
 
+#if defined(OS_IOS)
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+  if (settings.use_symbol_snapshot) {
+    return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartVmSnapshotData);
+  }
+#endif
+#endif
+
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(
       loaded_process, DartSnapshot::kVMDataSymbol);
@@ -91,6 +101,16 @@ std::unique_ptr<DartSnapshotBuffer> ResolveVMInstructions(
       return source;
     }
   }
+
+#if defined(OS_IOS)
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+  if (settings.use_symbol_snapshot) {
+    return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartVmSnapshotInstructions);
+  }
+#endif
+#endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(
@@ -122,6 +142,16 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateData(
     }
   }
 
+#if defined(OS_IOS)
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+  if (settings.use_symbol_snapshot) {
+    return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartIsolateSnapshotData);
+  }
+#endif
+#endif
+
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(
       loaded_process, DartSnapshot::kIsolateDataSymbol);
@@ -151,6 +181,16 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateInstructions(
       return source;
     }
   }
+
+#if defined(OS_IOS)
+#if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_PROFILE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DYNAMIC_RELEASE || \
+    FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+  if (settings.use_symbol_snapshot) {
+    return DartSnapshotBuffer::CreateWithUnmanagedAllocation(kDartIsolateSnapshotInstructions);
+  }
+#endif
+#endif
 
   auto loaded_process = fml::NativeLibrary::CreateForCurrentProcess();
   return DartSnapshotBuffer::CreateWithSymbolInLibrary(

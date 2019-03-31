@@ -74,6 +74,9 @@ class DartIsolate : public UIDartState {
                                    bool last_piece = true);
 
   FML_WARN_UNUSED_RESULT
+  bool PrepareForRunningFromCoreSnapshot();
+
+  FML_WARN_UNUSED_RESULT
   bool Run(const std::string& entrypoint);
 
   FML_WARN_UNUSED_RESULT
