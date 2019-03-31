@@ -73,6 +73,57 @@ FLUTTER_EXPORT
  */
 + (NSString*)defaultBundleIdentifier;
 
+**
+ * Config observatory, only for JIT mode.
+ */
+- (void)enableObservatory:(BOOL)enableObservatory;
+
+/**
+ * Config log verbose.
+ */
+- (void)enableLogVerbose:(BOOL)enableLogVerbose;
+
+/**
+ * Set observatory port.
+ */
+- (void)setObservatoryPort:(NSUInteger)port;
+
+/**
+ * Set observatory host.
+ */
+- (void)setObservatoryHost:(NSString *)host;
+
+/**
+ * Config ipv6 setting.
+ */
+- (void)enableIPV6:(BOOL)useIPV6;
+
+/**
+ * Config observatory, only for JIT mode.
+ */
+- (void)enableObservatory:(BOOL)enableObservatory;
+
+/**
+ * Config log verbose.
+ */
+- (void)enableLogVerbose:(BOOL)enableLogVerbose;
+
+/**
+ * Set observatory port.
+ */
+- (void)setObservatoryPort:(NSUInteger)port;
+
+/**
+ * Set observatory host.
+ */
+- (void)setObservatoryHost:(NSString *)host;
+
+/**
+ * Config ipv6 setting.
+ */
+- (void)enableIPV6:(BOOL)useIPV6;
+
+
 @end
 
 #endif  // FLUTTER_FLUTTERDARTPROJECT_H_

@@ -64,6 +64,10 @@
   BOOL _allowHeadlessExecution;
 }
 
++ (NSString *)getVMVersion {
+  return [NSString stringWithFormat:@"%s", shell::Shell::GetDartVMVersion()];
+}
+
 + (void)shutdownWithVM:(BOOL)shutdownVM {
   shell::Shell::Shutdown(shutdownVM);
 }
@@ -127,6 +131,11 @@
           engine->DispatchPointerDataPacket(*packet);
         }
       }));
+}
+
+- (NSString *)observatoryUri {
+  return [NSString stringWithCString:_shell->GetObservatoryUri().c_str()
+                           encoding:[NSString defaultCStringEncoding]];
 }
 
 - (fml::WeakPtr<shell::PlatformView>)platformView {

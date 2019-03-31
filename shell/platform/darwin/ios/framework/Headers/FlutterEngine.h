@@ -42,6 +42,11 @@ FLUTTER_EXPORT
     : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterPluginRegistry>
 
 /**
+ * Get Dart VM runtime version.
+ */
++ (NSString *)getVMVersion;
+
+/**
  * Shutdown engine to release memory.
  */
 + (void)shutdownWithVM:(BOOL)shutdownVM;
@@ -138,6 +143,11 @@ FLUTTER_EXPORT
  * errors.
  */
 - (void)destroyContext;
+
+/**
+ * Get observatory uri.
+ */
+- (NSString *)observatoryUri;
 
 /**
  * Sets the `FlutterViewController` for this instance.  The FlutterEngine must be

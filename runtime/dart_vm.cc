@@ -487,6 +487,10 @@ ServiceProtocol& DartVM::GetServiceProtocol() {
   return service_protocol_;
 }
 
+std::string DartVM::GetObservatoryUri() const {
+  return DartServiceIsolate::GetObservatoryUri();
+}
+
 fml::WeakPtr<DartVM> DartVM::GetWeakPtr() {
   return weak_factory_.GetWeakPtr();
 }

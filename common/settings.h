@@ -37,6 +37,8 @@ struct Settings {
 
   ~Settings();
 
+  std::string GetObservatoryHost() const;
+
   // VM settings
   std::string vm_snapshot_data_path;  // deprecated
   MappingCallback vm_snapshot_data;
@@ -72,6 +74,7 @@ struct Settings {
 
   // Observatory settings
   bool enable_observatory = false;
+  std::string observatory_host;
   // Port on target will be auto selected by the OS. A message will be printed
   // on the target with the port after it has been selected.
   uint32_t observatory_port = 0;

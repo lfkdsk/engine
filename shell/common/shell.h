@@ -59,6 +59,10 @@ class Shell final : public PlatformView::Delegate,
       CreateCallback<PlatformView> on_create_platform_view,
       CreateCallback<Rasterizer> on_create_rasterizer);
 
+  static const char* GetDartVMVersion() {
+    return blink::DartVM::VersionString();
+  }
+
   static void Shutdown(bool shutdown_vm);
 
   ~Shell();
@@ -74,6 +78,8 @@ class Shell final : public PlatformView::Delegate,
   fml::WeakPtr<PlatformView> GetPlatformView();
 
   blink::DartVM& GetDartVM() const;
+
+  std::string GetObservatoryUri() const;
 
   bool IsSetup() const;
 

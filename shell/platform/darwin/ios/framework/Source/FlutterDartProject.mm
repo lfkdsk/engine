@@ -258,6 +258,40 @@ static blink::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   return config;
 }
 
+#pragma mark - Settings setters
+
+- (void)enableObservatory:(BOOL)enableObservatory {
+  _settings.enable_observatory = enableObservatory;
+}
+
+- (void)enableLogVerbose:(BOOL)enableLogVerbose {
+  _settings.verbose_logging = enableLogVerbose;
+}
+
+/**
+ * Set observatory port.
+ */
+- (void)setObservatoryPort:(NSUInteger)port {
+  _settings.observatory_port = port;
+}
+
+/**
+ * Set observatory host.
+ */
+- (void)setObservatoryHost:(NSString *)host {
+  if (host == nil) {
+    return;
+  }
+  _settings.observatory_host = host.UTF8String;
+}
+
+/**
+ * Config ipv6 setting.
+ */
+- (void)enableIPV6:(BOOL)useIPV6 {
+  _settings.ipv6 = useIPV6;
+}
+
 #pragma mark - Assets-related utilities
 
 + (NSString*)flutterAssetsName:(NSBundle*)bundle {

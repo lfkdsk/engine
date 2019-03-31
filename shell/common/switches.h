@@ -56,6 +56,9 @@ DEF_SWITCH(DartFlags,
            "dart-flags",
            "Flags passed directly to the Dart VM without being interpreted "
            "by the Flutter shell.")
+DEF_SWITCH(DeviceObservatoryHost,
+           "OBSERVATORY-host",
+           "A custom Dart Observatory host. The default is ::1 or 127.0.0.1")
 DEF_SWITCH(DeviceObservatoryPort,
            "observatory-port",
            "A custom Dart Observatory port. The default is to pick a randomly "
