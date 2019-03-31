@@ -499,6 +499,9 @@ public class FlutterJNI {
       ByteBuffer message,
       int position
   );
+
+  public native void nativeShutDown(boolean shutDown);
+
   //------ End from FlutterNativeView ----
 
   // TODO(mattcarroll): rename comments after refactor is done and their origin no longer matters (https://github.com/flutter/flutter/issues/25533)

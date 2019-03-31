@@ -59,6 +59,7 @@ public class FlutterNativeView implements BinaryMessenger {
         mFlutterView = null;
         mFlutterJNI.detachFromNativeAndReleaseResources();
         applicationIsRunning = false;
+        mFlutterJNI.nativeShutDown(true);
     }
 
     public FlutterPluginRegistry getPluginRegistry() {

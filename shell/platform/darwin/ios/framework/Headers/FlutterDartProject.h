@@ -73,7 +73,7 @@ FLUTTER_EXPORT
  */
 + (NSString*)defaultBundleIdentifier;
 
-**
+/**
  * Config observatory, only for JIT mode.
  */
 - (void)enableObservatory:(BOOL)enableObservatory;
