@@ -25,13 +25,13 @@ task:
         ./flutter/tools/gn --unoptimized
         ninja -C out/host_debug_unopt
       test_host_script: cd $ENGINE_PATH/src && ./flutter/testing/run_tests.sh
-    - name: build_android
-      compile_host_script: |
-        cd $ENGINE_PATH/src
-        ./flutter/tools/gn --android --unoptimized
-        ninja -C out/android_debug_unopt
-        mkdir javadoc_tmp
-        ./flutter/tools/gen_javadoc.py --out-dir javadoc_tmp
+#     - name: build_android
+#       compile_host_script: |
+#         cd $ENGINE_PATH/src
+#         ./flutter/tools/gn --android --unoptimized
+#         ninja -C out/android_debug_unopt
+#         mkdir javadoc_tmp
+#         ./flutter/tools/gen_javadoc.py --out-dir javadoc_tmp
 
 format_and_dart_test_task:
   container:
@@ -46,4 +46,5 @@ format_and_dart_test_task:
     cp $CIRRUS_WORKING_DIR -r ./flutter
     gclient sync
 
+  # avoid format check.
   build_script: cd $ENGINE_PATH/src/flutter && ./ci/build.sh
