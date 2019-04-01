@@ -13,7 +13,7 @@ task:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
     ENGINE_PATH: "/tmp/clean_engine"
     DEPOT_TOOLS: "/tmp/depot_tools"
-    PATH: "DEPOTTOOLS:PATH"
+    PATH: "$DEPOT_TOOLS:$PATH"
   depot_tools_script:
     git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $DEPOT_TOOLS
   gclient_sync_script: |
