@@ -19,7 +19,7 @@ task:
     gclient sync
 
   matrix:
-    - name: build_and_test_host
+    name: build_and_test_host
 #       compile_host_script: 
 #         cd $ENGINE_PATH/src
 #         ./flutter/tools/gn --unoptimized
