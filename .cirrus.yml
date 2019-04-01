@@ -1,4 +1,4 @@
-gcp_credentials: ENCRYPTED[7ba94e3115455aef552b9863bbd74267aa42f841aa8ddc5f1a836a71ffaa72ec327842b5fe66903c9e3dd1172383f01c]
+# gcp_credentials: ENCRYPTED[7ba94e3115455aef552b9863bbd74267aa42f841aa8ddc5f1a836a71ffaa72ec327842b5fe66903c9e3dd1172383f01c]
 
 gke_container:
  image: gcr.io/flutter-cirrus/build-engine-image:latest
@@ -9,6 +9,8 @@ gke_container:
  memory: 100Gb # similarly, can't use all 100Gb memory
 
 task:
+  env:
+    CIRRUS_WORKING_DIR: "/tmp/github_repo"
   name: build_and_test_host
   replace_engine_script: |
     cd $ENGINE_PATH/src
