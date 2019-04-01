@@ -8,30 +8,21 @@ gke_container:
  cpu: 30 # can't use all 30-cores; system pods needs cores too
  memory: 100Gb # similarly, can't use all 100Gb memory
 
-task:
+build_and_test_host_task:
+  container:
+    image: gcr.io/flutter-cirrus/build-engine-image:latest
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
-
   replace_engine_script: |
     cd $ENGINE_PATH/src
     rm -r flutter
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
-
-  matrix:
-    - name: build_and_test_host
-      compile_host_script: |
-        cd $ENGINE_PATH/src
-        ./flutter/tools/gn --unoptimized
-        ninja -C out/host_debug_unopt
-      test_host_script: cd $ENGINE_PATH/src && ./flutter/testing/run_tests.sh
-    - name: build_android
-      compile_host_script: |
-        cd $ENGINE_PATH/src
-        ./flutter/tools/gn --android --unoptimized
-        ninja -C out/android_debug_unopt
-        mkdir javadoc_tmp
-        ./flutter/tools/gen_javadoc.py --out-dir javadoc_tmp
+  compile_host_script: |
+    cd $ENGINE_PATH/src
+    ./flutter/tools/gn --unoptimized
+    ninja -C out/host_debug_unopt    
+  test_host_script: cd $ENGINE_PATH/src && ./flutter/testing/run_tests.sh host_debug_unopt
 
 format_and_dart_test_task:
   container:
@@ -46,5 +37,5 @@ format_and_dart_test_task:
     cp $CIRRUS_WORKING_DIR -r ./flutter
     gclient sync
 
-  format_script: cd $ENGINE_PATH/src/flutter && ./ci/format.sh
+  # avoid format check.
   build_script: cd $ENGINE_PATH/src/flutter && ./ci/build.sh
