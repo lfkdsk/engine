@@ -35,8 +35,8 @@ build_android_task:
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
   compile_android_script: |
-    cd $ENGINE_PATH
-    ./lfkdsk_build_tools/build_android.sh release arm normal
+    cd $ENGINE_PATH/src
+    ./lfkdsk_build_tools/build_android.sh arm release normal
     ninja -C out/host_debug_unopt
 
 format_and_dart_test_task:
