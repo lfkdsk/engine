@@ -13,17 +13,21 @@ then
     platform='arm'
 fi
 
+echo platform ${platform}
+
 # 'debug' 'profile' 'release'
 mode=$2
 if [[ ! ${mode} ]];
 then
-    platform='release'
+    mode='release'
 fi
+
+echo mode ${mode}
 
 dynamic=$3
 if [[ ! ${dynamic} ]];
-then 
-    platform='normal'
+then
+    dynamic='normal'
 fi
 
 if [[ ${mode} != 'debug' ]]; then
