@@ -94,8 +94,8 @@ function upload_to_assets() {
 }
 
 # 非 debug 还要带上 gen_snapshot
-if [[ $mode != 'debug' ]]; then
-    if [ -f "$androidDir/clang_x86/gen_snapshot" ];then
+if [[ ${mode} != 'debug' ]]; then
+    if [[ -f "$androidDir/clang_x86/gen_snapshot" ]];then
         zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x86/gen_snapshot
     else
         zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x64/gen_snapshot
