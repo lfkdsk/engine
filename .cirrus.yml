@@ -24,6 +24,7 @@ task:
     rm -rf out
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
+
   matrix:
     - name: build_and_test_host
       compile_host_script: |
@@ -58,6 +59,7 @@ task:
         ninja -C out/android_debug_unopt
         mkdir javadoc_tmp
         ./flutter/tools/gen_javadoc.py --out-dir javadoc_tmp
+
 format_and_dart_test_task:
   container:
     image: gcr.io/flutter-cirrus/build-engine-image:latest
@@ -66,7 +68,7 @@ format_and_dart_test_task:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
     DEPOT_TOOLS: "/tmp/depot_tools"
     ENGINE_PATH: "/tmp/clean_engine"
-    PATH: "DEPOTTOOLS:PATH"
+    PATH: "$DEPOT_TOOLS:$PATH"
   depot_tools_script:
     git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $DEPOT_TOOLS
   gclient_sync_script: |
