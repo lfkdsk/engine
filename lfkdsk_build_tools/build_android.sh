@@ -7,25 +7,25 @@ rm -rf $cacheDir
 mkdir $cacheDir
 
 platform=$1 # 'debug' 'profile' 'release'
-if [ ! $platform ]
+if [[ ! $platform ]];
 then
     platform=release
 fi
 
 mode=$2 # 'arm' 'x64' 'x86' 'arm64'
-if [! $mode ]
+if [[ ! ${mode} ]];
 then
     platform=arm
 fi
 
 dynamic=$3
-if [! $dynamic ]
+if [[ ! ${dynamic} ]];
 then 
     platform=normal
 fi
 
-if [ $mode != 'debug' ]; then
-    if [ $platform = 'x64' -o $platform = 'x86' ]; then
+if [[ ${mode} != 'debug' ]]; then
+    if [ ${platform} = 'x64' -o $platform = 'x86' ]; then
         continue
     fi
 fi
