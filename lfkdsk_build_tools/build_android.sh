@@ -9,23 +9,23 @@ mkdir $cacheDir
 platform=$1 # 'debug' 'profile' 'release'
 if [[ ! $platform ]];
 then
-    platform=release
+    platform='release'
 fi
 
 mode=$2 # 'arm' 'x64' 'x86' 'arm64'
 if [[ ! ${mode} ]];
 then
-    platform=arm
+    platform='arm'
 fi
 
 dynamic=$3
 if [[ ! ${dynamic} ]];
 then 
-    platform=normal
+    platform='normal'
 fi
 
 if [[ ${mode} != 'debug' ]]; then
-    if [ ${platform} = 'x64' -o $platform = 'x86' ]; then
+    if [[ ${platform} = 'x64' || $platform = 'x86' ]]; then
         continue
     fi
 fi
