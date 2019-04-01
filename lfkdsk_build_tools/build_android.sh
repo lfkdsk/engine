@@ -54,7 +54,7 @@ fi
 # ninja build !!!
 ninja -C $androidDir -j $jcount
 
-if [ $mode != 'debug' ]; then
+if [[ $mode != 'debug' ]]; then
     modeDir=$modeDir-$mode
 fi
 rm -f $cacheDir/$modeDir
@@ -88,7 +88,7 @@ function upload_to_assets() {
 }
 
 # 非 debug 还要带上 gen_snapshot
-if [ $mode != 'debug' ]; then
+if [[ $mode != 'debug' ]]; then
     if [ -f "$androidDir/clang_x86/gen_snapshot" ];then
         zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x86/gen_snapshot
     else
@@ -102,7 +102,7 @@ if [ $mode != 'debug' ]; then
 fi
 
 # x86和x64要带上 libflutter.so
-if [ $platform = 'x64' -o $platform = 'x86' ]; then
+if [[ $platform = 'x64' || $platform = 'x86' ]]; then
     zip -rjq $cacheDir/$modeDir/artifacts.zip $androidDir/flutter.jar $androidDir/lib.stripped/libflutter.so
 else
     zip -rjq $cacheDir/$modeDir/artifacts.zip $androidDir/flutter.jar
