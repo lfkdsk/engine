@@ -8,7 +8,7 @@ gke_container:
  cpu: 30 # can't use all 30-cores; system pods needs cores too
  memory: 100Gb # similarly, can't use all 100Gb memory
 
-build_and_test_host:
+build_and_test_host_task:
   container:
     image: gcr.io/flutter-cirrus/build-engine-image:latest
   env:
