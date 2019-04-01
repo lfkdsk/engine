@@ -6,16 +6,18 @@ cacheDir=out/fly_android_cache
 rm -rf $cacheDir
 mkdir $cacheDir
 
-platform=$1 # 'debug' 'profile' 'release'
-if [[ ! $platform ]];
-then
-    platform='release'
-fi
-
-mode=$2 # 'arm' 'x64' 'x86' 'arm64'
-if [[ ! ${mode} ]];
+# 'arm' 'x64' 'x86' 'arm64'
+platform=$1
+if [[ ! ${platform} ]];
 then
     platform='arm'
+fi
+
+# 'debug' 'profile' 'release'
+mode=$2
+if [[ ! ${mode} ]];
+then
+    platform='release'
 fi
 
 dynamic=$3
@@ -25,14 +27,14 @@ then
 fi
 
 if [[ ${mode} != 'debug' ]]; then
-    if [[ ${platform} = 'x64' || $platform = 'x86' ]]; then
+    if [[ ${platform} = 'x64' || ${platform} = 'x86' ]]; then
         continue
     fi
 fi
 
-modeDir=android-$platform
+modeDir=android-${platform}
 # arm 不带后缀
-if [ $platform = 'arm' ]; then
+if [[ ${platform} = 'arm' ]]; then
     platformPostFix=''
 else
     platformPostFix=_${platform}
@@ -43,11 +45,11 @@ if [[ ${dynamic} = 'dynamic' ]]; then
     if [[ ${mode} = 'debug' ]]; then
         continue
     fi
-    ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamic
+    ./flutter/tools/gn --android --runtime-mode=${mode} --android-cpu=${platform} --dynamic
     androidDir=out/android_dynamic_${mode}${platformPostFix}
-    modeDir=$modeDir-dynamic
+    modeDir=${modeDir}-dynamic
 else
-    ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform
+    ./flutter/tools/gn --android --runtime-mode=${mode} --android-cpu=${platform}
     androidDir=out/android_${mode}${platformPostFix}
 fi
 
