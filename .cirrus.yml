@@ -37,7 +37,6 @@ build_android_task:
   compile_android_script: |
     cd $ENGINE_PATH/src/flutter
     ./lfkdsk_build_tools/build_android.sh arm release normal
-    ninja -C out/host_debug_unopt
 
 format_and_dart_test_task:
   container:
