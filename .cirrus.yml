@@ -9,8 +9,6 @@ gke_container:
  memory: 100Gb # similarly, can't use all 100Gb memory
 
 task:
-  env:
-    CIRRUS_WORKING_DIR: "/tmp/github_repo"
   name: build_and_test_host
   replace_engine_script: |
     cd $ENGINE_PATH/src
