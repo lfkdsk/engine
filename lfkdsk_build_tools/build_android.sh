@@ -30,6 +30,8 @@ then
     dynamic='normal'
 fi
 
+github_token=$4
+
 if [[ ${mode} != 'debug' ]]; then
     if [[ ${platform} = 'x64' || ${platform} = 'x86' ]]; then
         continue
@@ -68,16 +70,21 @@ mkdir $cacheDir/$modeDir
 
 function upload_to_assets() {
     files_to_upload=$1
-    if [[ "$CIRRUS_RELEASE" == "" ]]; then
+    if [[ ${CIRRUS_RELEASE} == "" ]]; then
        echo "Not a release. No need to deploy!"
        exit 0
     fi
 
-    if [[ "$GITHUB_TOKEN" == "" ]]; then
+    if [[ ${github_token} != "" ]]; then
+        GITHUB_TOKEN=${github_token}
+    fi
+
+    if [[ ${GITHUB_TOKEN} == "" ]]; then
       echo "Please provide GitHub access token via GITHUB_TOKEN environment variable!"
       exit 1
     fi
 
+    file_content_type="application/octet-stream"
     for fpath in $files_to_upload
     do
       echo "Uploading $fpath..."
@@ -117,4 +124,4 @@ fi
 files=(
     $cacheDir/$modeDir/artifacts.zip
 )
-upload_to_assets files
+upload_to_assets $files
