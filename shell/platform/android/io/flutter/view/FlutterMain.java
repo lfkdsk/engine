@@ -371,11 +371,11 @@ public class FlutterMain {
     }
 
     public static void onResume(Context context) {
-        if (sResourceUpdater != null) {
-            if (sResourceUpdater.getDownloadMode() == ResourceUpdater.DownloadMode.ON_RESUME) {
-                sResourceUpdater.startUpdateDownloadOnce();
-            }
-        }
+//        if (sResourceUpdater != null) {
+//            if (sResourceUpdater.getDownloadMode() == ResourceUpdater.DownloadMode.ON_RESUME) {
+//                sResourceUpdater.startUpdateDownloadOnce();
+//            }
+//        }
     }
 
     /**
@@ -428,7 +428,8 @@ public class FlutterMain {
      * If this is null, it means that dynamic patching is disabled in this app.
      */
     public static ResourceUpdater getResourceUpdater() {
-        return sResourceUpdater;
+        // return sResourceUpdater;
+        return null;
     }
 
     public static String getUpdateInstallationPath() {
