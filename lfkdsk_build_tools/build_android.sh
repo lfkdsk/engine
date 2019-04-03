@@ -3,8 +3,8 @@ cd ..
 
 jcount=4
 cacheDir=out/fly_android_cache
-rm -rf $cacheDir
-mkdir $cacheDir
+# rm -rf $cacheDir
+# mkdir $cacheDir
 
 # 'arm' 'x64' 'x86' 'arm64'
 platform=$1
@@ -65,8 +65,9 @@ ninja -C $androidDir -j $jcount
 if [[ $mode != 'debug' ]]; then
     modeDir=$modeDir-$mode
 fi
-rm -f $cacheDir/$modeDir
-mkdir $cacheDir/$modeDir
+
+# rm -f $cacheDir/$modeDir
+# mkdir $cacheDir/$modeDir
 
 function upload_to_assets() {
     files_to_upload=$1
@@ -88,7 +89,7 @@ function upload_to_assets() {
     for fpath in $files_to_upload
     do
       echo "Uploading $fpath..."
-      name=$platform-$mode-$dynamic-$(basename "$fpath")
+      name=android-$platform-$mode-$dynamic-$(basename "$fpath")
       url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/$CIRRUS_RELEASE/assets?name=$name"
       curl -X POST \
         --data-binary @$fpath \
