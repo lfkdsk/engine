@@ -42,6 +42,23 @@ build_android_task:
     cd $ENGINE_PATH/src/flutter
     ./lfkdsk_build_tools/build_android.sh arm release normal
 
+build_ios_task:
+  container:
+    image: gcr.io/flutter-cirrus/build-engine-image:latest
+  env:
+    CIRRUS_WORKING_DIR: "/tmp/github_repo"
+    GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
+  replace_engine_script: |
+    cd $ENGINE_PATH/src
+    rm -r flutter
+    mv $CIRRUS_WORKING_DIR flutter
+    gclient sync
+  compile_android_script: |
+    cd $ENGINE_PATH/src/flutter
+    ./lfkdsk_build_tools/ios/gn.sh
+    ./lfkdsk_build_tools/ios/ninja.sh
+    ./lfkdsk_build_tools/ios/create-framework.sh
+
 format_and_dart_test_task:
   container:
     image: gcr.io/flutter-cirrus/build-engine-image:latest
