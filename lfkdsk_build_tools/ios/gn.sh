@@ -13,6 +13,8 @@
 # python2 flutter/tools/gn --goma --ios --runtime-mode release --dynamic
 # python2 flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-cpu=arm
 
+cd ..
+
 python2 flutter/tools/gn --goma --ios --runtime-mode debug --no-lto
 
 # Fly Serial
