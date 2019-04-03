@@ -31,13 +31,13 @@ build_android_task:
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
-  android_build_cache:
-    folder: out/fly_android_cache
   replace_engine_script: |
     cd $ENGINE_PATH/src
     rm -r flutter
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
+  android_build_cache:
+    folder: out/fly_android_cache
   compile_android_script: |
     cd $ENGINE_PATH/src/flutter
     ./lfkdsk_build_tools/build_android.sh arm release normal

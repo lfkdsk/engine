@@ -65,6 +65,7 @@ ninja -C $androidDir -j $jcount
 if [[ $mode != 'debug' ]]; then
     modeDir=$modeDir-$mode
 fi
+
 # rm -f $cacheDir/$modeDir
 # mkdir $cacheDir/$modeDir
 
