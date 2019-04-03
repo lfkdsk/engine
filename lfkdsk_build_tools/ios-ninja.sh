@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ninja -C out/ios_debug
 # ninja -C out/ios_debug_arm
 # ninja -C out/ios_debug_sim
