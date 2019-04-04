@@ -56,11 +56,11 @@ build_ios_task:
   compile_android_script: |
     cd $ENGINE_PATH
     mkdir build_scripts
-    cp -r ./build_scripts/ ./src/flutter/lfkdsk_build_tools/
+    cp -r ./lfkdsk_build_tools/ ./src/flutter/lfkdsk_build_tools/
     cd src
-    ../build_scripts/ios-gn.sh
-    ../build_scripts/ios-ninja.sh
-    ../build_scripts/ios-create-framework.sh
+    ../lfkdsk_build_tools/ios-gn.sh
+    ../lfkdsk_build_tools/ios-ninja.sh
+    ../lfkdsk_build_tools/ios-create-framework.sh
 
 format_and_dart_test_task:
   container:
