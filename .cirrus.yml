@@ -55,8 +55,10 @@ build_ios_task:
     gclient sync
   compile_android_script: |
     cd $ENGINE_PATH
+    ls -sail
     mkdir lfkdsk_build_tools
-    cp -r ./lfkdsk_build_tools/ ./src/flutter/lfkdsk_build_tools/
+    cp -R ./lfkdsk_build_tools/ ./src/flutter/lfkdsk_build_tools/
+    ls ./lfkdsk_build_tools/ -sail
     cd src
     ../lfkdsk_build_tools/ios-gn.sh
     ../lfkdsk_build_tools/ios-ninja.sh
