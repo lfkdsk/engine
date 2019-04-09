@@ -19,7 +19,7 @@ build_and_test_host_task:
     ENGINE_PATH: "/tmp/engine"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
-    rm -r flutter
+    rm -rf flutter
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
   compile_host_script: |
@@ -36,7 +36,7 @@ build_android_task:
     ENGINE_PATH: "/tmp/engine"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
-    rm -r flutter
+    rm -rf flutter
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
   android_build_cache:
