@@ -1,34 +1,4 @@
 #!/usr/bin/env bash
-./flutter/tools/gn --goma --ios --runtime-mode debug --no-lto
-
-
-./flutter/tools/gn --goma --ios --runtime-mode profile --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode profile --ios-cpu=arm --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode release --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode release --ios-cpu=arm --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode debug --simulator --ios-framework-name=Fly
-
-./flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode debug --dynamic --simulator --ios-framework-name=FlyDynamic
-
-ninja -C out/ios_fly_debug_sim
-
-ninja -C out/ios_flydynamic_debug_sim
-
-ninja -C out/ios_fly_profile
-ninja -C out/ios_fly_profile_arm
-
-ninja -C out/ios_flydynamic_dynamic_profile_arm
-ninja -C out/ios_flydynamic_dynamic_profile
-
-ninja -C out/ios_fly_release
-ninja -C out/ios_fly_release_arm
-
-ninja -C out/ios_flydynamic_dynamic_release
-ninja -C out/ios_flydynamic_dynamic_release_arm
 
 frameworkDir=../frameworks
 
