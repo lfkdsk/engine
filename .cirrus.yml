@@ -18,8 +18,7 @@ build_and_test_host_task:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
-    ls -sail
-    ls ${CIRRUS_WORKING_DIR} -sail
+    ENGINE_PATH=../
     cd $ENGINE_PATH/src
     rm -r flutter
     mv $CIRRUS_WORKING_DIR flutter
@@ -37,6 +36,7 @@ build_android_task:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
+    ENGINE_PATH=../
     cd $ENGINE_PATH/src
     rm -r flutter
     mv $CIRRUS_WORKING_DIR flutter
@@ -54,6 +54,7 @@ build_ios_task:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
+    ENGINE_PATH=../
     cd $ENGINE_PATH/src
     rm -r flutter
     mv $CIRRUS_WORKING_DIR flutter
@@ -70,8 +71,7 @@ format_and_dart_test_task:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
 
   replace_engine_script: |
-    ls -sail
-    ls ${CIRRUS_WORKING_DIR} -sail
+    ENGINE_PATH=../
     cd $ENGINE_PATH/src
     rm -r flutter
     cp $CIRRUS_WORKING_DIR -r ./flutter
