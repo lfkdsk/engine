@@ -1,15 +1,15 @@
 gcp_credentials: ENCRYPTED[7ba94e3115455aef552b9863bbd74267aa42f841aa8ddc5f1a836a71ffaa72ec327842b5fe66903c9e3dd1172383f01c]
 
-#gke_container:
-#  image: gcr.io/flutter-cirrus/build-engine-image:latest
-#  cluster_name: build-32-cluster
-#  zone: us-central1-a
-#  namespace: default
-#  cpu: 30 # can't use all 30-cores; system pods needs cores too
-#  memory: 100Gb # similarly, can't use all 100Gb memory
+gke_container:
+  image: gcr.io/flutter-cirrus/build-engine-image:latest
+  cluster_name: build-32-cluster
+  zone: us-central1-a
+  namespace: default
+  cpu: 30 # can't use all 30-cores; system pods needs cores too
+  memory: 100Gb # similarly, can't use all 100Gb memory
 
-osx_instance:
-  image: mojave-xcode-10.2
+#osx_instance:
+#  image: mojave-xcode-10.2
 
 build_and_test_host_task:
   container:
@@ -19,6 +19,7 @@ build_and_test_host_task:
     ENGINE_PATH: "/tmp/engine"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
+    ls -sail
     echo `pwd`
     rm -rf flutter
     mv $CIRRUS_WORKING_DIR ./flutter
