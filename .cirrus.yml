@@ -16,6 +16,7 @@ build_and_test_host_task:
     image: gcr.io/flutter-cirrus/build-engine-image:latest
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
+    ENGINE_PATH: "/tmp/engine"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
     ENGINE_PATH=../
@@ -34,6 +35,7 @@ build_android_task:
     image: gcr.io/flutter-cirrus/build-engine-image:latest
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
+    ENGINE_PATH: "/tmp/engine"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
     ENGINE_PATH=../
@@ -52,9 +54,9 @@ build_ios_task:
     image: gcr.io/flutter-cirrus/build-engine-image:latest
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
+    ENGINE_PATH: "/tmp/engine"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
   replace_engine_script: |
-    ENGINE_PATH=../
     cd $ENGINE_PATH/src
     rm -r flutter
     mv $CIRRUS_WORKING_DIR flutter
@@ -69,9 +71,8 @@ format_and_dart_test_task:
 
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
-
+    ENGINE_PATH: "/tmp/engine"
   replace_engine_script: |
-    ENGINE_PATH=../
     cd $ENGINE_PATH/src
     rm -r flutter
     cp $CIRRUS_WORKING_DIR -r ./flutter
