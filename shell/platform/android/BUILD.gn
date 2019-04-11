@@ -165,6 +165,7 @@ java_library("flutter_shell_java") {
     "io/flutter/view/ResourceUpdater.java",
     "io/flutter/view/TextureRegistry.java",
     "io/flutter/view/VsyncWaiter.java",
+    "io/flutter/view/OnUpdateAotCallBack.java"
   ]
 
   deps = [

@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import io.flutter.view.OnUpdateAotCallBack;
 
 /**
  * A class to initialize the native code.
@@ -89,11 +90,7 @@ class ResourceExtractor {
 
                 return null;
 
-            } finally {
-                if (resourceUpdater != null) {
-                    resourceUpdater.getInstallationLock().unlock();
-                }
-            }
+            } finally { }
         }
     }
 
