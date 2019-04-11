@@ -268,17 +268,17 @@ public class FlutterMain {
             }
             if (sIsPrecompiledAsSharedLibrary) {
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_PATH + "=" +
-                        new File(PathUtils.getExternalStorageDirectory(applicationContext), sAotSharedLibraryPath));
+                        new File(PathUtils.getDataDirectory(applicationContext), sAotSharedLibraryPath));
             } else {
                 if (sIsPrecompiledAsBlobs) {
                     shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
-                            PathUtils.getExternalStorageDirectory(applicationContext));
+                            PathUtils.getDataDirectory(applicationContext));
                 } else {
                     shellArgs.add("--cache-dir-path=" +
                             PathUtils.getCacheDirectory(applicationContext));
 
                     shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
-                            PathUtils.getExternalStorageDirectory(applicationContext) + "/" + sFlutterAssetsDir);
+                            PathUtils.getDataDirectory(applicationContext) + "/" + sFlutterAssetsDir);
                 }
                 shellArgs.add("--" + AOT_VM_SNAPSHOT_DATA_KEY + "=" + sAotVmSnapshotData);
                 shellArgs.add("--" + AOT_VM_SNAPSHOT_INSTR_KEY + "=" + sAotVmSnapshotInstr);
