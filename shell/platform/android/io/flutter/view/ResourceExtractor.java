@@ -11,8 +11,10 @@ import android.content.res.AssetManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
+
 import io.flutter.util.BSDiff;
 import io.flutter.util.PathUtils;
+
 import org.json.JSONObject;
 
 import java.io.*;
@@ -30,6 +32,15 @@ import java.util.zip.ZipFile;
 class ResourceExtractor {
     private static final String TAG = "ResourceExtractor";
     private static final String TIMESTAMP_PREFIX = "res_timestamp-";
+    private static OnUpdateAotCallBack mCallBack = null;
+
+    public static void setUpdateAotCallBack(OnUpdateAotCallBack mCallBack) {
+        ResourceExtractor.mCallBack = mCallBack;
+    }
+
+    public static OnUpdateAotCallBack getUpdateAotCallBack() {
+        return mCallBack;
+    }
 
     @SuppressWarnings("deprecation")
     static long getVersionCode(PackageInfo packageInfo) {
@@ -41,52 +52,30 @@ class ResourceExtractor {
     }
 
     private class ExtractTask extends AsyncTask<Void, Void, Void> {
-        ExtractTask() { }
+        private OnUpdateAotCallBack mCallBack = FlutterMain.getRegisterCallBack("update-aot-callback", OnUpdateAotCallBack.class);
+
+        ExtractTask() {
+        }
 
         @Override
         protected Void doInBackground(Void... unused) {
             final File dataDir = new File(PathUtils.getDataDirectory(mContext));
-
-            ResourceUpdater resourceUpdater = FlutterMain.getResourceUpdater();
-            if (resourceUpdater != null) {
-                // Protect patch file from being overwritten by downloader while
-                // it's being extracted since downloading happens asynchronously.
-                resourceUpdater.getInstallationLock().lock();
-            }
-
             try {
-                if (resourceUpdater != null) {
-                    File updateFile = resourceUpdater.getDownloadedPatch();
-                    File activeFile = resourceUpdater.getInstalledPatch();
-
-                    if (updateFile.exists()) {
-                        JSONObject manifest = resourceUpdater.readManifest(updateFile);
-                        if (resourceUpdater.validateManifest(manifest)) {
-                            // Graduate patch file as active for asset manager.
-                            if (activeFile.exists() && !activeFile.delete()) {
-                                Log.w(TAG, "Could not delete file " + activeFile);
-                                return null;
-                            }
-                            if (!updateFile.renameTo(activeFile)) {
-                                Log.w(TAG, "Could not create file " + activeFile);
-                                return null;
-                            }
-                        }
-                    }
-                }
-
                 final String timestamp = checkTimestamp(dataDir);
                 if (timestamp == null) {
                     return null;
                 }
 
-                deleteFiles();
+                final boolean isCallBackExist = mCallBack != null;
+                final boolean shouldDelete = isCallBackExist ? mCallBack.shouldJumpDeleteResource() : true;
 
-                if (!extractUpdate(dataDir)) {
+                if (shouldDelete) {
+                    deleteFiles();
+                } else {
                     return null;
                 }
 
-                if (!extractAPK(dataDir)) {
+                if (!extractAPK(dataDir, mCallBack)) {
                     return null;
                 }
 
@@ -101,10 +90,10 @@ class ResourceExtractor {
                 return null;
 
             } finally {
-              if (resourceUpdater != null) {
-                  resourceUpdater.getInstallationLock().unlock();
-              }
-          }
+                if (resourceUpdater != null) {
+                    resourceUpdater.getInstallationLock().unlock();
+                }
+            }
         }
     }
 
@@ -174,7 +163,7 @@ class ResourceExtractor {
 
     /// Returns true if successfully unpacked APK resources,
     /// otherwise deletes all resources and returns false.
-    private boolean extractAPK(File dataDir) {
+    private boolean extractAPK(File dataDir, OnUpdateAotCallBack mCallBack) {
         final AssetManager manager = mContext.getResources().getAssets();
 
         for (String asset : mResources) {
@@ -194,6 +183,9 @@ class ResourceExtractor {
 
                 Log.i(TAG, "Extracted baseline resource " + asset);
 
+                if (mCallBack != null) {
+                    mCallBack.updateAotResource(mResources);
+                }
             } catch (FileNotFoundException fnfe) {
                 continue;
 

@@ -15,7 +15,8 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import io.flutter.util.PathUtils;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -85,6 +86,20 @@ public class FlutterMain {
     private static boolean sIsPrecompiledAsBlobs;
     private static boolean sIsPrecompiledAsSharedLibrary;
     private static Settings sSettings;
+    private static Map<String, Object> sRegisterCallBacks = new HashMap<>();
+
+    public static <T> void registerCallBack(String key, T callBack) {
+        sRegisterCallBacks.put(key, callBack);
+    }
+
+    public static <T> T getRegisterCallBack(String key, Class<T> classOfT) {
+        Object obj = sRegisterCallBacks.get(key);
+        if (obj == null) {
+            return null;
+        }
+
+        return classOfT.cast(obj);
+    }
 
     private static final class ImmutableSetBuilder<T> {
         static <T> ImmutableSetBuilder<T> newInstance() {
