@@ -136,9 +136,18 @@ class AccessibilityBridge
         // one that is currently available in the semantics tree.  However, we also want
         // to set it if we're exiting a list to a non-list, so that we can get the "out of list"
         // announcement when A11y focus moves out of a list and not into another list.
+        // o -> o.hasFlag(Flag.HAS_IMPLICIT_SCROLLING))
         return object.scrollChildren > 0
-                && (hasSemanticsObjectAncestor(mA11yFocusedObject, o -> o == object)
-                    || !hasSemanticsObjectAncestor(mA11yFocusedObject, o -> o.hasFlag(Flag.HAS_IMPLICIT_SCROLLING)));
+                && (hasSemanticsObjectAncestor(mA11yFocusedObject, new Predicate<SemanticsObject>() {
+                    public boolean test(SemanticsObject o) {
+                        return o == object;
+                    }
+                })
+                    || !hasSemanticsObjectAncestor(mA11yFocusedObject, new Predicate<SemanticsObject>() {
+                        public boolean test(SemanticsObject o) {
+                            return o.hasFlag(Flag.HAS_IMPLICIT_SCROLLING);
+                        }
+                    }));
     }
 
     @Override
