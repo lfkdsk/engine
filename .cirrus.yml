@@ -42,22 +42,31 @@ build_android_task:
     cd $ENGINE_PATH/src/flutter
     ./lfkdsk_build_tools/build_android.sh arm release normal
 
-build_ios_task:
-  container:
-    image: gcr.io/flutter-cirrus/build-engine-image:latest
+task:
+  name: build_ios
+  osx_instance:
+    image: high-sierra-xcode-9.4.1
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
+    ENGINE_PATH: "/tmp/engine"
+    DEPOT_TOOLS: "/tmp/depot_tools"
+    PATH: "$DEPOT_TOOLS:$PATH"
     GITHUB_TOKEN: ENCRYPTED[da21a18e61acdf856cfc08f28cb8df8323316590188eb1285b96639157b503dfc40576608af62921888c7209794277d0]
-  replace_engine_script: |
+  depot_tools_script:
+    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git $DEPOT_TOOLS
+  gclient_sync_script: |
+    mkdir -p $ENGINE_PATH/src
+    echo 'solutions = [{"managed": False,"name": "src/flutter","url": "git@github.com:flutter/engine.git","custom_deps": {},"deps_file": "DEPS","safesync_url": "",},]' > $ENGINE_PATH/.gclient
     cd $ENGINE_PATH/src
-    rm -r flutter
+    rm -rf flutter
+    rm -rf out
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
-  compile_android_script: |
-#    cd $ENGINE_PATH/src/flutter
-#    ./lfkdsk_build_tools/ios-gn.sh
-#    ./lfkdsk_build_tools/ios-ninja.sh
-#    ./lfkdsk_build_tools/ios-create-framework.sh
+  compile_ios_script: |
+    cd $ENGINE_PATH/src/flutter
+    ./lfkdsk_build_tools/ios-gn.sh
+    ./lfkdsk_build_tools/ios-ninja.sh
+    ./lfkdsk_build_tools/ios-create-framework.sh
 
 format_and_dart_test_task:
   container:
