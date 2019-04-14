@@ -18,20 +18,20 @@ ls .. --sail
 ls $ENGINE_PATH -sail
 ls $ENGINE_PATH/src -sail
 
-python2 flutter/tools/gn --goma --ios --runtime-mode debug --no-lto
+flutter/tools/gn --goma --ios --runtime-mode debug --no-lto
 
 # Fly Serial
 
-python2 flutter/tools/gn --goma --ios --runtime-mode profile --ios-framework-name=Fly
-python2 flutter/tools/gn --goma --ios --runtime-mode profile --ios-cpu=arm --ios-framework-name=Fly
-python2 flutter/tools/gn --goma --ios --runtime-mode release --ios-framework-name=Fly
-python2 flutter/tools/gn --goma --ios --runtime-mode release --ios-cpu=arm --ios-framework-name=Fly
-python2 flutter/tools/gn --goma --ios --runtime-mode debug --simulator --ios-framework-name=Fly
+flutter/tools/gn --goma --ios --runtime-mode profile --ios-framework-name=Fly
+flutter/tools/gn --goma --ios --runtime-mode profile --ios-cpu=arm --ios-framework-name=Fly
+flutter/tools/gn --goma --ios --runtime-mode release --ios-framework-name=Fly
+flutter/tools/gn --goma --ios --runtime-mode release --ios-cpu=arm --ios-framework-name=Fly
+flutter/tools/gn --goma --ios --runtime-mode debug --simulator --ios-framework-name=Fly
 
-python2 flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-framework-name=FlyDynamic
-python2 flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
-python2 flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-framework-name=FlyDynamic
-python2 flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
-python2 flutter/tools/gn --goma --ios --runtime-mode debug --dynamic --simulator --ios-framework-name=FlyDynamic
+flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-framework-name=FlyDynamic
+flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
+flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-framework-name=FlyDynamic
+flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
+flutter/tools/gn --goma --ios --runtime-mode debug --dynamic --simulator --ios-framework-name=FlyDynamic
 
 

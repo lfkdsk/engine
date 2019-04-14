@@ -63,10 +63,10 @@ task:
     mv $CIRRUS_WORKING_DIR flutter
     gclient sync
   compile_ios_script: |
-    cd $ENGINE_PATH/src/flutter
-    ./lfkdsk_build_tools/ios-gn.sh
-    ./lfkdsk_build_tools/ios-ninja.sh
-    ./lfkdsk_build_tools/ios-create-framework.sh
+    cd $ENGINE_PATH/src
+    ./flutter/lfkdsk_build_tools/ios-gn.sh
+    ./flutter/lfkdsk_build_tools/ios-ninja.sh
+    ./flutter/lfkdsk_build_tools/ios-create-framework.sh
 
 format_and_dart_test_task:
   container:
