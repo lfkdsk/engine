@@ -46,7 +46,6 @@ task:
   name: build_ios
   osx_instance:
     image: high-sierra-xcode-9.4.1
-    memory: 200Gb # similarly, can't use all 100Gb memory
   env:
     CIRRUS_WORKING_DIR: "/tmp/github_repo"
     ENGINE_PATH: "/tmp/engine"
