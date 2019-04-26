@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-./flutter/tools/gn --goma --ios --runtime-mode debug --no-lto
+./tools/gn --goma --ios --runtime-mode debug --no-lto
 
 
-./flutter/tools/gn --goma --ios --runtime-mode profile --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode profile --ios-cpu=arm --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode release --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode release --ios-cpu=arm --ios-framework-name=Fly
-./flutter/tools/gn --goma --ios --runtime-mode debug --simulator --ios-framework-name=Fly
+./tools/gn --goma --ios --runtime-mode profile --ios-framework-name=Fly
+./tools/gn --goma --ios --runtime-mode profile --ios-cpu=arm --ios-framework-name=Fly
+./tools/gn --goma --ios --runtime-mode release --ios-framework-name=Fly
+./tools/gn --goma --ios --runtime-mode release --ios-cpu=arm --ios-framework-name=Fly
+./tools/gn --goma --ios --runtime-mode debug --simulator --ios-framework-name=Fly
 
-./flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode profile --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode release --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
-./flutter/tools/gn --goma --ios --runtime-mode debug --dynamic --simulator --ios-framework-name=FlyDynamic
+./tools/gn --goma --ios --runtime-mode profile --dynamic --ios-framework-name=FlyDynamic
+./tools/gn --goma --ios --runtime-mode profile --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
+./tools/gn --goma --ios --runtime-mode release --dynamic --ios-framework-name=FlyDynamic
+./tools/gn --goma --ios --runtime-mode release --dynamic --ios-cpu=arm --ios-framework-name=FlyDynamic
+./tools/gn --goma --ios --runtime-mode debug --dynamic --simulator --ios-framework-name=FlyDynamic
+
+cd ..
 
 ninja -C out/ios_fly_debug_sim
 
