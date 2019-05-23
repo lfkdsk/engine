@@ -459,6 +459,7 @@ bool DartIsolate::Run(const std::string& entrypoint_name, fml::closure on_run) {
 
   tonic::DartState::Scope scope(this);
 
+  TT_LOG() << "DartIsolate::Run entrypoint_name=" << entrypoint_name;
   auto user_entrypoint_function =
       Dart_GetField(Dart_RootLibrary(), tonic::ToDart(entrypoint_name.c_str()));
 
@@ -486,6 +487,7 @@ bool DartIsolate::RunFromLibrary(const std::string& library_name,
 
   tonic::DartState::Scope scope(this);
 
+  TT_LOG() << "DartIsolate::RunFromLibrary library_name="<< library_name << " entrypoint_name=" << entrypoint_name;
   auto user_entrypoint_function =
       Dart_GetField(Dart_LookupLibrary(tonic::ToDart(library_name.c_str())),
                     tonic::ToDart(entrypoint_name.c_str()));

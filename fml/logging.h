@@ -93,3 +93,6 @@ bool ShouldCreateLogMessage(LogSeverity severity);
   FML_LOG(ERROR) << "Not implemented in: " << __PRETTY_FUNCTION__
 
 #endif  // FLUTTER_FML_LOGGING_H_
+
+// Just For Bytedance
+#define TT_LOG() FML_LOG(ERROR)
