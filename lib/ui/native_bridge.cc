@@ -1,8 +1,4 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-#include "flutter/lib/ui/native_interpreter.h"
+#include "flutter/lib/ui/native_bridge.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,58 +40,36 @@ static void PropagateIfError(Dart_Handle result) {
   }
 }
 
-
 void NativeDetect(Dart_NativeArguments args) {
-  //Dart_Handle func = Dart_GetNativeArgument(args, 0);
-  //TODO(limengyun) : detect if func need interpreter
-
-  dart::OS::Print("NativeDetect");
-  Dart_SetReturnValue(args, tonic::ToDart(true));
+  Dart_Handle func = Dart_GetNativeArgument(args, 0);
+  Dart_SetReturnValue(args, ToDart(Dart_NeedInvokeInterpreter(func)));
 }
 
 void NativeCall(Dart_NativeArguments args) {
   // 第一个参数为需要调用的function
-  Dart_Handle func = Dart_GetNativeArgument(args, 0);
+  Dart_Handle closure = Dart_GetNativeArgument(args, 0);
 
   // 第二个参数为Named可选参数的个数
   int optional_named_args_length = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 1));
 
-  // 给func的实际参数的数量得减去 2
-  int total_args_length = Dart_GetNativeArgumentCount(args);
-  int i;
-  for (i = 0; i < total_args_length; i++) {
-    dart::OS::Print("arg[%d]=%s ",i, DartConverter<std::string>::FromDart(Dart_GetNativeArgument(args, i)).c_str());
-  }
 
-
-
-  int normal_args_length = total_args_length - optional_named_args_length * 2 - 2;
-
-  dart::OS::Print("optional_named_args_length=%d normal_args_length=%d",optional_named_args_length, normal_args_length);
-
-  Dart_Handle normal_args[normal_args_length];
-  //Dart_Handle optional_named_args[optional_named_args_length];
   int start = 2;
 
-  for (i = 0; i < normal_args_length; i++) {
-    normal_args[i] = Dart_GetNativeArgument(args, start + i);
-    dart::OS::Print("arg[%d]=%s ",i, DartConverter<std::string>::FromDart(normal_args[i]).c_str());
+  // 构建Named可选参数
+  Dart_Handle optional_args_names[optional_named_args_length];
+  for (int j = 0; j < optional_named_args_length; ++j) {
+    optional_args_names[j] = Dart_GetNativeArgument(args, start + j);
   }
 
-  if (optional_named_args_length > 0) {
-    for (i = 0; i < optional_named_args_length; i++) {
-      dart::OS::Print("%d optional_named_args[%s]=%s ",
-          i,
-          DartConverter<std::string>::FromDart(Dart_GetNativeArgument(args, start + normal_args_length + i * 2)).c_str(),
-          DartConverter<std::string>::FromDart(Dart_GetNativeArgument(args, start + normal_args_length + i * 2 + 1)).c_str()
-          );
-    }
-
+  // 构建实际参数
+  int all_args_length = Dart_GetNativeArgumentCount(args) - optional_named_args_length - 2;
+  Dart_Handle all_args[all_args_length];
+  for (int i = 0; i < all_args_length; i++) {
+    all_args[i] = Dart_GetNativeArgument(args, start + optional_named_args_length + i);
   }
 
-  Dart_Handle result = tonic::DartInvoke(func, {});
+  Dart_Handle result = Dart_InvokeInterpreter(closure, all_args_length, all_args, optional_named_args_length, optional_args_names);
   PropagateIfError(result);
-
   Dart_SetReturnValue(args, result);
 }
 
@@ -111,7 +85,7 @@ void NativeCall8(Dart_NativeArguments args) { NativeCall(args); }
 void NativeCall9(Dart_NativeArguments args) { NativeCall(args); }
 void NativeCall10(Dart_NativeArguments args) { NativeCall(args); }
 
-void NativeInterpreter::RegisterNatives(tonic::DartLibraryNatives* natives) {
+void NativeBridge::RegisterNatives(tonic::DartLibraryNatives* natives) {
   natives->Register({
                         {"NativeDetect", NativeDetect, 1, true},
                         {"NativeCall0", NativeCall0, 2, true},
