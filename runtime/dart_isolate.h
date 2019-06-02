@@ -108,7 +108,7 @@ class DartIsolate : public UIDartState {
  private:
   bool LoadKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece);
 
-  bool LoadKernelFromFile(const char* filePath);
+  Dart_Handle LoadKernelFromFile(const char* filePath);
 
   class AutoFireClosure {
    public:

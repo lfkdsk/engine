@@ -310,16 +310,16 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
   return true;
 }
 
-bool DartIsolate::LoadKernelFromFile(const char* filePath) {
+Dart_Handle DartIsolate::LoadKernelFromFile(const char* filePath) {
     std::shared_ptr<const fml::Mapping> mapping = std::make_unique<fml::FileMapping>(fml::OpenFile(filePath, false, fml::FilePermission::kRead));
     if (mapping->GetMapping() == nullptr) {
         FML_LOG(ERROR)<<"app.dill is null"<<std::endl;
-        return false;
+        return NULL;
     }
 
     if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
         FML_LOG(ERROR)<<"app.dill is not kernel"<<std::endl;
-        return false;
+        return NULL;
     }
 
     kernel_buffers_.push_back(mapping);
@@ -328,21 +328,15 @@ bool DartIsolate::LoadKernelFromFile(const char* filePath) {
             Dart_LoadLibraryFromKernel2(mapping->GetMapping(), mapping->GetSize());
     if (tonic::LogIfError(library)) {
         FML_LOG(ERROR)<<"app.dill load failed"<<std::endl;
-        return false;
+        return NULL;
     }
     FML_LOG(ERROR)<<"app.dill load success"<<std::endl;
 
     if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
-        return false;
+        return NULL;
     }
 
-    FML_LOG(ERROR)<<"begin run app.dill"<<std::endl;
-    if (tonic::LogIfError(tonic::DartInvokeField(library, "main",
-                                                 {}))) {
-        FML_LOG(ERROR) << "Could not invoke the app.dill main entrypoint.";
-        return false;
-    }
-    return true;
+    return library;
 }
 
 FML_WARN_UNUSED_RESULT
@@ -495,9 +489,22 @@ bool DartIsolate::Run(const std::string& entrypoint_name, fml::closure on_run) {
   tonic::DartState::Scope scope(this);
 
 #if defined(__ANDROID__)
-  LoadKernelFromFile("/data/user/0/com.example.flutter_app2/files/app.dill");
-#endif
+    Dart_Handle library = LoadKernelFromFile("/data/user/0/com.example.flutter_app2/files/app.dill");
+    auto user_entrypoint_function =
+            Dart_GetField(library, tonic::ToDart("mainFunc"));
 
+    if (!InvokeMainEntrypoint(user_entrypoint_function)) {
+        return false;
+    }
+
+    phase_ = Phase::Running;
+    FML_DLOG(INFO) << "New isolate is in the running state.";
+
+    if (on_run) {
+        on_run();
+    }
+    return true;
+#else
   TT_LOG() << "DartIsolate::Run entrypoint_name=" << entrypoint_name;
   auto user_entrypoint_function =
       Dart_GetField(Dart_RootLibrary(), tonic::ToDart(entrypoint_name.c_str()));
@@ -513,6 +520,7 @@ bool DartIsolate::Run(const std::string& entrypoint_name, fml::closure on_run) {
     on_run();
   }
   return true;
+#endif
 }
 
 FML_WARN_UNUSED_RESULT
