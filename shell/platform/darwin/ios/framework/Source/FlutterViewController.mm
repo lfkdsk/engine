@@ -13,6 +13,7 @@
 #include "flutter/fml/message_loop.h"
 #include "flutter/fml/platform/darwin/platform_version.h"
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
+#include "flutter/shell/common/engine.h"
 #include "flutter/shell/common/thread_host.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterEngine_Internal.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterPlatformPlugin.h"
@@ -472,6 +473,12 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   [_engine.get() notifyViewControllerDeallocated];
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   [super dealloc];
+}
+
+#pragma mark - Frame
+
+- (void)scheduleBackgroundFrame {
+  [_engine.get() shell].GetEngine()->ScheduleBackgroundFrame();
 }
 
 #pragma mark - Application lifecycle notifications

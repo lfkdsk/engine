@@ -152,6 +152,12 @@ FLUTTER_EXPORT
 - (BOOL)loadDefaultSplashScreenView;
 
 /**
+ * Request a frame when flutter view is in background.
+ * The request will be ignore if flutter view is not in background.
+ */
+- (void)scheduleBackgroundFrame;
+
+/**
  * Controls whether the created view will be opaque or not.
  *
  * Default is `YES`.  Note that setting this to `NO` may negatively impact performance

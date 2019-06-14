@@ -119,6 +119,7 @@ class Engine final : public RuntimeDelegate {
 
   // |RuntimeDelegate|
   FontCollection& GetFontCollection() override;
+  void ScheduleBackgroundFrame();
 
  private:
   Engine::Delegate& delegate_;
@@ -145,6 +146,9 @@ class Engine final : public RuntimeDelegate {
 
   // |RuntimeDelegate|
   void HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) override;
+
+  // |RuntimeDelegate|
+  void AddNextFrameCallback(fml::closure callback) override;
 
   // |RuntimeDelegate|
   void UpdateIsolateDescription(const std::string isolate_name,
