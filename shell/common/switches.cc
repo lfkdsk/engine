@@ -241,6 +241,13 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
         {aot_snapshot_path, aot_isolate_snapshot_instr_filename});
   }
 
+  std::string dynamic_dill_path;
+  command_line.GetOptionValue(FlagForSwitch(Switch::DynamicDillPath),
+                            &dynamic_dill_path);
+  settings.dynamic_dill_path = dynamic_dill_path;
+
+  FML_LOG(ERROR)<<"dynamic_dill_path:"<<settings.dynamic_dill_path<<std::endl;
+
   command_line.GetOptionValue(FlagForSwitch(Switch::CacheDirPath),
                               &settings.temp_directory_path);
 

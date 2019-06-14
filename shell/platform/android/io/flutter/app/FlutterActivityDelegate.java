@@ -19,6 +19,7 @@ import android.content.res.Resources.NotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -322,6 +323,9 @@ public final class FlutterActivityDelegate
         }
         if (intent.getBooleanExtra("verbose-logging", false)) {
             args.add("--verbose-logging");
+        }
+        if (!TextUtils.isEmpty(intent.getStringExtra("dynamic_dill_path"))){
+            args.add("--dynamic_dill_path="+intent.getStringExtra("dynamic_dill_path"));
         }
         if (!args.isEmpty()) {
             String[] argsArray = new String[args.size()];

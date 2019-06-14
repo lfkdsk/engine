@@ -177,6 +177,9 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
   }
 
   if (configuration.GetEntrypointLibrary().empty()) {
+    if(!settings_.dynamic_dill_path.empty()){
+        configuration.SetEntrypoint("mainFunc");
+    }
     if (!isolate->Run(configuration.GetEntrypoint())) {
       FML_LOG(ERROR) << "Could not run the isolate.";
       return RunStatus::Failure;
