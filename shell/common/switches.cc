@@ -246,8 +246,6 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
                             &dynamic_dill_path);
   settings.dynamic_dill_path = dynamic_dill_path;
 
-  FML_LOG(ERROR)<<"dynamic_dill_path:"<<settings.dynamic_dill_path<<std::endl;
-
   command_line.GetOptionValue(FlagForSwitch(Switch::CacheDirPath),
                               &settings.temp_directory_path);
 

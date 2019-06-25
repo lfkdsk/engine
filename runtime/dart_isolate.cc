@@ -316,6 +316,7 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
 }
 
 Dart_Handle DartIsolate::LoadKernelFromFile(const char* filePath) {
+    FML_LOG(ERROR)<<"dill_path:"<<filePath<<std::endl;
     std::shared_ptr<const fml::Mapping> mapping = std::make_unique<fml::FileMapping>(fml::OpenFile(filePath, false, fml::FilePermission::kRead));
     if (mapping->GetMapping() == nullptr) {
         FML_LOG(ERROR)<<"app.dill is null"<<std::endl;
