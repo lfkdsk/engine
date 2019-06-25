@@ -268,8 +268,9 @@ bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
 
   tonic::DartState::Scope scope(this);
 
-  if(!settings_.dynamic_dill_path.empty()){
-      LoadKernelFromFile(settings_.dynamic_dill_path.c_str());
+  if(!settings_.application_kernel_asset.empty()){
+    TT_LOG() << "LoadKernelFromFile " << settings_.application_kernel_asset.c_str();
+    LoadKernelFromFile(settings_.application_kernel_asset.c_str());
   }
 
   if (Dart_IsNull(Dart_RootLibrary())) {
@@ -378,8 +379,9 @@ bool DartIsolate::PrepareForRunningFromKernel(
     return true;
   }
 
-  if(!settings_.dynamic_dill_path.empty()){
-    LoadKernelFromFile(settings_.dynamic_dill_path.c_str());
+  if(!settings_.application_kernel_asset.empty()){
+    TT_LOG() << "LoadKernelFromFile " << settings_.application_kernel_asset.c_str();
+    LoadKernelFromFile(settings_.application_kernel_asset.c_str());
   }
 
   if (Dart_IsNull(Dart_RootLibrary())) {
@@ -500,7 +502,8 @@ bool DartIsolate::Run(const std::string& entrypoint_name, fml::closure on_run) {
 
   tonic::DartState::Scope scope(this);
 
-  FML_LOG(ERROR) << "DartIsolate::Run entrypoint_name=" << entrypoint_name;
+
+  TT_LOG() << "DartIsolate::Run entrypoint_name=" << entrypoint_name;
   auto user_entrypoint_function =
       Dart_GetField(Dart_RootLibrary(), tonic::ToDart(entrypoint_name.c_str()));
 

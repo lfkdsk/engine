@@ -177,7 +177,7 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
   }
 
   if (configuration.GetEntrypointLibrary().empty()) {
-    if(!settings_.dynamic_dill_path.empty()){
+    if(!settings_.application_kernel_asset.empty()){
         configuration.SetEntrypoint("mainFunc");
     }
     if (!isolate->Run(configuration.GetEntrypoint())) {
