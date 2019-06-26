@@ -99,11 +99,21 @@
 
   [self setupChannels];
 
+  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center addObserver:self
+             selector:@selector(onMemoryWarning:)
+                 name:UIApplicationDidReceiveMemoryWarningNotification
+               object:nil];
+
   return self;
 }
 
 - (void)dealloc {
   [_pluginPublications release];
+
+  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+
   [super dealloc];
 }
 
@@ -742,6 +752,15 @@
   return _weakBinaryMessengerFactory->GetWeakPtr();
 }
 // END
+
+#pragma mark - Memory Notifications
+
+- (void)onMemoryWarning:(NSNotification*)notification {
+  if (_shell) {
+    _shell->NotifyLowMemoryWarning();
+  }
+  [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
+}
 
 @end
 
