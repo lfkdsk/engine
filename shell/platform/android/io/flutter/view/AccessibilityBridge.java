@@ -2029,6 +2029,9 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
                 if (ancestorTransform == null) {
                     ancestorTransform = new float[16];
                 }
+                if (transform == null) {
+                    transform = new float[16];
+                }
                 Matrix.multiplyMM(globalTransform, 0, ancestorTransform, 0, transform, 0);
 
                 final float[] sample = new float[4];
