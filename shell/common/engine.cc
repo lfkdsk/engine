@@ -176,10 +176,11 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
     return RunStatus::Failure;
   }
 
+  if(!settings_.application_kernel_asset.empty()){
+    configuration.SetEntrypoint("mainFunc");
+  }
+
   if (configuration.GetEntrypointLibrary().empty()) {
-    if(!settings_.application_kernel_asset.empty()){
-        configuration.SetEntrypoint("mainFunc");
-    }
     if (!isolate->Run(configuration.GetEntrypoint())) {
       FML_LOG(ERROR) << "Could not run the isolate.";
       return RunStatus::Failure;
