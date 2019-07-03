@@ -87,14 +87,22 @@ void AddNextFrameCallback(Dart_Handle callback) {
   if (!dart_state->window()) {
     return;
   }
+
+  tonic::DartPersistentValue* next_frame_callback =
+      new tonic::DartPersistentValue(dart_state, callback);
   dart_state->window()->client()->AddNextFrameCallback(
-      [handle = std::make_shared<tonic::DartPersistentValue>(dart_state, callback)]() mutable {
-        std::shared_ptr<tonic::DartState> dart_state_ = handle->dart_state().lock();
+      [next_frame_callback]() mutable {
+        std::shared_ptr<tonic::DartState> dart_state_ =
+            next_frame_callback->dart_state().lock();
         if (!dart_state_) {
           return;
         }
         tonic::DartState::Scope scope(dart_state_);
-        tonic::DartInvokeVoid(handle->value());
+        tonic::DartInvokeVoid(next_frame_callback->value());
+
+        // next_frame_callback is associated with the Dart isolate and must be
+        // deleted on the UI thread
+        delete next_frame_callback;
       });
 }
 
