@@ -93,7 +93,9 @@ void FlutterMain::Init(JNIEnv* env,
   // BYTEDANCE ADD:
   if (flutter::DartVM::IsRunningDynamicCode()) {
     //TODO: 这里指定mock的Android动态资源的目录
-    settings.dynamic_dill_path = "/sdcard/Android/flutter_assets";
+    if(settings.dynamic_dill_path.empty()){
+      settings.dynamic_dill_path = "/sdcard/Android/flutter_assets";
+    }
   }
 
   settings.task_observer_add = [](intptr_t key, fml::closure callback) {
