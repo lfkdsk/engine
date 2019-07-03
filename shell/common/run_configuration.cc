@@ -15,7 +15,6 @@ namespace flutter {
 RunConfiguration RunConfiguration::InferFromSettings(
     const Settings& settings,
     fml::RefPtr<fml::TaskRunner> io_worker) {
-  TT_LOG() << settings.ToString();
   auto asset_manager = std::make_shared<AssetManager>();
 
   asset_manager->PushBack(std::make_unique<DirectoryAssetBundle>(

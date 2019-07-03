@@ -268,9 +268,12 @@ bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
 
   tonic::DartState::Scope scope(this);
 
-  if(!settings_.application_kernel_asset.empty()){
-    TT_LOG() << "LoadKernelFromFile " << settings_.application_kernel_asset.c_str();
-    LoadKernelFromFile(settings_.application_kernel_asset.c_str());
+  // BYTEDANCE ADD:
+  // 如果是动态化模式，就加载kernel. kernel_buffers_ 在Engine::PrepareAndLaunchIsolate中已经塞进去了。
+  if (Dart_IsDynamicRuntime()) {
+    if (!kernel_buffers_.empty()) {
+      LoadKernelFromKernelBuffers();
+    }
   }
 
   if (Dart_IsNull(Dart_RootLibrary())) {
@@ -312,6 +315,39 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
   if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
     return false;
   }
+  return true;
+}
+
+// BYTEDANCE ADD:
+bool DartIsolate::LoadKernelFromKernelBuffers() {
+  // 暂时只支持一个好啦，先跑起来再说
+  std::shared_ptr<const fml::Mapping> mapping = kernel_buffers_.at(0);
+
+  if (!mapping || mapping->GetSize() == 0) {
+    FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: Kernel is NULL." << std::endl;
+    return false;
+  }
+  if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
+    FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: Kernel is Invalid." << std::endl;
+    return false;
+  }
+
+  Dart_SetRootLibrary(Dart_Null());
+
+  Dart_Handle library =
+      Dart_LoadLibraryFromKernel2(mapping->GetMapping(), mapping->GetSize());
+  if (tonic::LogIfError(library)) {
+    FML_LOG(ERROR)<<"Kernel load failed"<<std::endl;
+    return false;
+  }
+
+  if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
+    FML_LOG(ERROR)<<"Kernel FinalizeLoading failed"<<std::endl;
+    return false;
+  }
+
+  Dart_SetRootLibrary(library);
+  FML_LOG(ERROR)<<"Kernel load success"<<std::endl;
   return true;
 }
 
@@ -805,6 +841,11 @@ void DartIsolate::AddIsolateShutdownCallback(fml::closure closure) {
 
 void DartIsolate::OnShutdownCallback() {
   shutdown_callbacks_.clear();
+}
+
+// BYTEDANCE ADD:
+std::vector<std::shared_ptr<const fml::Mapping>> &DartIsolate::GetKernelBuffers() {
+  return kernel_buffers_;
 }
 
 DartIsolate::AutoFireClosure::AutoFireClosure(fml::closure closure)

@@ -23,7 +23,7 @@ extern const intptr_t kPlatformStrongDillSize;
 #endif
 }
 
-//static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
+static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
 
 static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   auto command_line = flutter::CommandLineFromNSProcessInfo();
@@ -118,21 +118,23 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
       // Check if there is an application kernel snapshot in the assets directory we could
       // potentially use.  Looking for the snapshot makes sense only if we have a VM that can use
       // it.
-//      if (!flutter::DartVM::IsRunningPrecompiledCode()) {
-//        NSURL* applicationKernelSnapshotURL =
-//            [NSURL URLWithString:@(kApplicationKernelSnapshotFileName)
-//                   relativeToURL:[NSURL fileURLWithPath:assetsPath]];
-
+      if (!flutter::DartVM::IsRunningPrecompiledCode()) {
         NSURL* applicationKernelSnapshotURL =
-            [NSURL URLWithString:@("assets/app.dill")
+            [NSURL URLWithString:@(kApplicationKernelSnapshotFileName)
                    relativeToURL:[NSURL fileURLWithPath:assetsPath]];
         if ([[NSFileManager defaultManager] fileExistsAtPath:applicationKernelSnapshotURL.path]) {
           settings.application_kernel_asset = applicationKernelSnapshotURL.path.UTF8String;
         } else {
           NSLog(@"Failed to find snapshot: %@", applicationKernelSnapshotURL.path);
         }
-//      }
+      }
     }
+  }
+
+  // BYTEDANCE ADD:
+  if (flutter::DartVM::IsRunningDynamicCode()) {
+    //TODO: 这里指定mock的iOS动态资源的目录
+    settings.dynamic_dill_path = "/sdcard/Android/flutter_assets";
   }
 
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG

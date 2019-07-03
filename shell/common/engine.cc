@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <flutter/assets/directory_asset_bundle.h>
 
 #include "flutter/common/settings.h"
 #include "flutter/fml/eintr_wrapper.h"
@@ -169,6 +170,21 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
   if (isolate->GetPhase() == DartIsolate::Phase::Running) {
     FML_DLOG(WARNING) << "Isolate was already running!";
     return RunStatus::FailureAlreadyRunning;
+  }
+
+  // BYTEDANCE ADD:
+  // 更新 asset_manager_ 以支持动态资源
+  if (DartVM::IsRunningDynamicCode()) {
+    TT_LOG() << "PrepareAndLaunchIsolate: settings_=" << settings_.ToString() ;
+    if (!settings_.dynamic_dill_path.empty()) {
+      // 放在最前面，动态下发的资源优先级最高。
+      asset_manager_->PushFront(std::make_unique<DirectoryAssetBundle>(
+          fml::OpenDirectory(settings_.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
+
+      // 塞进去一个kernel, 在isolate.PrepareForRunningFromPrecompiledCode() 中会被加载
+      std::shared_ptr<fml::Mapping> kernel = asset_manager_->GetAsMapping("kernel_blob.bin");
+      isolate->GetKernelBuffers().push_back(kernel);
+    }
   }
 
   if (!isolate_configuration->PrepareIsolate(*isolate)) {

@@ -189,6 +189,11 @@ bool DartVM::IsRunningPrecompiledCode() {
   return Dart_IsPrecompiledRuntime();
 }
 
+// BYTEDANCE ADD：
+bool DartVM::IsRunningDynamicCode() {
+  return Dart_IsDynamicRuntime();
+}
+
 static std::vector<const char*> ProfilingFlags(bool enable_profiling) {
 // Disable Dart's built in profiler when building a debug build. This
 // works around a race condition that would sometimes stop a crash's

@@ -88,10 +88,12 @@ void FlutterMain::Init(JNIEnv* env,
     if (fml::IsFile(application_kernel_path)) {
       settings.application_kernel_asset = application_kernel_path;
     }
-  } else {
-      if (fml::IsFile(settings.dynamic_dill_path)) {
-          settings.application_kernel_asset = settings.dynamic_dill_path;
-      }
+  }
+
+  // BYTEDANCE ADD:
+  if (flutter::DartVM::IsRunningDynamicCode()) {
+    //TODO: 这里指定mock的Android动态资源的目录
+    settings.dynamic_dill_path = "/sdcard/Android/flutter_assets";
   }
 
   settings.task_observer_add = [](intptr_t key, fml::closure callback) {

@@ -105,10 +105,16 @@ class DartIsolate : public UIDartState {
 
   fml::RefPtr<fml::TaskRunner> GetMessageHandlingTaskRunner() const;
 
+  // BYTEDANCE ADD:
+  std::vector<std::shared_ptr<const fml::Mapping>> &GetKernelBuffers();
+
  private:
   bool LoadKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece);
 
   Dart_Handle LoadKernelFromFile(const char* filePath);
+
+  // BYTEDANCE ADD:
+  bool LoadKernelFromKernelBuffers();
 
   class AutoFireClosure {
    public:
