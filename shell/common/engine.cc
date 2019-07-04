@@ -192,8 +192,10 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
     return RunStatus::Failure;
   }
 
-  if(!settings_.application_kernel_asset.empty()){
-    configuration.SetEntrypoint("mainFunc");
+  if (DartVM::IsRunningDynamicCode()) {
+    if (!settings_.dynamic_dill_path.empty()) {
+      configuration.SetEntrypoint("mainFunc");
+    }
   }
 
   if (configuration.GetEntrypointLibrary().empty()) {
