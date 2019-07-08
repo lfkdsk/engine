@@ -16,7 +16,9 @@ then
     jcount=4
 fi
 
-tosDir=$2
+doCompile=$2
+
+tosDir=$3
 if [ ! $tosDir ]
 then 
 	tosDir=$(git rev-parse HEAD)
@@ -44,14 +46,16 @@ for mode in 'debug' 'profile' 'release'
 #		./flutter/tools/gn --runtime-mode=$mode
 #		ninja -C $hostDir -j $jcount
 
-		./flutter/tools/gn --ios --runtime-mode=$mode
-		ninja -C $iOSArm64Dir -j $jcount
+        if [ -z "$doCompile" ]; then
+		    ./flutter/tools/gn --ios --runtime-mode=$mode
+		    ninja -C $iOSArm64Dir -j $jcount
 
-		./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
-		ninja -C $iOSArmV7Dir -j $jcount
+            ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
+            ninja -C $iOSArmV7Dir -j $jcount
 
-		./flutter/tools/gn --ios --runtime-mode=debug --simulator
-		ninja -C $iOSSimDir -j $jcount
+            ./flutter/tools/gn --ios --runtime-mode=debug --simulator
+            ninja -C $iOSSimDir -j $jcount
+		fi
 
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
 

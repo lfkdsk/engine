@@ -17,7 +17,9 @@ else
     dynamics=('normal' 'dynamic')
 fi
 
-tosDir=$3
+doCompile=$3
+
+tosDir=$4
 if [ ! $tosDir ]
 then 
 	tosDir=$(git rev-parse HEAD)
@@ -35,8 +37,8 @@ rm -rf $cacheDir
 mkdir $cacheDir
 
 hostDir=out/host_debug
-./flutter/tools/gn
-ninja -C $hostDir -j $jcount
+#./flutter/tools/gn
+#ninja -C $hostDir -j $jcount
 
 # flutter_patched_sdk.zip
 rm -f $cacheDir/flutter_patched_sdk.zip
@@ -48,8 +50,8 @@ node ./flutter/tt_build_tools/tosUpload.js $cacheDir/flutter_patched_sdk.zip flu
 echo uploaded flutter/framework/$tosDir/flutter_patched_sdk.zip
 
 hostDir=out/host_release
-./flutter/tools/gn --runtime-mode=release
-ninja -C $hostDir -j $jcount
+#./flutter/tools/gn --runtime-mode=release
+#ninja -C $hostDir -j $jcount
 
 # flutter_patched_sdk.zip
 rm -f $cacheDir/flutter_patched_sdk_product.zip
@@ -93,7 +95,9 @@ for mode in 'debug' 'profile' 'release'; do
                 androidDir=out/android_${mode}${platformPostFix}
             fi
 
-            ninja -C $androidDir -j $jcount
+            if [ -z "$doCompile" ]; then
+                ninja -C $androidDir -j $jcount
+            fi
 
             if [ $mode != 'debug' ]; then
                 modeDir=$modeDir-$mode
