@@ -183,6 +183,10 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
 
       // 塞进去一个kernel, 在isolate.PrepareForRunningFromPrecompiledCode() 中会被加载
       std::shared_ptr<fml::Mapping> kernel = asset_manager_->GetAsMapping("kernel_blob.bin");
+      if(kernel != nullptr){
+          // 这个目前没找到原因
+          configuration.SetEntrypoint("mainFunc");
+      }
       isolate->GetKernelBuffers().push_back(kernel);
     }
   }
@@ -190,12 +194,6 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
   if (!isolate_configuration->PrepareIsolate(*isolate)) {
     FML_LOG(ERROR) << "Could not prepare to run the isolate.";
     return RunStatus::Failure;
-  }
-
-  if (DartVM::IsRunningDynamicCode()) {
-    if (!settings_.dynamic_dill_path.empty()) {
-      configuration.SetEntrypoint("mainFunc");
-    }
   }
 
   if (configuration.GetEntrypointLibrary().empty()) {
