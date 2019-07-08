@@ -21,7 +21,10 @@ class _FlutterFrontendCompiler implements frontend.CompilerInterface{
   final frontend.CompilerInterface _compiler;
 
   _FlutterFrontendCompiler(StringSink output,
-      {bool trackWidgetCreation: false, bool unsafePackageSerialization}) :
+      {bool trackWidgetCreation: false, bool unsafePackageSerialization,
+        bool genBytecode: false,
+        bool dropAST: false,
+        bool modifyPackage: false,}) :
           _compiler = new frontend.FrontendCompiler(output,
           transformer: trackWidgetCreation ? new WidgetCreatorTracker() : null,
           unsafePackageSerialization: unsafePackageSerialization);
