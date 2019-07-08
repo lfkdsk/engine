@@ -27,7 +27,9 @@ class _FlutterFrontendCompiler implements frontend.CompilerInterface{
           unsafePackageSerialization: unsafePackageSerialization);
 
   @override
-  Future<bool> compile(String filename, ArgResults options, {IncrementalCompiler generator}) async {
+  Future<bool> compile(String filename, ArgResults options, {IncrementalCompiler generator,bool genBytecode: false,
+    bool dropAST: false,
+    bool modifyPackage: false,}) async {
     return _compiler.compile(filename, options, generator: generator);
   }
 
