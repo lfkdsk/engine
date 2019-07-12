@@ -43,6 +43,8 @@ def get_out_dir(args):
     if args.enable_vulkan:
         target_dir.append('vulkan')
 
+    if args.dynamicart:
+        target_dir.append('dynamicart')
     return os.path.join(args.out_dir, 'out', '_'.join(target_dir))
 
 def to_command_line(gn_args):
@@ -76,6 +78,12 @@ def to_gn_args(args):
       runtime_mode = 'dynamic_' + runtime_mode
 
     gn_args = {}
+
+    # BD ADD:
+    # dynamicart arg
+    if args.dynamicart and (runtime_mode != 'release' or args.target_os not in ['android', 'ios']):
+        raise Exception('--dynamicart is only supported on --release with (--android or --ios)')
+    gn_args['dynamicart'] = args.dynamicart # Enable dynamicart Mode.
 
     # Skia GN args.
     gn_args['skia_enable_flutter_defines'] = True # Enable Flutter API guards in Skia.
@@ -297,6 +305,8 @@ def parse_args(args):
   parser.add_argument('--mac-sdk-path', default='', type=str,
                       help='On the mac, the SDK is inferred from the Xcode location unless this flag is specified.')
 
+  # BD ADD:
+  parser.add_argument('--dynamicart', default=False, action='store_true')
   return parser.parse_args(args)
 
 def main(argv):
