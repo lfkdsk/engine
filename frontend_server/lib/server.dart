@@ -21,18 +21,13 @@ class _FlutterFrontendCompiler implements frontend.CompilerInterface{
   final frontend.CompilerInterface _compiler;
 
   _FlutterFrontendCompiler(StringSink output,
-      {bool trackWidgetCreation: false, bool unsafePackageSerialization,
-        bool genBytecode: false,
-        bool dropAST: false,
-        bool modifyPackage: false,}) :
+      {bool trackWidgetCreation: false, bool unsafePackageSerialization}) :
           _compiler = new frontend.FrontendCompiler(output,
           transformer: trackWidgetCreation ? new WidgetCreatorTracker() : null,
           unsafePackageSerialization: unsafePackageSerialization);
 
   @override
-  Future<bool> compile(String filename, ArgResults options, {IncrementalCompiler generator,bool genBytecode: false,
-    bool dropAST: false,
-    bool modifyPackage: false,}) async {
+  Future<bool> compile(String filename, ArgResults options, {IncrementalCompiler generator}) async {
     return _compiler.compile(filename, options, generator: generator);
   }
 
