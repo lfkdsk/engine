@@ -519,6 +519,9 @@ class RuntimeController final : public WindowClient {
 
   // BD ADD:
   int64_t GetEngineMainEnterMicros() override;
+  
+  // BD ADD:
+  std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(RuntimeController);
 };

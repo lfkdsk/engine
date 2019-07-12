@@ -619,6 +619,11 @@ class Shell final : public PlatformView::Delegate,
   std::unique_ptr<fml::TaskRunnerAffineWeakPtrFactory<Shell>> weak_factory_gpu_;
 
   friend class testing::ShellTest;
+  
+  // BD ADD:
+  std::vector<double> GetFps(int thread_type,
+                int fps_type = kAvgFpsType,
+                bool do_clear = false) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Shell);
 };

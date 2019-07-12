@@ -67,6 +67,7 @@ class WindowClient {
   // BD ADD: START
   virtual void AddNextFrameCallback(fml::closure callback) = 0;
   virtual int64_t GetEngineMainEnterMicros() = 0;
+  virtual std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) = 0;
   // END
  protected:
   virtual ~WindowClient();
