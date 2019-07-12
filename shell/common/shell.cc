@@ -69,14 +69,17 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
   auto io_task_runner = shell->GetTaskRunners().GetIOTaskRunner();
   fml::TaskRunner::RunNowOrPostTask(
       io_task_runner,
-      [&io_latch,       //
-       &io_manager,     //
-       &platform_view,  //
-       io_task_runner   //
+      [&io_latch,           //
+       &io_manager,         //
+       &platform_view,      //
+       io_task_runner,      //
+       shell = shell.get()  //
   ]() {
         TRACE_EVENT0("flutter", "ShellSetupIOSubsystem");
         io_manager = std::make_unique<ShellIOManager>(
-            platform_view->CreateResourceContext(), io_task_runner);
+            platform_view->CreateResourceContext(), io_task_runner,
+            shell->settings_
+                .should_defer_decode_image_when_platform_view_invalid);
         io_latch.Signal();
       });
   io_latch.Wait();
@@ -454,6 +457,10 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
           platform_view->CreateResourceContext());
     }
 
+    if (io_manager) {
+      io_manager->UpdatePlatformViewValid(true);
+    }
+
     // Step 1: Tell the GPU thread that it should create a surface for its
     // rasterizer.
     if (should_post_gpu_task) {
@@ -495,6 +502,7 @@ void Shell::OnPlatformViewDestroyed() {
     io_manager->GetSkiaUnrefQueue()->Drain();
     // Step 3: All done. Signal the latch that the platform thread is waiting
     // on.
+    io_manager->UpdatePlatformViewValid(false);
     latch.Signal();
   };
 
@@ -845,11 +853,11 @@ void Shell::UpdateIsolateDescription(const std::string isolate_name,
 // |Engine::Delegate|
 void Shell::AddNextFrameCallback(fml::closure callback) {
   task_runners_.GetGPUTaskRunner()->PostTask(
-      [rasterizer = rasterizer_->GetWeakPtr(), callback = std::move(callback)]() {
+      [rasterizer = rasterizer_->GetWeakPtr(),
+       callback = std::move(callback)]() {
         if (rasterizer) {
-          rasterizer->AddNextFrameCallback([callback = std::move(callback)](){
-            callback();
-          });
+          rasterizer->AddNextFrameCallback(
+              [callback = std::move(callback)]() { callback(); });
         };
       });
 }

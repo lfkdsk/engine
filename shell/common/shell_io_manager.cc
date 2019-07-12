@@ -44,7 +44,8 @@ sk_sp<GrContext> ShellIOManager::CreateCompatibleResourceLoadingContext(
 
 ShellIOManager::ShellIOManager(
     sk_sp<GrContext> resource_context,
-    fml::RefPtr<fml::TaskRunner> unref_queue_task_runner)
+    fml::RefPtr<fml::TaskRunner> unref_queue_task_runner,
+    bool should_defer_decode_image_when_platform_view_invalid)
     : resource_context_(std::move(resource_context)),
       resource_context_weak_factory_(
           resource_context_ ? std::make_unique<fml::WeakPtrFactory<GrContext>>(
@@ -53,7 +54,10 @@ ShellIOManager::ShellIOManager(
       unref_queue_(fml::MakeRefCounted<flutter::SkiaUnrefQueue>(
           std::move(unref_queue_task_runner),
           fml::TimeDelta::FromMilliseconds(250))),
-      weak_factory_(this) {
+      weak_factory_(this),
+      is_platform_view_valid_(false),
+      should_defer_decode_image_when_platform_view_invalid_(
+          should_defer_decode_image_when_platform_view_invalid) {
   if (!resource_context_) {
 #ifndef OS_FUCHSIA
     FML_DLOG(WARNING) << "The IO manager was initialized without a resource "
@@ -99,5 +103,15 @@ fml::RefPtr<flutter::SkiaUnrefQueue> ShellIOManager::GetSkiaUnrefQueue() const {
 
 fml::WeakPtr<ShellIOManager> ShellIOManager::GetWeakPtr() {
   return weak_factory_.GetWeakPtr();
+}
+
+void ShellIOManager::UpdatePlatformViewValid(bool valid) {
+  is_platform_view_valid_ = valid;
+}
+
+bool ShellIOManager::IsResourceContextValidForDecodeImage() const {
+  return !should_defer_decode_image_when_platform_view_invalid_ ||
+         (should_defer_decode_image_when_platform_view_invalid_ &&
+          is_platform_view_valid_);
 }
 }  // namespace flutter
