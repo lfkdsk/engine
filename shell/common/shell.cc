@@ -214,7 +214,6 @@ std::unique_ptr<Shell> Shell::Create(
       !on_create_rasterizer) {
     return nullptr;
   }
-
   fml::AutoResetWaitableEvent latch;
   std::unique_ptr<Shell> shell;
   fml::TaskRunner::RunNowOrPostTask(
@@ -845,14 +844,45 @@ void Shell::UpdateIsolateDescription(const std::string isolate_name,
 // |Engine::Delegate|
 void Shell::AddNextFrameCallback(fml::closure callback) {
   task_runners_.GetGPUTaskRunner()->PostTask(
-      [rasterizer = rasterizer_->GetWeakPtr(), callback = std::move(callback)]() {
+      [rasterizer = rasterizer_->GetWeakPtr(),
+       callback = std::move(callback)]() {
         if (rasterizer) {
-          rasterizer->AddNextFrameCallback([callback = std::move(callback)](){
-            callback();
-          });
+          rasterizer->AddNextFrameCallback(
+              [callback = std::move(callback)]() { callback(); });
         };
       });
 }
+
+// BD ADD: START
+double Shell::GetFps(int thread_type, int fps_type, bool do_clear) {
+  double fps = 0;
+  fml::WeakPtr<Rasterizer> rasterizer = rasterizer_->GetWeakPtr();
+  if (rasterizer) {
+    if (thread_type == kUiThreadType) {
+      fps = rasterizer->compositor_context()->engine_time().GetFps(fps_type);
+      if (do_clear) {
+        task_runners_.GetUITaskRunner()->PostTask(
+            [rasterizer = rasterizer_->GetWeakPtr()] {
+              if (rasterizer) {
+                rasterizer->compositor_context()->engine_time().ClearFps();
+              }
+            });
+      }
+    } else if (thread_type == kGpuThreadType) {
+      fps = rasterizer->compositor_context()->frame_time().GetFps(fps_type);
+      if (do_clear) {
+        task_runners_.GetGPUTaskRunner()->PostTask(
+            [rasterizer = rasterizer_->GetWeakPtr()] {
+              if (rasterizer) {
+                rasterizer->compositor_context()->frame_time().ClearFps();
+              }
+            });
+      }
+    }
+  }
+  return fps;
+}
+// END
 
 // |ServiceProtocol::Handler|
 fml::RefPtr<fml::TaskRunner> Shell::GetServiceProtocolHandlerTaskRunner(

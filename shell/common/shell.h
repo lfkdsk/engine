@@ -224,6 +224,11 @@ class Shell final : public PlatformView::Delegate,
       const ServiceProtocol::Handler::ServiceProtocolMap& params,
       rapidjson::Document& response);
 
+  // BD ADD:
+  double GetFps(int thread_type,
+                int fps_type = kAvgFpsType,
+                bool do_clear = false) override;
+
   FML_DISALLOW_COPY_AND_ASSIGN(Shell);
 };
 

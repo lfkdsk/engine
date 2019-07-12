@@ -89,17 +89,20 @@ void AddNextFrameCallback(Dart_Handle callback) {
   }
   dart_state->window()->client()->AddNextFrameCallback(fml::MakeCopyable(
       [callback = std::make_unique<tonic::DartPersistentValue>(
-          tonic::DartState::Current(), callback),
-       ui_task_runner = dart_state->GetTaskRunners().GetUITaskRunner()]() mutable {
-        ui_task_runner->PostTask(fml::MakeCopyable([callback = std::move(callback)]() mutable {
-          std::shared_ptr<tonic::DartState> dart_state_ = callback->dart_state().lock();
-          if (!dart_state_) {
-            return;
-          }
-          tonic::DartState::Scope scope(dart_state_);
-          tonic::DartInvokeVoid(callback->value());
-        }));
-  }));
+           tonic::DartState::Current(), callback),
+       ui_task_runner =
+           dart_state->GetTaskRunners().GetUITaskRunner()]() mutable {
+        ui_task_runner->PostTask(
+            fml::MakeCopyable([callback = std::move(callback)]() mutable {
+              std::shared_ptr<tonic::DartState> dart_state_ =
+                  callback->dart_state().lock();
+              if (!dart_state_) {
+                return;
+              }
+              tonic::DartState::Scope scope(dart_state_);
+              tonic::DartInvokeVoid(callback->value());
+            }));
+      }));
 }
 
 void _AddNextFrameCallback(Dart_NativeArguments args) {
@@ -161,6 +164,18 @@ void _RespondToPlatformMessage(Dart_NativeArguments args) {
   tonic::DartCallStatic(&RespondToPlatformMessage, args);
 }
 
+// BD ADD: START
+void GetFps(Dart_NativeArguments args) {
+  Dart_Handle exception = nullptr;
+  int thread_type =
+      tonic::DartConverter<int>::FromArguments(args, 1, exception);
+  int fps_type = tonic::DartConverter<int>::FromArguments(args, 2, exception);
+  bool do_clear = tonic::DartConverter<bool>::FromArguments(args, 3, exception);
+  double fps = UIDartState::Current()->window()->client()->GetFps(
+      thread_type, fps_type, do_clear);
+  Dart_SetDoubleReturnValue(args, fps);
+}
+// END
 }  // namespace
 
 Dart_Handle ToByteData(const std::vector<uint8_t>& buffer) {
@@ -379,6 +394,8 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_setIsolateDebugName", SetIsolateDebugName, 2, true},
       {"Window_reportUnhandledException", ReportUnhandledException, 2, true},
       {"Window_addNextFrameCallback", _AddNextFrameCallback, 2, true},
+      // BD ADD:
+      {"Window_getFps", GetFps, 4, true},
   });
 }
 
