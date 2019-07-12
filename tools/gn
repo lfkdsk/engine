@@ -81,8 +81,8 @@ def to_gn_args(args):
 
     # BD ADD:
     # dynamicart arg
-    if args.dynamicart and (runtime_mode != 'release' or args.target_os not in ['android', 'ios']):
-        raise Exception('--dynamicart is only supported on --release with (--android or --ios)')
+    if args.dynamicart and runtime_mode != 'release':
+        raise Exception('--dynamicart is only supported on --release')
     gn_args['dynamicart'] = args.dynamicart # Enable dynamicart Mode.
 
     # Skia GN args.
