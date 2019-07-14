@@ -165,6 +165,18 @@ void _RespondToPlatformMessage(Dart_NativeArguments args) {
   tonic::DartCallStatic(&RespondToPlatformMessage, args);
 }
 
+// BD ADD: START
+void GetFps(Dart_NativeArguments args) {
+  Dart_Handle exception = nullptr;
+  int thread_type =
+      tonic::DartConverter<int>::FromArguments(args, 1, exception);
+  int fps_type = tonic::DartConverter<int>::FromArguments(args, 2, exception);
+  bool do_clear = tonic::DartConverter<bool>::FromArguments(args, 3, exception);
+  double fps = UIDartState::Current()->window()->client()->GetFps(
+      thread_type, fps_type, do_clear);
+  Dart_SetDoubleReturnValue(args, fps);
+}
+// END
 }  // namespace
 
 Dart_Handle ToByteData(const std::vector<uint8_t>& buffer) {
@@ -383,6 +395,8 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_setIsolateDebugName", SetIsolateDebugName, 2, true},
       {"Window_reportUnhandledException", ReportUnhandledException, 2, true},
       {"Window_addNextFrameCallback", _AddNextFrameCallback, 2, true},
+      // BD ADD:
+      {"Window_getFps", GetFps, 4, true},
   });
 }
 

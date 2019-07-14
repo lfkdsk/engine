@@ -17,6 +17,10 @@
 #include "third_party/skia/include/core/SkPictureRecorder.h"
 
 namespace flutter {
+// BD ADD: START
+static const int kUiThreadType = 1;
+static const int kGpuThreadType = 2;
+// END
 
 class LayerTree;
 
@@ -79,7 +83,9 @@ class CompositorContext {
 
   const Counter& frame_count() const { return frame_count_; }
 
-  const Stopwatch& frame_time() const { return frame_time_; }
+  // BD MOD:
+  // const Stopwatch& frame_time() const { return frame_time_; }
+  Stopwatch& frame_time() { return frame_time_; }
 
   Stopwatch& engine_time() { return engine_time_; }
 

@@ -461,4 +461,10 @@ void Engine::HandleAssetPlatformMessage(fml::RefPtr<PlatformMessage> message) {
   response->CompleteEmpty();
 }
 
+// BD ADD: START
+double Engine::GetFps(int thread_type, int fps_type, bool do_clear) {
+  return delegate_.GetFps(thread_type, fps_type, do_clear);
+}
+// END
+
 }  // namespace flutter
