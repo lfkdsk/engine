@@ -133,8 +133,10 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 
   // BYTEDANCE ADD:
   if (flutter::DartVM::IsRunningDynamicCode()) {
-    //TODO: 这里指定mock的iOS动态资源的目录
-    settings.dynamic_dill_path = "/sdcard/Android/flutter_assets";
+    //TODO: 这里指定mock的iOS动态资源的zip包路径
+    if (settings.dynamic_dill_path.empty()) {
+      settings.dynamic_dill_path = "/sdcard/Android/flutter.zip";
+    }
   }
 
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG

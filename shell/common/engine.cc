@@ -188,8 +188,10 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
       if(kernel != nullptr){
           // 这个目前没找到原因
           configuration.SetEntrypoint("mainFunc");
+          isolate->GetKernelBuffers().push_back(kernel);
+      } else {
+        TT_LOG() << "no kernel_blob.bin in zip file " <<settings_.dynamic_dill_path.c_str();
       }
-      isolate->GetKernelBuffers().push_back(kernel);
     }
   }
 

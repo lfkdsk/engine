@@ -92,9 +92,9 @@ void FlutterMain::Init(JNIEnv* env,
 
   // BYTEDANCE ADD:
   if (flutter::DartVM::IsRunningDynamicCode()) {
-    //TODO: 这里指定mock的Android动态资源的目录
-    if(settings.dynamic_dill_path.empty()){
-      settings.dynamic_dill_path = "/sdcard/Android/flutter_assets";
+    //TODO: 这里指定mock的Android动态资源的zip包路径
+    if (settings.dynamic_dill_path.empty()) {
+      settings.dynamic_dill_path = "/sdcard/Android/flutter.zip";
     }
   }
 
