@@ -77,7 +77,7 @@ void DartUI::InitForGlobal() {
     CanvasPathMeasure::RegisterNatives(g_natives);
     Codec::RegisterNatives(g_natives);
     DartRuntimeHooks::RegisterNatives(g_natives);
-    NativeBridge::RegisterNatives(g_natives);
+//    NativeBridge::RegisterNatives(g_natives);
     EngineLayer::RegisterNatives(g_natives);
     FontCollection::RegisterNatives(g_natives);
     FrameInfo::RegisterNatives(g_natives);

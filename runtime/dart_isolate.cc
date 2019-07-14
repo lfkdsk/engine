@@ -268,6 +268,7 @@ bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
 
   tonic::DartState::Scope scope(this);
 
+#if defined(DART_DYNAMIC_RUNTIME)
   // BYTEDANCE ADD:
   // 如果是动态化模式，就加载kernel. kernel_buffers_ 在Engine::PrepareAndLaunchIsolate中已经塞进去了。
   if (Dart_IsDynamicRuntime()) {
@@ -275,6 +276,7 @@ bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
       LoadKernelFromKernelBuffers();
     }
   }
+#endif
 
   if (Dart_IsNull(Dart_RootLibrary())) {
     return false;
@@ -318,6 +320,7 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
   return true;
 }
 
+#if defined(DART_DYNAMIC_RUNTIME)
 // BYTEDANCE ADD:
 bool DartIsolate::LoadKernelFromKernelBuffers() {
   // 暂时只支持一个好啦，先跑起来再说
@@ -350,40 +353,7 @@ bool DartIsolate::LoadKernelFromKernelBuffers() {
   FML_LOG(ERROR)<<"Kernel load success"<<std::endl;
   return true;
 }
-
-Dart_Handle DartIsolate::LoadKernelFromFile(const char* filePath) {
-    FML_LOG(ERROR)<<"dill_path:"<<filePath<<std::endl;
-    std::shared_ptr<const fml::Mapping> mapping = std::make_unique<fml::FileMapping>(fml::OpenFile(filePath, false, fml::FilePermission::kRead));
-    if (mapping->GetMapping() == nullptr) {
-        FML_LOG(ERROR)<<"app.dill is null"<<std::endl;
-        return NULL;
-    }
-
-    if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
-        FML_LOG(ERROR)<<"app.dill is not kernel"<<std::endl;
-        return NULL;
-    }
-
-    kernel_buffers_.push_back(mapping);
-
-    Dart_SetRootLibrary(Dart_Null());
-
-    Dart_Handle library =
-            Dart_LoadLibraryFromKernel2(mapping->GetMapping(), mapping->GetSize());
-    if (tonic::LogIfError(library)) {
-        FML_LOG(ERROR)<<"app.dill load failed"<<std::endl;
-        return NULL;
-    }
-
-    if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
-        FML_LOG(ERROR)<<"app.dill FinalizeLoading failed"<<std::endl;
-        return NULL;
-    }
-
-    Dart_SetRootLibrary(library);
-    FML_LOG(ERROR)<<"app.dill load success"<<std::endl;
-    return library;
-}
+#endif
 
 FML_WARN_UNUSED_RESULT
 bool DartIsolate::PrepareForRunningFromKernel(
@@ -414,11 +384,6 @@ bool DartIsolate::PrepareForRunningFromKernel(
   if (!last_piece) {
     // More to come.
     return true;
-  }
-
-  if(!settings_.application_kernel_asset.empty()){
-    TT_LOG() << "LoadKernelFromFile " << settings_.application_kernel_asset.c_str();
-    LoadKernelFromFile(settings_.application_kernel_asset.c_str());
   }
 
   if (Dart_IsNull(Dart_RootLibrary())) {

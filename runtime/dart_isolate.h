@@ -111,11 +111,10 @@ class DartIsolate : public UIDartState {
  private:
   bool LoadKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece);
 
-  Dart_Handle LoadKernelFromFile(const char* filePath);
-
+#if defined(DART_DYNAMIC_RUNTIME)
   // BYTEDANCE ADD:
   bool LoadKernelFromKernelBuffers();
-
+#endif
   class AutoFireClosure {
    public:
     AutoFireClosure(fml::closure closure);
