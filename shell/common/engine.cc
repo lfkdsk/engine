@@ -180,6 +180,7 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
     if (!settings_.dynamic_dill_path.empty()) {
       // 放在最前面，动态下发的资源优先级最高。
       asset_manager_->PushFront(std::make_unique<ZipAssetStore>(settings_.dynamic_dill_path.c_str(), "flutter_assets"));
+      font_collection_.RegisterFonts(asset_manager_);
 //      asset_manager_->PushFront(std::make_unique<DirectoryAssetBundle>(
 //          fml::OpenDirectory(settings_.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
 
