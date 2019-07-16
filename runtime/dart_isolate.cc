@@ -268,15 +268,17 @@ bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
 
   tonic::DartState::Scope scope(this);
 
-#if defined(DART_DYNAMIC_RUNTIME)
+  TT_LOG() << "out PrepareForRunningFromPrecompiledCode.";
+
   // BYTEDANCE ADD:
   // 如果是动态化模式，就加载kernel. kernel_buffers_ 在Engine::PrepareAndLaunchIsolate中已经塞进去了。
+  TT_LOG() << "out LoadKernelFromKernelBuffers.";
   if (Dart_IsDynamicRuntime()) {
     if (!kernel_buffers_.empty()) {
+      TT_LOG() << "LoadKernelFromKernelBuffers.";
       LoadKernelFromKernelBuffers();
     }
   }
-#endif
 
   if (Dart_IsNull(Dart_RootLibrary())) {
     return false;
@@ -320,9 +322,14 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
   return true;
 }
 
-#if defined(DART_DYNAMIC_RUNTIME)
+
 // BYTEDANCE ADD:
 bool DartIsolate::LoadKernelFromKernelBuffers() {
+  if (!DartVM::IsRunningDynamicCode()) {
+    return false;
+  }
+
+  FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: start loading..." << std::endl;
   // 暂时只支持一个好啦，先跑起来再说
   std::shared_ptr<const fml::Mapping> mapping = kernel_buffers_.at(0);
 
@@ -353,7 +360,6 @@ bool DartIsolate::LoadKernelFromKernelBuffers() {
   FML_LOG(ERROR)<<"Kernel load success"<<std::endl;
   return true;
 }
-#endif
 
 FML_WARN_UNUSED_RESULT
 bool DartIsolate::PrepareForRunningFromKernel(

@@ -189,6 +189,8 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
           // 这个目前没找到原因
           configuration.SetEntrypoint("mainFunc");
           isolate->GetKernelBuffers().push_back(kernel);
+
+        TT_LOG() << "kernel is pushed into KernelBuffers.";
       } else {
         TT_LOG() << "no kernel_blob.bin in zip file " <<settings_.dynamic_dill_path.c_str();
       }
@@ -201,14 +203,15 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
   }
 
   if (configuration.GetEntrypointLibrary().empty()) {
+    TT_LOG() << "start run isolate...";
     if (!isolate->Run(configuration.GetEntrypoint())) {
-      FML_LOG(ERROR) << "Could not run the isolate.";
+      FML_LOG(ERROR) << "Could not run the isolate. isolate->Run failed.";
       return RunStatus::Failure;
     }
   } else {
     if (!isolate->RunFromLibrary(configuration.GetEntrypointLibrary(),
                                  configuration.GetEntrypoint())) {
-      FML_LOG(ERROR) << "Could not run the isolate.";
+      FML_LOG(ERROR) << "Could not run the isolate. isolate->RunFromLibrary failed.";
       return RunStatus::Failure;
     }
   }
