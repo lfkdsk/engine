@@ -189,7 +189,8 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
       if(kernel != nullptr){
           // 这个目前没找到原因
           configuration.SetEntrypoint("mainFunc");
-          isolate->GetKernelBuffers().push_back(kernel);
+        IsolateConfiguration::dynamic_kernel = kernel;
+          //isolate->GetKernelBuffers().push_back(kernel);
 
         TT_LOG() << "kernel is pushed into KernelBuffers.";
       } else {
