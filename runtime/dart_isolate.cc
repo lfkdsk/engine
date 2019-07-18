@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <tuple>
+#include <flutter/shell/common/isolate_configuration.h>
 
 #include "flutter/fml/paths.h"
 #include "flutter/fml/trace_event.h"
@@ -274,7 +275,7 @@ bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
   // 如果是动态化模式，就加载kernel. kernel_buffers_ 在Engine::PrepareAndLaunchIsolate中已经塞进去了。
   TT_LOG() << "out LoadKernelFromKernelBuffers.";
   if (Dart_IsDynamicRuntime()) {
-    if (!kernel_buffers_.empty()) {
+    if (IsolateConfiguration::dynamic_kernel != nullptr) {
       TT_LOG() << "LoadKernelFromKernelBuffers.";
       LoadKernelFromKernelBuffers();
     }
@@ -331,7 +332,8 @@ bool DartIsolate::LoadKernelFromKernelBuffers() {
 
   FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: start loading..." << std::endl;
   // 暂时只支持一个好啦，先跑起来再说
-  std::shared_ptr<const fml::Mapping> mapping = kernel_buffers_.at(0);
+  std::shared_ptr<const fml::Mapping> mapping = IsolateConfiguration::dynamic_kernel;
+  kernel_buffers_.push_back(mapping);
 
   if (!mapping || mapping->GetSize() == 0) {
     FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: Kernel is NULL." << std::endl;

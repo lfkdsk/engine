@@ -219,4 +219,6 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForKernelList(
       std::move(kernel_pieces));
 }
 
+std::shared_ptr<const fml::Mapping> IsolateConfiguration::dynamic_kernel = nullptr;
+
 }  // namespace flutter

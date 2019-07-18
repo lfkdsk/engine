@@ -38,6 +38,8 @@ class IsolateConfiguration {
   static std::unique_ptr<IsolateConfiguration> CreateForKernelList(
       std::vector<std::unique_ptr<const fml::Mapping>> kernel_pieces);
 
+  static std::shared_ptr<const fml::Mapping> dynamic_kernel;
+
   IsolateConfiguration();
 
   virtual ~IsolateConfiguration();
