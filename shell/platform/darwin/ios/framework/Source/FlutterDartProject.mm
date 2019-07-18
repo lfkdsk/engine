@@ -106,11 +106,11 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     NSString* assetsName = [FlutterDartProject flutterAssetsName:bundle];
     NSString* assetsPath = [bundle pathForResource:assetsName ofType:@""];
 
-    if (assetsPath.length == 0) {
+    if (!assetsPath || assetsPath.length == 0) {
       assetsPath = [mainBundle pathForResource:assetsName ofType:@""];
     }
 
-    if (assetsPath.length == 0) {
+    if (!assetsPath || assetsPath.length == 0) {
       NSLog(@"Failed to find assets path for \"%@\"", assetsName);
     } else {
       settings.assets_path = assetsPath.UTF8String;
@@ -128,14 +128,6 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
           NSLog(@"Failed to find snapshot: %@", applicationKernelSnapshotURL.path);
         }
       }
-    }
-  }
-
-  // BYTEDANCE ADD:
-  if (flutter::DartVM::IsRunningDynamicCode()) {
-    //TODO: 这里指定mock的iOS动态资源的zip包路径
-    if (settings.dynamic_dill_path.empty()) {
-      settings.dynamic_dill_path = "/sdcard/Android/flutter.zip";
     }
   }
 
@@ -203,6 +195,21 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   }
   return config;
 }
+
+// BD MOD: START
+- (void)setDynamicDillPath:(NSString*)dynamicDillPath {
+  if (flutter::DartVM::IsRunningDynamicCode()) {
+    // TODO: 这里指定mock的iOS动态资源的zip包路径
+    if (_settings.dynamic_dill_path.empty()) {
+      if (dynamicDillPath && [dynamicDillPath isKindOfClass:[NSString class]] &&
+          dynamicDillPath.length > 0) {
+        _settings.dynamic_dill_path = self.dynamicDillPath.UTF8String;
+        _dynamicDillPath = [dynamicDillPath copy];
+      }
+    }
+  }
+}
+// END
 
 #pragma mark - Assets-related utilities
 

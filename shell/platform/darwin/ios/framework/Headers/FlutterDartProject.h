@@ -25,6 +25,13 @@ FLUTTER_EXPORT
  */
 - (instancetype)initFromDefaultSourceForConfiguration FLUTTER_UNAVAILABLE("Use -init instead.");
 
+// BYTEDANCE ADD:
+/**
+ * dynamic dill zip path.
+ */
+@property (nonatomic, copy)NSString *dynamicDillPath;
+// END
+
 /**
  * Returns the file name for the given asset. If the bundle with the identifier
  * "io.flutter.flutter.app" exists, it will try use that bundle; otherwise, it
