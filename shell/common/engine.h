@@ -148,6 +148,9 @@ class Engine final : public RuntimeDelegate {
   void HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) override;
 
   // |RuntimeDelegate|
+  void AddNextFrameCallback(fml::closure callback) override;
+
+  // |RuntimeDelegate|
   void UpdateIsolateDescription(const std::string isolate_name,
                                 int64_t isolate_port) override;
 
