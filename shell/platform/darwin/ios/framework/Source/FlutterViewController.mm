@@ -43,7 +43,7 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   BOOL _engineNeedsLaunch;
   NSMutableSet<NSNumber*>* _ongoingTouches;
   // BD ADD:
-  BOOL _surfaceEnabled;
+  BOOL _surfaceCreated;
 }
 
 #pragma mark - Manage and override all designated initializers
@@ -61,7 +61,7 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
     _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterViewController>>(self);
     _ongoingTouches = [[NSMutableSet alloc] init];
     // BD ADD:
-    _surfaceEnabled = NO;
+    _surfaceCreated = NO;
     [self performCommonViewControllerInitialization];
     [engine setViewController:self];
   }
@@ -83,6 +83,8 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
     [_engine.get() createShell:nil libraryURI:nil];
     _engineNeedsLaunch = YES;
     _ongoingTouches = [[NSMutableSet alloc] init];
+    // BD ADD:
+    _surfaceCreated = NO;
     [self loadDefaultSplashScreenView];
     [self performCommonViewControllerInitialization];
   }
@@ -427,15 +429,15 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   //    [_engine.get() platformView] -> NotifyDestroyed();
   //    [_engine.get() platformViewsController] -> SetFlutterView(nullptr);
   //  }
-  if (appeared && !_surfaceEnabled) {
+  if (appeared && !_surfaceCreated) {
     [self installSplashScreenViewCallback];
     [_engine.get() platformViewsController] -> SetFlutterView(_flutterView.get());
     [_engine.get() platformView] -> NotifyCreated();
-    _surfaceEnabled = YES;
-  } else if (!appeared && _surfaceEnabled) {
+    _surfaceCreated = YES;
+  } else if (!appeared && _surfaceCreated) {
     [_engine.get() platformView] -> NotifyDestroyed();
     [_engine.get() platformViewsController] -> SetFlutterView(nullptr);
-    _surfaceEnabled = NO;
+    _surfaceCreated = NO;
   }
   // END
 }
