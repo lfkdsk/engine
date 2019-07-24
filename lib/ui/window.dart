@@ -140,8 +140,9 @@ class FrameTiming {
   }
 }
 
-// BD ADD:
+// BD ADD: START
 typedef TimeToFirstFrameMicrosCallback = void Function(int frameworkInitTime, int firstFrameTime);
+// END
 
 /// States that an application can be in.
 ///

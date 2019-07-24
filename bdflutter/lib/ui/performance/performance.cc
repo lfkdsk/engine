@@ -6,6 +6,7 @@
 #include "third_party/tonic/dart_binding_macros.h"
 #include "third_party/tonic/dart_library_natives.h"
 #include "bdflutter/common/fps_recorder.h"
+#include "boost.h"
 
 namespace flutter {
 
@@ -62,12 +63,29 @@ void Performance_obtainFps(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, data_handle);
 }
 
+void Performance_startBoost(Dart_NativeArguments args) {
+  uint16_t flags = (uint16_t)tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  int millis = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 1));
+  Boost::Current()->StartUp(flags, millis);
+}
+
+void Performance_finishBoost(Dart_NativeArguments args) {
+  uint16_t flags = (uint16_t)tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  Boost::Current()->Finish(flags);
+}
+
+void Performance_forceGC(Dart_NativeArguments args) {
+  Boost::Current()->ForceGC();
+}
 
 void Performance::RegisterNatives(tonic::DartLibraryNatives* natives) {
   natives->Register({
       {"Performance_imageMemoryUsage", Performance_imageMemoryUsage, 1, true},
       {"Performance_startRecordFps", Performance_startRecordFps, 2, true},
       {"Performance_obtainFps", Performance_obtainFps, 3, true},
+      {"Performance_startBoost", Performance_startBoost, 3, true},
+      {"Performance_finishBoost", Performance_finishBoost, 2, true},
+      {"Performance_forceGC", Performance_forceGC, 1, true},
   });
 }
 

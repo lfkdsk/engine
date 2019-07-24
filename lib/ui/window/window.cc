@@ -14,6 +14,8 @@
 #include "third_party/tonic/dart_microtask_queue.h"
 #include "third_party/tonic/logging/dart_invoke.h"
 #include "third_party/tonic/typed_data/dart_byte_data.h"
+// BD ADD:
+#include "flutter/bdflutter/lib/ui/performance/boost.h"
 
 namespace flutter {
 namespace {
@@ -374,6 +376,9 @@ void Window::BeginFrame(fml::TimePoint frameTime) {
     return;
   tonic::DartState::Scope scope(dart_state);
 
+  // BD ADD:
+  Boost::Current()->CheckFinished();
+  
   int64_t microseconds = (frameTime - fml::TimePoint()).ToMicroseconds();
 
   tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_beginFrame",
@@ -477,6 +482,18 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
 }
 
 // BD ADD: START
+void Window::NotifyIdle(int64_t microseconds) {
+  std::shared_ptr<tonic::DartState> dart_state = library_.dart_state().lock();
+  if (!dart_state)
+    return;
+  tonic::DartState::Scope scope(dart_state);
+
+  tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_notifyIdle",
+                                           {
+                                               Dart_NewInteger(microseconds),
+                                           }));
+}
+
 void Window::ExitApp() {
   std::shared_ptr<tonic::DartState> dart_state = library_.dart_state().lock();
   if (!dart_state)
