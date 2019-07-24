@@ -12,6 +12,9 @@
 #include "flutter/runtime/runtime_delegate.h"
 #include "third_party/tonic/dart_message_handler.h"
 
+// BD ADD:
+#include "flutter/bdflutter/lib/ui/performance/boost.h"
+
 namespace flutter {
 
 RuntimeController::RuntimeController(
@@ -218,8 +221,9 @@ bool RuntimeController::ReportTimings(std::vector<int64_t> timings) {
   }
   return false;
 }
-
-bool RuntimeController::NotifyIdle(int64_t deadline) {
+// BD MOD：
+// bool RuntimeController::NotifyIdle(int64_t deadline) {
+bool RuntimeController::NotifyIdle(int64_t deadline, int type) {
   std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
   if (!root_isolate) {
     return false;
@@ -227,7 +231,32 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   tonic::DartState::Scope scope(root_isolate);
 
-  Dart_NotifyIdle(deadline);
+  // BD MOD: START
+  // Dart_NotifyIdle(deadline);
+  if (type & Boost::kPageQuiet) {
+    if (Boost::Current()->IsGCDisabled()) {
+      Boost::Current()->Finish(Boost::kDisableGC);
+    }
+    Dart_NotifyIdle(deadline);
+    
+    if (Boost::Current()->CanNotifyIdle()) {
+      if (auto* window = GetWindowIfAvailable()) {
+        window->NotifyIdle(500000);
+      }
+    }
+  } else if (type & Boost::kVsyncIdle) {
+    if (!Boost::Current()->IsGCDisabled()) {
+      Dart_NotifyIdle(deadline);
+    }
+    if (Boost::Current()->CanNotifyIdle()) {
+      int64_t micros = deadline - Dart_TimelineGetMicros();
+        auto* window = GetWindowIfAvailable();
+        if (window && micros > 2999) {
+          window->NotifyIdle(micros);
+        }
+    }
+  }
+  // END
 
   // Idle notifications being in isolate scope are part of the contract.
   if (idle_notification_callback_) {
