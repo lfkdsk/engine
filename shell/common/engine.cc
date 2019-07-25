@@ -179,7 +179,13 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
     TT_LOG() << "PrepareAndLaunchIsolate: settings_=" << settings_.ToString() ;
     if (!settings_.dynamic_dill_path.empty()) {
       // 放在最前面，动态下发的资源优先级最高。
-      asset_manager_->PushFront(std::make_unique<ZipAssetStore>(settings_.dynamic_dill_path.c_str(), "flutter_assets"));
+      const auto file_ext_index = settings_.dynamic_dill_path.rfind(".");
+      if(settings_.dynamic_dill_path.substr(file_ext_index) != ".zip"){
+          asset_manager_->PushFront(std::make_unique<DirectoryAssetBundle>(fml::OpenDirectory(
+                  settings_.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
+      }else{
+          asset_manager_->PushFront(std::make_unique<ZipAssetStore>(settings_.dynamic_dill_path.c_str(), "flutter_assets"));
+      }
       font_collection_.RegisterFonts(asset_manager_);
 //      asset_manager_->PushFront(std::make_unique<DirectoryAssetBundle>(
 //          fml::OpenDirectory(settings_.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
