@@ -10,7 +10,7 @@ fi
 isFast=$2
 
 if [ $isFast = 'fast' ]; then
-    platforms=('arm' 'arm64')
+    platforms=('arm' 'arm64' 'x64' 'x86')
     dynamics=('normal')
 else
     platforms=('arm' 'x64' 'x86' 'arm64')

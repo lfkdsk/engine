@@ -42,6 +42,8 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   BOOL _viewOpaque;
   BOOL _engineNeedsLaunch;
   NSMutableSet<NSNumber*>* _ongoingTouches;
+  // BD ADD:
+  BOOL _surfaceCreated;
 }
 
 #pragma mark - Manage and override all designated initializers
@@ -58,7 +60,8 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
     _flutterView.reset([[FlutterView alloc] initWithDelegate:_engine opaque:self.isViewOpaque]);
     _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterViewController>>(self);
     _ongoingTouches = [[NSMutableSet alloc] init];
-
+    // BD ADD:
+    _surfaceCreated = NO;
     [self performCommonViewControllerInitialization];
     [engine setViewController:self];
   }
@@ -80,6 +83,8 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
     [_engine.get() createShell:nil libraryURI:nil];
     _engineNeedsLaunch = YES;
     _ongoingTouches = [[NSMutableSet alloc] init];
+    // BD ADD:
+    _surfaceCreated = NO;
     [self loadDefaultSplashScreenView];
     [self performCommonViewControllerInitialization];
   }
@@ -414,14 +419,27 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
 
 - (void)surfaceUpdated:(BOOL)appeared {
   // NotifyCreated/NotifyDestroyed are synchronous and require hops between the UI and GPU thread.
-  if (appeared) {
+
+  //  BD MOD: START
+  //  if (appeared) {
+  //    [self installSplashScreenViewCallback];
+  //    [_engine.get() platformViewsController] -> SetFlutterView(_flutterView.get());
+  //    [_engine.get() platformView] -> NotifyCreated();
+  //  } else {
+  //    [_engine.get() platformView] -> NotifyDestroyed();
+  //    [_engine.get() platformViewsController] -> SetFlutterView(nullptr);
+  //  }
+  if (appeared && !_surfaceCreated) {
     [self installSplashScreenViewCallback];
     [_engine.get() platformViewsController] -> SetFlutterView(_flutterView.get());
     [_engine.get() platformView] -> NotifyCreated();
-  } else {
+    _surfaceCreated = YES;
+  } else if (!appeared && _surfaceCreated) {
     [_engine.get() platformView] -> NotifyDestroyed();
     [_engine.get() platformViewsController] -> SetFlutterView(nullptr);
+    _surfaceCreated = NO;
   }
+  // END
 }
 
 #pragma mark - UIViewController lifecycle notifications
@@ -511,9 +529,13 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
 
 #pragma mark - Frame
 
+// BD ADD: START
+//
+//
 - (void)scheduleBackgroundFrame {
   [_engine.get() shell].GetEngine()->ScheduleBackgroundFrame();
 }
+// END
 
 #pragma mark - Application lifecycle notifications
 
@@ -521,12 +543,12 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   TRACE_EVENT0("flutter", "applicationBecameActive");
   bool optimiseEnabled = [[NSUserDefaults standardUserDefaults]
       boolForKey:@"flutter_optimise_enter_foreground_surface_enabled"];
-    
+
   if (_viewportMetrics.physical_width &&
       ((optimiseEnabled && self.view.window) || !optimiseEnabled)) {
     [self surfaceUpdated:YES];
   }
-    
+
   [[_engine.get() lifecycleChannel] sendMessage:@"AppLifecycleState.resumed"];
 }
 
@@ -727,6 +749,9 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 - (void)viewDidLayoutSubviews {
   CGSize viewSize = self.view.bounds.size;
   CGFloat scale = [UIScreen mainScreen].scale;
+  // BD ADD:
+  CGSize originViewportSize =
+      CGSizeMake(_viewportMetrics.physical_width, _viewportMetrics.physical_height);
 
   // First time since creation that the dimensions of its view is known.
   bool firstViewBoundsUpdate = !_viewportMetrics.physical_width;
@@ -739,8 +764,22 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 
   // This must run after updateViewportMetrics so that the surface creation tasks are queued after
   // the viewport metrics update tasks.
-  if (firstViewBoundsUpdate)
+
+  // BD MOD: START
+  //  if (firstViewBoundsUpdate)
+  //    [self surfaceUpdated:YES];
+  if (firstViewBoundsUpdate) {
     [self surfaceUpdated:YES];
+  }
+  // 当App处于inactive状态，且期间尺寸改变(iPad上调整多窗口App尺寸)
+  // 当恢复active时在此处提前创建Surface，可避免视图拉伸跳变
+  else if (ABS(originViewportSize.width - _viewportMetrics.physical_width) > 0.01 ||
+           ABS(originViewportSize.height - _viewportMetrics.physical_height) > 0.01) {
+    if ([UIApplication sharedApplication].applicationState == UIApplicationStateInactive) {
+      [self surfaceUpdated:YES];
+    }
+  }
+  // END
 }
 
 - (void)viewSafeAreaInsetsDidChange {

@@ -70,6 +70,7 @@ void _scheduleMicrotask(void callback()) native 'ScheduleMicrotask';
 
 int _getCallbackHandle(Function closure) native 'GetCallbackHandle';
 Function _getCallbackFromHandle(int handle) native 'GetCallbackFromHandle';
+
 /**
  * BD ADD:
  * Set a time to notify current isolate skiping gc from now, unit is millisecond, and set 0 to cancle.
