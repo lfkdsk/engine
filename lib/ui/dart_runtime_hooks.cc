@@ -349,13 +349,17 @@ void GetCallbackFromHandle(Dart_NativeArguments args) {
   
 // BD ADD: START
 void SkipGCFromNow(Dart_NativeArguments args) {
+#if defined(DART_PERFORMANCE_EXTENSION)
   Dart_Handle h = Dart_GetNativeArgument(args, 0);
   int millis = DartConverter<int>::FromDart(h);
   Dart_SkipGCFromNow(millis);
+#endif
 }
 
 void ForceGC(Dart_NativeArguments args) {
+#if defined(DART_PERFORMANCE_EXTENSION)
   Dart_ForceGC();
+#endif
 }
 // END
 }  // namespace flutter
