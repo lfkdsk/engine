@@ -94,11 +94,26 @@ void Canvas::save() {
     return;
   canvas_->save();
 }
+/**
+ * BD ADD: START
+ * force close antialias if need
+ */
+void Canvas::ensureAntiAlias(const Paint* paint) const {
+  if (!UIDartState::Current()->IsAntiAliasDisabled()) {
+    return;
+  }
+  SkPaint* sPaint = const_cast<SkPaint*>(paint->paint());
+  if (sPaint && sPaint->isAntiAlias()) {
+    sPaint->setAntiAlias(false);
+  }
+}
 
 void Canvas::saveLayerWithoutBounds(const Paint& paint,
                                     const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->saveLayer(nullptr, paint.paint());
 }
 
@@ -110,6 +125,8 @@ void Canvas::saveLayer(double left,
                        const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   SkRect bounds = SkRect::MakeLTRB(left, top, right, bottom);
   canvas_->saveLayer(&bounds, paint.paint());
 }
@@ -164,6 +181,11 @@ void Canvas::clipRect(double left,
                       bool doAntiAlias) {
   if (!canvas_)
     return;
+  // BD ADD: START
+  if (doAntiAlias && UIDartState::Current()->IsAntiAliasDisabled()) {
+    doAntiAlias = false;
+  }
+  // END
   canvas_->clipRect(SkRect::MakeLTRB(left, top, right, bottom), clipOp,
                     doAntiAlias);
 }
@@ -171,6 +193,11 @@ void Canvas::clipRect(double left,
 void Canvas::clipRRect(const RRect& rrect, bool doAntiAlias) {
   if (!canvas_)
     return;
+  // BD ADD: START
+  if (doAntiAlias && UIDartState::Current()->IsAntiAliasDisabled()) {
+    doAntiAlias = false;
+  }
+  // END
   canvas_->clipRRect(rrect.sk_rrect, doAntiAlias);
 }
 
@@ -180,6 +207,11 @@ void Canvas::clipPath(const CanvasPath* path, bool doAntiAlias) {
   if (!path)
     Dart_ThrowException(
         ToDart("Canvas.clipPath called with non-genuine Path."));
+  // BD ADD: START
+  if (doAntiAlias && UIDartState::Current()->IsAntiAliasDisabled()) {
+    doAntiAlias = false;
+  }
+  // END
   canvas_->clipPath(path->path(), doAntiAlias);
 }
 
@@ -197,12 +229,16 @@ void Canvas::drawLine(double x1,
                       const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawLine(x1, y1, x2, y2, *paint.paint());
 }
 
 void Canvas::drawPaint(const Paint& paint, const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawPaint(*paint.paint());
 }
 
@@ -214,6 +250,8 @@ void Canvas::drawRect(double left,
                       const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawRect(SkRect::MakeLTRB(left, top, right, bottom), *paint.paint());
 }
 
@@ -222,6 +260,8 @@ void Canvas::drawRRect(const RRect& rrect,
                        const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawRRect(rrect.sk_rrect, *paint.paint());
 }
 
@@ -231,6 +271,8 @@ void Canvas::drawDRRect(const RRect& outer,
                         const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawDRRect(outer.sk_rrect, inner.sk_rrect, *paint.paint());
 }
 
@@ -242,6 +284,8 @@ void Canvas::drawOval(double left,
                       const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawOval(SkRect::MakeLTRB(left, top, right, bottom), *paint.paint());
 }
 
@@ -252,6 +296,8 @@ void Canvas::drawCircle(double x,
                         const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawCircle(x, y, radius, *paint.paint());
 }
 
@@ -266,6 +312,8 @@ void Canvas::drawArc(double left,
                      const PaintData& paint_data) {
   if (!canvas_)
     return;
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawArc(SkRect::MakeLTRB(left, top, right, bottom),
                    startAngle * 180.0 / M_PI, sweepAngle * 180.0 / M_PI,
                    useCenter, *paint.paint());
@@ -279,6 +327,8 @@ void Canvas::drawPath(const CanvasPath* path,
   if (!path)
     Dart_ThrowException(
         ToDart("Canvas.drawPath called with non-genuine Path."));
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawPath(path->path(), *paint.paint());
 }
 
@@ -292,6 +342,8 @@ void Canvas::drawImage(const CanvasImage* image,
   if (!image)
     Dart_ThrowException(
         ToDart("Canvas.drawImage called with non-genuine Image."));
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawImage(image->image(), x, y, paint.paint());
 }
 
@@ -311,6 +363,8 @@ void Canvas::drawImageRect(const CanvasImage* image,
   if (!image)
     Dart_ThrowException(
         ToDart("Canvas.drawImageRect called with non-genuine Image."));
+  // BD ADD:
+  ensureAntiAlias(&paint);
   SkRect src = SkRect::MakeLTRB(src_left, src_top, src_right, src_bottom);
   SkRect dst = SkRect::MakeLTRB(dst_left, dst_top, dst_right, dst_bottom);
   canvas_->drawImageRect(image->image(), src, dst, paint.paint(),
@@ -333,6 +387,8 @@ void Canvas::drawImageNine(const CanvasImage* image,
   if (!image)
     Dart_ThrowException(
         ToDart("Canvas.drawImageNine called with non-genuine Image."));
+  // BD ADD:
+  ensureAntiAlias(&paint);
   SkRect center =
       SkRect::MakeLTRB(center_left, center_top, center_right, center_bottom);
   SkIRect icenter;
@@ -360,6 +416,8 @@ void Canvas::drawPoints(const Paint& paint,
   static_assert(sizeof(SkPoint) == sizeof(float) * 2,
                 "SkPoint doesn't use floats.");
 
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawPoints(point_mode,
                       points.num_elements() / 2,  // SkPoints have two floats.
                       reinterpret_cast<const SkPoint*>(points.data()),
@@ -376,6 +434,8 @@ void Canvas::drawVertices(const Vertices* vertices,
     Dart_ThrowException(
         ToDart("Canvas.drawVertices called with non-genuine Vertices."));
 
+  // BD ADD:
+  ensureAntiAlias(&paint);
   canvas_->drawVertices(vertices->vertices(), blend_mode, *paint.paint());
 }
 
@@ -394,6 +454,8 @@ void Canvas::drawAtlas(const Paint& paint,
         ToDart("Canvas.drawAtlas or Canvas.drawRawAtlas called with "
                "non-genuine Image."));
 
+  // BD ADD:
+  ensureAntiAlias(&paint);
   sk_sp<SkImage> skImage = atlas->image();
 
   static_assert(sizeof(SkRSXform) == sizeof(float) * 4,

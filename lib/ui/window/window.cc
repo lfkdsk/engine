@@ -348,7 +348,9 @@ void Window::BeginFrame(fml::TimePoint frameTime) {
   if (!dart_state)
     return;
   tonic::DartState::Scope scope(dart_state);
-
+  // BD ADD:
+  UIDartState::Current()->EnsureBoostStatus();
+  
   int64_t microseconds = (frameTime - fml::TimePoint()).ToMicroseconds();
 
   tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_beginFrame",

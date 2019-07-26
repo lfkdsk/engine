@@ -8,6 +8,8 @@
 #include "flutter/lib/ui/window/window.h"
 #include "third_party/tonic/converter/dart_converter.h"
 #include "third_party/tonic/dart_message_handler.h"
+// BD ADD:
+#include "third_party/dart/runtime/include/dart_tools_api.h"
 
 using tonic::ToDart;
 
@@ -151,6 +153,37 @@ void UIDartState::ReportUnhandledException(const std::string& error,
 
 fml::WeakPtr<IOManager> UIDartState::GetIOManager() const {
   return io_manager_;
+}
+// BD ADD:
+void UIDartState::StartBoost(int type, int millis) {
+  this->boost_deadline_ = millis * 1000 + Dart_TimelineGetMicros();
+  Dart_SkipGCFromNow(millis);
+}
+
+void UIDartState::EnsureBoostStatus() {
+  if(this->boost_deadline_ <= 0 ) {
+    return;
+  }
+  bool needBoost =  this->boost_deadline_ > Dart_TimelineGetMicros();
+  if(!needBoost) {
+    this->boost_deadline_ = 0;
+  }
+  isAntiAliasDisabled_ = isGCDisabled_ = needBoost;
+  
+}
+
+void UIDartState::CloseBoost() {
+  this->boost_deadline_ = 0;
+  Dart_SkipGCFromNow(0);
+  isAntiAliasDisabled_ = isGCDisabled_ = false;
+}
+
+bool UIDartState::IsAntiAliasDisabled() {
+  return isAntiAliasDisabled_;
+}
+  
+bool UIDartState::IsGCDisabled() {
+  return isGCDisabled_;
 }
 
 }  // namespace flutter
