@@ -121,7 +121,7 @@ class UIDartState : public tonic::DartState {
   void AddOrRemoveTaskObserver(bool add);
   // BD ADD:
   int64_t boost_deadline_ = 0;
-  bool isAntiAliasDisabled_ = false;
+  bool isAntiAliasDisabled_ = true;
   bool isGCDisabled_ = false;
 };
 

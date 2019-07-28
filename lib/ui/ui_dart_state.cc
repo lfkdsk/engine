@@ -161,14 +161,14 @@ void UIDartState::StartBoost(int type, int millis) {
 }
 
 void UIDartState::EnsureBoostStatus() {
-  if(this->boost_deadline_ <= 0 ) {
-    return;
-  }
-  bool needBoost =  this->boost_deadline_ > Dart_TimelineGetMicros();
-  if(!needBoost) {
-    this->boost_deadline_ = 0;
-  }
-  isAntiAliasDisabled_ = isGCDisabled_ = needBoost;
+//  if(this->boost_deadline_ <= 0 ) {
+//    return;
+//  }
+//  bool needBoost =  this->boost_deadline_ > Dart_TimelineGetMicros();
+//  if(!needBoost) {
+//    this->boost_deadline_ = 0;
+//  }
+//  isAntiAliasDisabled_ = isGCDisabled_ = needBoost;
   
 }
 
