@@ -77,8 +77,15 @@ class MessageLoopImpl : public fml::RefCountedThreadSafe<MessageLoopImpl> {
 
   struct DelayedTaskCompare {
     bool operator()(const DelayedTask& a, const DelayedTask& b) {
-      return a.target_time == b.target_time ? a.order > b.order
+      /**
+       * BD MOD: START
+       * when the target_time is zero, always push the message at front of queue
+       */
+      // return a.target_time == b.target_time ? a.order > b.order
+      //                                       : a.target_time > b.target_time;
+      return a.target_time == b.target_time ? (a.target_time == 0 ? a.order < b.order : a.order > b.order)
                                             : a.target_time > b.target_time;
+      // END
     }
   };
 

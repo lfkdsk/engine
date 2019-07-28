@@ -112,13 +112,17 @@ Dart_Handle Picture::RasterizeToImage(sk_sp<SkPicture> picture,
   });
 
   // Kick things off on the GPU.
-  fml::TaskRunner::RunNowOrPostTask(
+  // BD MOD:
+  // fml::TaskRunner::RunNowOrPostTask(
+  fml::TaskRunner::RunNowOrPostTaskAtHead(
       gpu_task_runner,
       [ui_task_runner, snapshot_delegate, picture, picture_bounds, ui_task] {
         sk_sp<SkImage> raster_image =
             snapshot_delegate->MakeRasterSnapshot(picture, picture_bounds);
 
-        fml::TaskRunner::RunNowOrPostTask(
+        // BD MOD:
+        // fml::TaskRunner::RunNowOrPostTask(
+        fml::TaskRunner::RunNowOrPostTaskAtHead(
             ui_task_runner,
             [ui_task, raster_image]() { ui_task(raster_image); });
       });

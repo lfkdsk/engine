@@ -32,6 +32,11 @@ void TaskRunner::PostDelayedTask(fml::closure task, fml::TimeDelta delay) {
   loop_->PostTask(std::move(task), fml::TimePoint::Now() + delay);
 }
 
+// BD START:
+void TaskRunner::PostTaskAtHead(fml::closure task) {
+  loop_->PostTask(std::move(task), fml::TimePoint());
+}
+// END
 bool TaskRunner::RunsTasksOnCurrentThread() {
   if (!fml::MessageLoop::IsInitializedForCurrentThread()) {
     return false;
@@ -48,6 +53,17 @@ void TaskRunner::RunNowOrPostTask(fml::RefPtr<fml::TaskRunner> runner,
     runner->PostTask(std::move(task));
   }
 }
+// BD ADD: START
+void TaskRunner::RunNowOrPostTaskAtHead(fml::RefPtr<fml::TaskRunner> runner,
+                                        fml::closure task){
+  FML_DCHECK(runner);
+  if (runner->RunsTasksOnCurrentThread()) {
+    task();
+  } else {
+    runner->PostTaskAtHead(std::move(task));
+  }
+}
+// END
 
 // BD ADD: START
 void TaskRunner::PostBarrier(bool barrier_enabled) {
