@@ -90,14 +90,6 @@ void FlutterMain::Init(JNIEnv* env,
     }
   }
 
-  // BYTEDANCE ADD:
-  if (flutter::DartVM::IsRunningDynamicCode()) {
-    //TODO: 这里指定mock的Android动态资源的zip包路径
-    if (settings.dynamic_dill_path.empty()) {
-      settings.dynamic_dill_path = "/sdcard/Android/flutter.zip";
-    }
-  }
-
   settings.task_observer_add = [](intptr_t key, fml::closure callback) {
     fml::MessageLoop::GetCurrent().AddTaskObserver(key, std::move(callback));
   };
@@ -130,6 +122,16 @@ static void RecordStartTimestamp(JNIEnv* env,
   int64_t initTimeMicros =
       static_cast<int64_t>(initTimeMillis) * static_cast<int64_t>(1000);
   flutter::engine_main_enter_ts = Dart_TimelineGetMicros() - initTimeMicros;
+}
+
+// BYTEDANCE ADD:
+Settings FlutterMain::SettingsFromArgs(JNIEnv* env, jobjectArray jargs) {
+  std::vector<std::string> args;
+  for (auto& arg : fml::jni::StringArrayToVector(env, jargs)) {
+    args.push_back(std::move(arg));
+  }
+  auto command_line = fml::CommandLineFromIteratorsWithArgv0("", args.begin(), args.end());
+  return SettingsFromCommandLine(command_line);
 }
 
 bool FlutterMain::Register(JNIEnv* env) {

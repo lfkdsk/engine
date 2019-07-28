@@ -420,10 +420,18 @@ public class FlutterJNI {
   @UiThread
   public void attachToNative(boolean isBackgroundView) {
     ensureNotAttachedToNative();
-    nativePlatformViewId = nativeAttach(this, isBackgroundView);
+    nativePlatformViewId = nativeAttach(this, null, isBackgroundView);
   }
 
-  private native long nativeAttach(FlutterJNI flutterJNI, boolean isBackgroundView);
+  // BYTEDANCE ADD:
+  @UiThread
+  public void attachToNative(String[] args, boolean isBackgroundView) {
+    ensureNotAttachedToNative();
+    nativePlatformViewId = nativeAttach(this, args, isBackgroundView);
+  }
+
+  // BYTEDANCE MOD:
+  private native long nativeAttach(FlutterJNI flutterJNI, String[] args, boolean isBackgroundView);
 
   @UiThread
   public void detachFromNativeAndReleaseResources() {

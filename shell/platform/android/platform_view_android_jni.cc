@@ -146,13 +146,18 @@ void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj) {
 
 // Called By Java
 
+// BYTEDANCE MOD:
 static jlong AttachJNI(JNIEnv* env,
                        jclass clazz,
                        jobject flutterJNI,
+                       jobjectArray jargs,
                        jboolean is_background_view) {
   fml::jni::JavaObjectWeakGlobalRef java_object(env, flutterJNI);
+  // 每个Holder拥有自己的Settings
+  Settings settings(FlutterMain::Get().GetSettings());
+  settings.dynamic_dill_path = FlutterMain::SettingsFromArgs(env, jargs).dynamic_dill_path;
   auto shell_holder = std::make_unique<AndroidShellHolder>(
-      FlutterMain::Get().GetSettings(), java_object, is_background_view);
+      settings, java_object, is_background_view);
   if (shell_holder->IsValid()) {
     return reinterpret_cast<jlong>(shell_holder.release());
   } else {
@@ -294,7 +299,7 @@ static void RunBundleAndSnapshotFromLibrary(JNIEnv* env,
   }
 
   // BD MOD: 跟iOS IsolateConfiguration::InferFromSettings 的逻辑对齐
-  auto isolate_configuration = CreateIsolateConfiguration(*asset_manager, FlutterMain::Get().GetSettings());
+  auto isolate_configuration = CreateIsolateConfiguration(*asset_manager, ANDROID_SHELL_HOLDER->GetSettings());
   if (!isolate_configuration) {
     FML_DLOG(ERROR)
         << "Isolate configuration could not be determined for engine launch.";
@@ -562,7 +567,8 @@ bool RegisterApi(JNIEnv* env) {
       // Start of methods from FlutterNativeView
       {
           .name = "nativeAttach",
-          .signature = "(Lio/flutter/embedding/engine/FlutterJNI;Z)J",
+          // BYTEDANCE MOD:
+          .signature = "(Lio/flutter/embedding/engine/FlutterJNI;[Ljava/lang/String;Z)J",
           .fnPtr = reinterpret_cast<void*>(&AttachJNI),
       },
       {

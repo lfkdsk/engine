@@ -158,7 +158,8 @@ public final class FlutterActivityDelegate
         flutterView = viewFactory.createFlutterView(activity);
         if (flutterView == null) {
             FlutterNativeView nativeView = viewFactory.createFlutterNativeView();
-            flutterView = new FlutterView(activity, null, nativeView);
+            // BYTEDANCE MOD:
+            flutterView = new FlutterView(activity, null, nativeView, args);
             flutterView.setLayoutParams(matchParent);
             activity.setContentView(flutterView);
             launchView = createLaunchView();

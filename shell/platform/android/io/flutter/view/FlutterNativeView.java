@@ -48,6 +48,18 @@ public class FlutterNativeView implements BinaryMessenger {
         assertAttached();
     }
 
+    // BYTEDANCE ADD:
+    public FlutterNativeView(@NonNull Context context, String[] args)  {
+        mContext = context;
+        mPluginRegistry = new FlutterPluginRegistry(this, context);
+        mFlutterJNI = new FlutterJNI();
+        mFlutterJNI.setRenderSurface(new RenderSurfaceImpl());
+        this.dartExecutor = new DartExecutor(mFlutterJNI);
+        mFlutterJNI.addEngineLifecycleListener(new EngineLifecycleListenerImpl());
+        attach(this, args);
+        assertAttached();
+    }
+
     public void detachFromFlutterView() {
         mPluginRegistry.detach();
         mFlutterView = null;
@@ -163,6 +175,12 @@ public class FlutterNativeView implements BinaryMessenger {
 
     private void attach(FlutterNativeView view, boolean isBackgroundView) {
         mFlutterJNI.attachToNative(isBackgroundView);
+        dartExecutor.onAttachedToJNI();
+    }
+
+    // BYTEDANCE ADD:
+    private void attach(FlutterNativeView view, String[] args) {
+        mFlutterJNI.attachToNative(args, false);
         dartExecutor.onAttachedToJNI();
     }
 
