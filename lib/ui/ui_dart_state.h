@@ -72,6 +72,7 @@ class UIDartState : public tonic::DartState {
   };
 
   fml::WeakPtr<IOManager> GetIOManager() const;
+
   // BD ADD:
   void StartBoost(int type, int millis);
   void EnsureBoostStatus();

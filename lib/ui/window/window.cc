@@ -348,6 +348,7 @@ void Window::BeginFrame(fml::TimePoint frameTime) {
   if (!dart_state)
     return;
   tonic::DartState::Scope scope(dart_state);
+
   // BD ADD:
   UIDartState::Current()->EnsureBoostStatus();
   
