@@ -8,8 +8,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <flutter/assets/directory_asset_bundle.h>
-#include <flutter/assets/zip_asset_store.h>
 
 #include "flutter/common/settings.h"
 #include "flutter/fml/eintr_wrapper.h"
@@ -173,36 +171,11 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
     return RunStatus::FailureAlreadyRunning;
   }
 
-  // BYTEDANCE ADD:
-  // 更新 asset_manager_ 以支持动态资源
-  if (DartVM::IsRunningDynamicCode()) {
-    TT_LOG() << "PrepareAndLaunchIsolate: settings_=" << settings_.ToString() ;
-    if (!settings_.dynamic_dill_path.empty()) {
-      // 放在最前面，动态下发的资源优先级最高。
-      const auto file_ext_index = settings_.dynamic_dill_path.rfind(".");
-      if(settings_.dynamic_dill_path.substr(file_ext_index) != ".zip"){
-          asset_manager_->PushFront(std::make_unique<DirectoryAssetBundle>(fml::OpenDirectory(
-                  settings_.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
-      }else{
-          asset_manager_->PushFront(std::make_unique<ZipAssetStore>(settings_.dynamic_dill_path.c_str(), "flutter_assets"));
-      }
-      font_collection_.RegisterFonts(asset_manager_);
-//      asset_manager_->PushFront(std::make_unique<DirectoryAssetBundle>(
-//          fml::OpenDirectory(settings_.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
-
-      // 塞进去一个kernel, 在isolate.PrepareForRunningFromPrecompiledCode() 中会被加载
-      std::shared_ptr<fml::Mapping> kernel = asset_manager_->GetAsMapping("kernel_blob.bin");
-      if(kernel != nullptr){
-          // 这个目前没找到原因
-          configuration.SetEntrypoint("mainFunc");
-        IsolateConfiguration::dynamic_kernel = kernel;
-          //isolate->GetKernelBuffers().push_back(kernel);
-
-        TT_LOG() << "kernel is pushed into KernelBuffers.";
-      } else {
-        TT_LOG() << "no kernel_blob.bin in zip file " <<settings_.dynamic_dill_path.c_str();
-      }
-    }
+  // BD ADD:
+  if (DartVM::IsRunningDynamicCode() && !settings_.dynamic_dill_path.empty()) {
+    // TODO(@zhaoxuyang): 这个目前没找到原因, 但其实不应该需要这样强行指定一个mainFunc的
+    TT_LOG() << "SetEntrypoint to mainFunc";
+    configuration.SetEntrypoint("mainFunc");
   }
 
   if (!isolate_configuration->PrepareIsolate(*isolate)) {

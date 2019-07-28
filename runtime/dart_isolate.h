@@ -70,6 +70,9 @@ class DartIsolate : public UIDartState {
   Phase GetPhase() const;
 
   FML_WARN_UNUSED_RESULT
+  bool PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> kernel);
+
+  FML_WARN_UNUSED_RESULT
   bool PrepareForRunningFromPrecompiledCode();
 
   FML_WARN_UNUSED_RESULT
@@ -105,14 +108,11 @@ class DartIsolate : public UIDartState {
 
   fml::RefPtr<fml::TaskRunner> GetMessageHandlingTaskRunner() const;
 
-  // BYTEDANCE ADD:
-  std::vector<std::shared_ptr<const fml::Mapping>> &GetKernelBuffers();
-
  private:
   bool LoadKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece);
 
-  // BYTEDANCE ADD:
-  bool LoadKernelFromKernelBuffers();
+  // BD ADD:
+  bool LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping);
 
   class AutoFireClosure {
    public:

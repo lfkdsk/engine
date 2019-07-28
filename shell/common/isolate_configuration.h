@@ -28,6 +28,9 @@ class IsolateConfiguration {
 
   static std::unique_ptr<IsolateConfiguration> CreateForAppSnapshot();
 
+  // BD ADD:
+  static std::unique_ptr<IsolateConfiguration> CreateForDynamicartKernel(std::unique_ptr<const fml::Mapping> kernel);
+
   static std::unique_ptr<IsolateConfiguration> CreateForKernel(
       std::unique_ptr<const fml::Mapping> kernel);
 
@@ -37,8 +40,6 @@ class IsolateConfiguration {
 
   static std::unique_ptr<IsolateConfiguration> CreateForKernelList(
       std::vector<std::unique_ptr<const fml::Mapping>> kernel_pieces);
-
-  static std::shared_ptr<const fml::Mapping> dynamic_kernel;
 
   IsolateConfiguration();
 

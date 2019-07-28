@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "flutter/assets/directory_asset_bundle.h"
+#include "flutter/assets/zip_asset_store.h"
 #include "flutter/shell/common/isolate_configuration.h"
 
 #include "flutter/fml/make_copyable.h"
@@ -22,6 +24,24 @@ bool IsolateConfiguration::PrepareIsolate(DartIsolate& isolate) {
 
   return DoPrepareIsolate(isolate);
 }
+
+
+class DynamicartIsolateConfiguration : public IsolateConfiguration {
+ public:
+  DynamicartIsolateConfiguration(std::unique_ptr<const fml::Mapping> kernel)
+      : kernel_(std::move(kernel)) {}
+
+  // |IsolateConfiguration|
+  bool DoPrepareIsolate(DartIsolate& isolate) override {
+    return isolate.PrepareForRunningFromDynamicartKernel(std::move(kernel_));
+  }
+
+ private:
+  std::unique_ptr<const fml::Mapping> kernel_;
+
+  FML_DISALLOW_COPY_AND_ASSIGN(DynamicartIsolateConfiguration);
+};
+
 
 class AppSnapshotIsolateConfiguration final : public IsolateConfiguration {
  public:
@@ -145,6 +165,27 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::InferFromSettings(
     const Settings& settings,
     std::shared_ptr<AssetManager> asset_manager,
     fml::RefPtr<fml::TaskRunner> io_worker) {
+  // Running in Dynamicart mode.
+  if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
+    // 如果是动态模式，asset_manager也给一并更新了。动态资源放在最前面，优先级最高。
+    const auto file_ext_index = settings.dynamic_dill_path.rfind('.');
+    if (settings.dynamic_dill_path.substr(file_ext_index) != ".zip") {
+      asset_manager->PushFront(std::make_unique<DirectoryAssetBundle>(fml::OpenDirectory(
+          settings.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
+    } else {
+      asset_manager->PushFront(std::make_unique<ZipAssetStore>(settings.dynamic_dill_path.c_str(), "flutter_assets"));
+    }
+
+    // 塞进去一个kernel, 在isolate.PrepareForRunningFromDynamicartKernel() 中会被加载
+    std::unique_ptr<fml::Mapping> kernel = asset_manager->GetAsMapping("kernel_blob.bin");
+    if (kernel != nullptr && kernel->GetSize() > 0) {
+      TT_LOG() << "Created IsolateConfiguration For Running DynamicartKernel.";
+      return IsolateConfiguration::CreateForDynamicartKernel(std::move(kernel));
+    } else {
+      TT_LOG() << "No kernel_blob.bin in zip file " << settings.dynamic_dill_path.c_str();
+    }
+  }
+
   // Running in AOT mode.
   if (DartVM::IsRunningPrecompiledCode()) {
     return CreateForAppSnapshot();
@@ -196,6 +237,12 @@ IsolateConfiguration::CreateForAppSnapshot() {
   return std::make_unique<AppSnapshotIsolateConfiguration>();
 }
 
+// BD ADD:
+std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicartKernel(
+    std::unique_ptr<const fml::Mapping> kernel) {
+  return std::make_unique<DynamicartIsolateConfiguration>(std::move(kernel));
+}
+
 std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForKernel(
     std::unique_ptr<const fml::Mapping> kernel) {
   return std::make_unique<KernelIsolateConfiguration>(std::move(kernel));
@@ -218,7 +265,5 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForKernelList(
   return std::make_unique<KernelListIsolateConfiguration>(
       std::move(kernel_pieces));
 }
-
-std::shared_ptr<const fml::Mapping> IsolateConfiguration::dynamic_kernel = nullptr;
 
 }  // namespace flutter

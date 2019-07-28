@@ -261,7 +261,8 @@ bool DartIsolate::LoadLibraries(bool is_root_isolate) {
   return true;
 }
 
-bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
+// BD ADD:
+bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> mapping) {
   TRACE_EVENT0("flutter", "DartIsolate::PrepareForRunningFromPrecompiledCode");
   if (phase_ != Phase::LibrariesSetup) {
     return false;
@@ -269,17 +270,40 @@ bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
 
   tonic::DartState::Scope scope(this);
 
-  TT_LOG() << "out PrepareForRunningFromPrecompiledCode.";
+  TT_LOG() << "LoadKernelFromDyanmicartKernel.";
+  LoadKernelFromDyanmicartKernel(mapping);
 
-  // BYTEDANCE ADD:
-  // 如果是动态化模式，就加载kernel. kernel_buffers_ 在Engine::PrepareAndLaunchIsolate中已经塞进去了。
-  TT_LOG() << "out LoadKernelFromKernelBuffers.";
-  if (Dart_IsDynamicRuntime()) {
-    if (IsolateConfiguration::dynamic_kernel != nullptr) {
-      TT_LOG() << "LoadKernelFromKernelBuffers.";
-      LoadKernelFromKernelBuffers();
-    }
+  if (Dart_IsNull(Dart_RootLibrary())) {
+    return false;
   }
+
+  if (!MarkIsolateRunnable()) {
+    return false;
+  }
+
+  if (child_isolate_preparer_ == nullptr) {
+    child_isolate_preparer_ = [buffers = kernel_buffers_](DartIsolate* isolate) {
+      for (unsigned long i = 0; i < buffers.size(); i++) {
+        const std::shared_ptr<const fml::Mapping>& buffer = buffers.at(i);
+        if (!isolate->PrepareForRunningFromDynamicartKernel(buffer)) {
+          return false;
+        }
+      }
+      return true;
+    };
+  }
+
+  phase_ = Phase::Ready;
+  return true;
+}
+
+bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
+  TRACE_EVENT0("flutter", "DartIsolate::PrepareForRunningFromPrecompiledCode");
+  if (phase_ != Phase::LibrariesSetup) {
+    return false;
+  }
+
+  tonic::DartState::Scope scope(this);
 
   if (Dart_IsNull(Dart_RootLibrary())) {
     return false;
@@ -324,23 +348,21 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
 }
 
 
-// BYTEDANCE ADD:
-bool DartIsolate::LoadKernelFromKernelBuffers() {
+// BD ADD: 暂时只支持一个DyanmicartKernel好啦，先跑起来再说
+bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping) {
   if (!DartVM::IsRunningDynamicCode()) {
     return false;
   }
 
-  FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: start loading..." << std::endl;
-  // 暂时只支持一个好啦，先跑起来再说
-  std::shared_ptr<const fml::Mapping> mapping = IsolateConfiguration::dynamic_kernel;
+  FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: start loading..." << std::endl;
   kernel_buffers_.push_back(mapping);
 
   if (!mapping || mapping->GetSize() == 0) {
-    FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: Kernel is NULL." << std::endl;
+    FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is NULL." << std::endl;
     return false;
   }
   if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
-    FML_LOG(ERROR)<<"LoadKernelFromKernelBuffers: Kernel is Invalid." << std::endl;
+    FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is Invalid." << std::endl;
     return false;
   }
 
@@ -814,11 +836,6 @@ void DartIsolate::AddIsolateShutdownCallback(fml::closure closure) {
 
 void DartIsolate::OnShutdownCallback() {
   shutdown_callbacks_.clear();
-}
-
-// BYTEDANCE ADD:
-std::vector<std::shared_ptr<const fml::Mapping>> &DartIsolate::GetKernelBuffers() {
-  return kernel_buffers_;
 }
 
 DartIsolate::AutoFireClosure::AutoFireClosure(fml::closure closure)

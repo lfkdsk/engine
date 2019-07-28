@@ -195,8 +195,30 @@ static void SurfaceDestroyed(JNIEnv* env, jobject jcaller, jlong shell_holder) {
   ANDROID_SHELL_HOLDER->GetPlatformView()->NotifyDestroyed();
 }
 
+// BD MOD: 增加 const Settings& settings 参数
 std::unique_ptr<IsolateConfiguration> CreateIsolateConfiguration(
-    const flutter::AssetManager& asset_manager) {
+    flutter::AssetManager& asset_manager, const Settings& settings) {
+  // BD ADD:
+  // Running in Dynamicart mode.
+  if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
+    // 如果是动态模式，asset_manager也给一并更新了。动态资源放在最前面，优先级最高。
+    const auto file_ext_index = settings.dynamic_dill_path.rfind('.');
+    if (settings.dynamic_dill_path.substr(file_ext_index) != ".zip") {
+      asset_manager.PushFront(std::make_unique<DirectoryAssetBundle>(fml::OpenDirectory(
+          settings.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
+    } else {
+      asset_manager.PushFront(std::make_unique<ZipAssetStore>(settings.dynamic_dill_path.c_str(), "flutter_assets"));
+    }
+
+    std::unique_ptr<fml::Mapping> kernel = asset_manager.GetAsMapping("kernel_blob.bin");
+    if (kernel != nullptr && kernel->GetSize() > 0) {
+      TT_LOG() << "Created IsolateConfiguration For Running DynamicartKernel.";
+      return IsolateConfiguration::CreateForDynamicartKernel(std::move(kernel));
+    } else {
+      TT_LOG() << "No kernel_blob.bin in zip file " << settings.dynamic_dill_path.c_str();
+    }
+  }
+
   if (flutter::DartVM::IsRunningPrecompiledCode()) {
     return IsolateConfiguration::CreateForAppSnapshot();
   }
@@ -271,7 +293,8 @@ static void RunBundleAndSnapshotFromLibrary(JNIEnv* env,
     }
   }
 
-  auto isolate_configuration = CreateIsolateConfiguration(*asset_manager);
+  // BD MOD: 跟iOS IsolateConfiguration::InferFromSettings 的逻辑对齐
+  auto isolate_configuration = CreateIsolateConfiguration(*asset_manager, FlutterMain::Get().GetSettings());
   if (!isolate_configuration) {
     FML_DLOG(ERROR)
         << "Isolate configuration could not be determined for engine launch.";

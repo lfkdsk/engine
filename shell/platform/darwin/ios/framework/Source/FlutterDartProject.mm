@@ -110,6 +110,18 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
       assetsPath = [mainBundle pathForResource:assetsName ofType:@""];
     }
 
+//    留着给minimum-size模式使用
+//    NSURL* isolateSnapshotDataURL =
+//        [NSURL URLWithString:@("assets/isolate_snapshot_data")
+//               relativeToURL:[NSURL fileURLWithPath:assetsPath]];
+//    if ([[NSFileManager defaultManager] fileExistsAtPath:isolateSnapshotDataURL.path]) {
+//      settings.isolate_snapshot_data_path = isolateSnapshotDataURL.path.UTF8String;
+//      NSLog(@"Find snapshot: %@", isolateSnapshotDataURL.path);
+//    } else {
+//      NSLog(@"Failed to find snapshot: %@", isolateSnapshotDataURL.path);
+//    }
+
+
     if (!assetsPath || assetsPath.length == 0) {
       NSLog(@"Failed to find assets path for \"%@\"", assetsName);
     } else {
