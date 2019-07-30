@@ -151,6 +151,9 @@ class Shell final : public PlatformView::Delegate,
 
   // |PlatformView::Delegate|
   void OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) override;
+                
+  // |PlatformView::Delegate|
+  void OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) override;
 
   // |PlatformView::Delegate|
   void OnPlatformViewSetNextFrameCallback(fml::closure closure) override;

@@ -60,6 +60,9 @@ class PlatformView {
 
     virtual void OnPlatformViewMarkTextureFrameAvailable(
         int64_t texture_id) = 0;
+      
+    virtual void OnPlatformViewRegisterImageLoader(
+        std::shared_ptr<flutter::ImageLoader> imageLoader) = 0;
   };
 
   explicit PlatformView(Delegate& delegate, TaskRunners task_runners);
@@ -113,6 +116,8 @@ class PlatformView {
 
   // Called once per texture update (e.g. video frame), on the platform thread.
   void MarkTextureFrameAvailable(int64_t texture_id);
+    
+  void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
 
  protected:
   PlatformView::Delegate& delegate_;

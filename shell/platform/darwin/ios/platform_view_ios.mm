@@ -70,6 +70,11 @@ void PlatformViewIOS::RegisterExternalTexture(int64_t texture_id,
                                               NSObject<FlutterTexture>* texture) {
   RegisterTexture(std::make_shared<IOSExternalTextureGL>(texture_id, texture));
 }
+    
+// |PlatformView|
+void PlatformViewIOS::RegisterExternalImageLoader(NSObject<FlutterImageLoader>* imageLoader) {
+  RegisterImageLoader(std::make_shared<IOSExternalImageLoader>(imageLoader));
+}
 
 // |PlatformView|
 std::unique_ptr<Surface> PlatformViewIOS::CreateRenderingSurface() {

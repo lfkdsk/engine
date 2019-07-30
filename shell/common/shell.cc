@@ -712,6 +712,21 @@ void Shell::OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) {
     }
   });
 }
+    
+// |shell::PlatformView::Delegate|
+void Shell::OnPlatformViewUnregisterTexture(int64_t texture_id) {
+   FML_DCHECK(is_setup_);
+   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
+    
+   task_runners_.GetGPUTaskRunner()->PostTask(
+       [rasterizer = rasterizer_->GetWeakPtr(), texture_id]() {
+         if (rasterizer) {
+           if (auto* registry = rasterizer->GetTextureRegistry()) {
+             registry->UnregisterTexture(texture_id);
+           }
+         }
+       });
+}
 
 // |PlatformView::Delegate|
 void Shell::OnPlatformViewSetNextFrameCallback(fml::closure closure) {

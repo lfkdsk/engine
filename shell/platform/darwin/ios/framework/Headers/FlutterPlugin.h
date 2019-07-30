@@ -13,6 +13,7 @@
 #include "FlutterCodecs.h"
 #include "FlutterPlatformViews.h"
 #include "FlutterTexture.h"
+#include "FlutterImageLoader.h"
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol FlutterPluginRegistrar;
@@ -244,6 +245,8 @@ typedef void (*FlutterPluginRegistrantCallback)(NSObject<FlutterPluginRegistry>*
  * @return The texture registry.
  */
 - (NSObject<FlutterTextureRegistry>*)textures;
+
+- (NSObject<FlutterImageLoaderRegistry>*)imageLoaders;
 
 /**
  * Registers a `FlutterPlatformViewFactory` for creation of platfrom views.

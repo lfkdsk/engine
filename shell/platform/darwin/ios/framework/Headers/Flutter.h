@@ -65,5 +65,6 @@
 #include "FlutterPluginAppLifeCycleDelegate.h"
 #include "FlutterTexture.h"
 #include "FlutterViewController.h"
+#include "FlutterImageLoader.h"
 
 #endif  // FLUTTER_FLUTTER_H_

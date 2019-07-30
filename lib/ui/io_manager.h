@@ -6,6 +6,7 @@
 #define FLUTTER_LIB_UI_IO_MANAGER_H_
 
 #include "flutter/flow/skia_gpu_object.h"
+#include "flutter/flow/image_loader.h"
 #include "flutter/fml/memory/weak_ptr.h"
 #include "third_party/skia/include/gpu/GrContext.h"
 
@@ -22,6 +23,8 @@ class IOManager {
   virtual fml::RefPtr<flutter::SkiaUnrefQueue> GetSkiaUnrefQueue() const = 0;
 
   virtual bool IsResourceContextValidForDecodeImage() const = 0;
+
+  virtual std::shared_ptr<flutter::ImageLoader> GetImageLoader() const = 0;
 };
 
 }  // namespace flutter

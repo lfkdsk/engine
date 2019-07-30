@@ -13,6 +13,7 @@
 #include "FlutterMacros.h"
 #include "FlutterPlugin.h"
 #include "FlutterTexture.h"
+#include "FlutterImageLoader.h"
 
 @class FlutterViewController;
 
@@ -39,7 +40,7 @@
  */
 FLUTTER_EXPORT
 @interface FlutterEngine
-    : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterPluginRegistry>
+    : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterImageLoaderRegistry, FlutterPluginRegistry>
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
