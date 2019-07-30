@@ -215,7 +215,7 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     if (_settings.dynamic_dill_path.empty()) {
       if (dynamicDillPath && [dynamicDillPath isKindOfClass:[NSString class]] &&
           dynamicDillPath.length > 0) {
-        _settings.dynamic_dill_path = self.dynamicDillPath.UTF8String;
+        _settings.dynamic_dill_path = dynamicDillPath.UTF8String;
         _dynamicDillPath = [dynamicDillPath copy];
       }
     }
