@@ -1666,6 +1666,15 @@ Future<Codec> instantiateImageCodec(Uint8List list, {
 String _instantiateImageCodec(Uint8List list, _Callback<Codec> callback, _ImageInfo imageInfo, double decodedCacheRatioCap)
   native 'instantiateImageCodec';
 
+Future<Image> getNativeImage(String nativeKey) {
+  return _futurize(
+        (_Callback<Image> callback) => _getNativeImage(nativeKey, callback),
+  );
+}
+
+String _getNativeImage(String nativeKey, _Callback<Image> callback)
+  native 'getNativeImage';
+
 /// Loads a single image frame from a byte array into an [Image] object.
 ///
 /// This is a convenience wrapper around [instantiateImageCodec]. Prefer using
