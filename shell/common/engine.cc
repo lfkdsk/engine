@@ -171,13 +171,6 @@ Engine::RunStatus Engine::PrepareAndLaunchIsolate(
     return RunStatus::FailureAlreadyRunning;
   }
 
-  // BD ADD:
-  if (DartVM::IsRunningDynamicCode() && !settings_.dynamic_dill_path.empty()) {
-    // TODO(@zhaoxuyang): 这个目前没找到原因, 但其实不应该需要这样强行指定一个mainFunc的
-    TT_LOG() << "SetEntrypoint to mainFunc";
-    configuration.SetEntrypoint("mainFunc");
-  }
-
   if (!isolate_configuration->PrepareIsolate(*isolate)) {
     FML_LOG(ERROR) << "Could not prepare to run the isolate.";
     return RunStatus::Failure;
