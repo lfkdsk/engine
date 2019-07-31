@@ -27,6 +27,7 @@ namespace {
 
 static constexpr const char* kInitCodecTraceTag = "InitCodec";
 static constexpr const char* kCodecNextFrameTraceTag = "CodecNextFrame";
+static constexpr const char* kGetNativeImageTraceTag = "GetNativeImage";
 
 // This must be kept in sync with the enum in painting.dart
 enum PixelFormat {
@@ -550,10 +551,12 @@ Dart_Handle SingleFrameCodec::getNextFrame(Dart_Handle callback_handle) {
   return Dart_Null();
 }
 
-static void InvokeNetworkCallback(fml::RefPtr<CanvasImage> image,
-                                  tonic::DartPersistentValue* callback) {
+static void InvokeGetNativeImageCallback(fml::RefPtr<CanvasImage> image,
+                                         std::unique_ptr<DartPersistentValue> callback,
+                                         size_t trace_id) {
     std::shared_ptr<tonic::DartState> dart_state = callback->dart_state().lock();
     if (!dart_state) {
+        TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
         return;
     }
     tonic::DartState::Scope scope(dart_state);
@@ -562,81 +565,56 @@ static void InvokeNetworkCallback(fml::RefPtr<CanvasImage> image,
     } else {
         DartInvoke(callback->value(), {ToDart(image)});
     }
-    delete callback;
+    TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
 }
     
-void Network(Dart_NativeArguments args) {
-    Dart_Handle exception = nullptr;
-    const std::string url = tonic::DartConverter<std::string>::FromArguments(args, 0, exception);
-    Dart_Handle callback_handle = Dart_GetNativeArgument(args, 1);
-
+void GetNativeImage(Dart_NativeArguments args) {
+  static size_t trace_counter = 1;
+  const size_t trace_id = trace_counter++;
+  TRACE_FLOW_BEGIN("flutter", kGetNativeImageTraceTag, trace_id);
+    
+  Dart_Handle callback_handle = Dart_GetNativeArgument(args, 1);
+  if (!Dart_IsClosure(callback_handle)) {
+    TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+    Dart_SetReturnValue(args, ToDart("Callback must be a function"));
+    return;
+  }
+    
+  Dart_Handle exception = nullptr;
+  const std::string url = tonic::DartConverter<std::string>::FromArguments(args, 0, exception);
+  if (exception) {
+    TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+    Dart_SetReturnValue(args, exception);
+    return;
+  }
+    
   auto* dart_state = UIDartState::Current();
+
   const auto& task_runners = dart_state->GetTaskRunners();
   fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
-//  tonic::DartPersistentValue* callback = new tonic::DartPersistentValue(tonic::DartState::Current(), callback_handle);
-//  task_runners.GetIOTaskRunner()->PostTask(fml::MakeCopyable(
-//      [callback = std::move(callback),
-//       ui_task_runner = task_runners.GetUITaskRunner(),
-//       io_task_runner = task_runners.GetIOTaskRunner(),
-//       context = dart_state->GetResourceContext(),
-//       io_manager = dart_state->GetIOManager(),
-//       queue = UIDartState::Current()->GetSkiaUnrefQueue(),
-//       url = std::move(url)]() mutable {
-          std::shared_ptr<flutter::ImageLoader> imageLoader = io_manager.get()->GetImageLoader();
-          imageLoader->Load(url, dart_state, fml::MakeCopyable(
-              [context = dart_state->GetResourceContext(),
-               ui_task_runner = task_runners.GetUITaskRunner(),
-               io_task_runner = task_runners.GetIOTaskRunner(),
-               queue = UIDartState::Current()->GetSkiaUnrefQueue(),
-               callback = new tonic::DartPersistentValue(tonic::DartState::Current(), callback_handle)
-               ](void* data, size_t width, size_t height, size_t size, size_t row_bytes, sk_sp<SkImage> skimage) mutable {
-                  io_task_runner->PostTask(fml::MakeCopyable(
-                     [//data = std::move(data),
-                      context = std::move(context),
-                      queue = std::move(queue),
-                      skimage = std::move(skimage),
-                      //width,
-                      //height,
-                      //size,
-               ](sk_sp<SkImage> skimage) mutable {
-                  io_task_runner->PostTask(fml::MakeCopyable(
-                     [
-                      context = std::move(context),
-                      queue = std::move(queue),
-                      skimage = std::move(skimage),
-                      callback = std::move(callback),
-                      ui_task_runner = std::move(ui_task_runner)
-                      //row_bytes
-                     ]() mutable {
-//                      sk_sp<SkData> buffer = SkData::MakeWithoutCopy(data, size);
-//                      SkImageInfo sk_info = SkImageInfo::Make(width, height, kBGRA_8888_SkColorType, kPremul_SkAlphaType);
-//                      SkImageInfo sk_info = SkImageInfo::Make(width, height, kBGRA_8888_SkColorType, kPremageul_SkAlphaType);
-//                      sk_sp<SkImage> skImage;
-//                      if (context) {
-//                        SkPixmap pixmap(sk_info, buffer->data(), row_bytes);
-//                        skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixmap, true, nullptr, true);
-//                      } else {
-//                        skImage = SkImage::MakeRasterData(sk_info, std::move(buffer), row_bytes);
-//                      }
-//                      auto image = CanvasImage::Create();
-//                      image->set_image({skImage, queue});
+  std::shared_ptr<flutter::ImageLoader> imageLoader = io_manager.get()->GetImageLoader();
+  imageLoader->Load(url, dart_state, fml::MakeCopyable(
+      [context = dart_state->GetResourceContext(),
+       ui_task_runner = task_runners.GetUITaskRunner(),
+       io_task_runner = task_runners.GetIOTaskRunner(),
+       queue = UIDartState::Current()->GetSkiaUnrefQueue(),
+       callback = std::make_unique<DartPersistentValue>(tonic::DartState::Current(), callback_handle),
+       trace_id](sk_sp<SkImage> skimage) mutable {
+         auto image = CanvasImage::Create();
+         image->set_image({skimage, queue});
 
-                      auto image = CanvasImage::Create();
-                      image->set_image({skimage, queue});
-
-                      ui_task_runner->PostTask(fml::MakeCopyable(
-                         [callback = std::move(callback),
-                          image = std::move(image)]() mutable {
-                             InvokeNetworkCallback(image, std::move(callback));
-                          }));
-                     }));
-               }));
-//           }));
+         ui_task_runner->PostTask(fml::MakeCopyable(
+             [callback = std::move(callback),
+              image = std::move(image),
+              trace_id]() mutable {
+                InvokeGetNativeImageCallback(image, std::move(callback), trace_id);
+             }));
+      }));
 }
 
 void Codec::RegisterNatives(tonic::DartLibraryNatives* natives) {
   natives->Register({
-      {"network", Network, 2, true},
+      {"getNativeImage", GetNativeImage, 2, true},
   });
   natives->Register({
       {"instantiateImageCodec", InstantiateImageCodec, 4, true},

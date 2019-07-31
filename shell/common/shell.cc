@@ -719,11 +719,12 @@ void Shell::OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoad
     FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
     task_runners_.GetIOTaskRunner()->PostTask(
-        [io_manager = io_manager_->GetWeakPtr(), imageLoader] {
-          if (io_manager) {
-            io_manager->SetImageLoader(imageLoader);
-          }
-        });
+      [io_manager = io_manager_->GetWeakPtr(),
+       imageLoader = std::move(imageLoader)] {
+        if (io_manager) {
+          io_manager->RegisterImageLoader(imageLoader);
+      }
+    });
 }
     
 // |PlatformView::Delegate|

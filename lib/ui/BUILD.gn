@@ -54,6 +54,8 @@ source_set("ui") {
     "painting/shader.h",
     "painting/vertices.cc",
     "painting/vertices.h",
+    "painting/image_loader.cc",
+    "painting/image_loader.h",
     "plugins/callback_cache.cc",
     "plugins/callback_cache.h",
     "semantics/custom_accessibility_action.cc",

@@ -16,6 +16,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterViewController_Internal.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
 #include "flutter/shell/platform/darwin/ios/ios_external_texture_gl.h"
+#include "flutter/shell/platform/darwin/ios/ios_external_image_loader.h"
 
 namespace flutter {
 

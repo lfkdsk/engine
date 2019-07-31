@@ -6,11 +6,20 @@
 
 #include "FlutterMacros.h"
 
+typedef struct IOSImageInfo{
+  CVPixelBufferRef _Nullable pixelBufferRef;
+  void* _Nullable data;
+  size_t width;
+  size_t height;
+  OSType pixelFormatType;
+  CGImageAlphaInfo alphaInfo;
+} IOSImageInfo;
+
 NS_ASSUME_NONNULL_BEGIN
 
 FLUTTER_EXPORT
 @protocol FlutterImageLoader <NSObject>
-typedef void(^callback)(CVPixelBufferRef, void *, int, int, int, int);
+typedef void(^callback)(IOSImageInfo);
 - (void)loadImage:(NSString*)url complete:(callback)complete;
 @end
 

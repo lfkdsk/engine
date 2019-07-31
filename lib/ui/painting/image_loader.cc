@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "flutter/flow/image_loader.h"
+#include "flutter/lib/ui/painting/image_loader.h"
 
 namespace flutter {
     

@@ -9,6 +9,7 @@
 
 #include "flutter/common/task_runners.h"
 #include "flutter/flow/texture.h"
+#include "flutter/lib/ui/painting/image_loader.h"
 #include "flutter/fml/macros.h"
 #include "flutter/fml/memory/weak_ptr.h"
 #include "flutter/lib/ui/semantics/custom_accessibility_action.h"

@@ -6,9 +6,10 @@
 #define FLUTTER_LIB_UI_IO_MANAGER_H_
 
 #include "flutter/flow/skia_gpu_object.h"
-#include "flutter/flow/image_loader.h"
+#include "flutter/lib/ui/painting/image_loader.h"
 #include "flutter/fml/memory/weak_ptr.h"
 #include "third_party/skia/include/gpu/GrContext.h"
+#include "flutter/lib/ui/painting/image_loader.h"
 
 namespace flutter {
 // Interface for methods that manage access to the resource GrContext and Skia
