@@ -29,10 +29,6 @@ namespace flutter {
         }
     }
     
-    void DummyReleaseProc(const void*ptr, void*context) {
-        std::free((char*)ptr);
-    }
-    
     void IOSExternalImageLoader::Load(const std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
         NSString* URL = [NSString stringWithCString:url.c_str() encoding:[NSString defaultCStringEncoding]];
         [imageLoader_ loadImage:URL complete: ^(IOSImageInfo imageInfo) {
