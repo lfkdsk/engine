@@ -405,14 +405,13 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   if (_viewportMetrics.physical_width)
     [self surfaceUpdated:YES];
   [[_engine.get() lifecycleChannel] sendMessage:@"AppLifecycleState.inactive"];
-
+  [self onUserSettingsChanged:nil];
   [super viewWillAppear:animated];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
   TRACE_EVENT0("flutter", "viewDidAppear");
   [self onLocaleUpdated:nil];
-  [self onUserSettingsChanged:nil];
   [self onAccessibilityStatusChanged:nil];
   [[_engine.get() lifecycleChannel] sendMessage:@"AppLifecycleState.resumed"];
 
