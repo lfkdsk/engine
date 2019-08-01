@@ -6,6 +6,7 @@
 #define FLUTTER_ANDROID_EXTERNAL_IMAGE_LOADER_H
 
 #include "flutter/lib/ui/painting/image_loader.h"
+#include "flutter/fml/macros.h"
 
 namespace flutter {
     class AndroidExternalImageLoader : public flutter::ImageLoader {
