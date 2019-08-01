@@ -20,16 +20,30 @@ import android.support.annotation.RequiresApi;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.*;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
-import android.view.inputmethod.InputMethodManager;
+
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
+
 import io.flutter.app.FlutterPluginRegistry;
-import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.embedding.android.AndroidKeyProcessor;
 import io.flutter.embedding.android.AndroidTouchProcessor;
+import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.embedding.engine.renderer.FlutterRenderer;
 import io.flutter.embedding.engine.systemchannels.AccessibilityChannel;
@@ -40,16 +54,12 @@ import io.flutter.embedding.engine.systemchannels.NavigationChannel;
 import io.flutter.embedding.engine.systemchannels.PlatformChannel;
 import io.flutter.embedding.engine.systemchannels.SettingsChannel;
 import io.flutter.embedding.engine.systemchannels.SystemChannel;
-import io.flutter.plugin.common.*;
+import io.flutter.plugin.common.ActivityLifecycleListener;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.editing.TextInputPlugin;
 import io.flutter.plugin.platform.PlatformPlugin;
 import io.flutter.plugin.platform.PlatformViewsController;
-
-import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import io.flutter.view.AndroidImageLoader;
 
 /**
  * An Android view containing a Flutter app.
@@ -274,7 +284,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         mMetrics.update(viewportMetrics);
         updateViewportMetrics();
     }
-    
+
     private static Activity getActivity(Context context) {
         if (context == null) {
             return null;
@@ -838,6 +848,14 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
      */
     public interface FirstFrameListener {
         void onFirstFrame();
+    }
+
+    public void registerAndroidImageLoader(String key, AndroidImageLoader androidImageLoader) {
+        mNativeView.getFlutterJNI().registerAndroidImageLoader(key, androidImageLoader);
+    }
+
+    public void unRegisterAndroidImageLoader(String key) {
+        mNativeView.getFlutterJNI().unRegisterAndroidImageLoader(key);
     }
 
     @Override

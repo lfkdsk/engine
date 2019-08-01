@@ -73,6 +73,8 @@ class PlatformViewAndroid final : public PlatformView {
       int64_t texture_id,
       const fml::jni::JavaObjectWeakGlobalRef& surface_texture);
 
+  void RegisterExternalImageLoader(const fml::jni::JavaObjectWeakGlobalRef& android_image_loader);
+
  private:
   const fml::jni::JavaObjectWeakGlobalRef java_object_;
   const std::unique_ptr<AndroidSurface> android_surface_;

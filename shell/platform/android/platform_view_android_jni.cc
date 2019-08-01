@@ -51,6 +51,8 @@ static fml::jni::ScopedJavaGlobalRef<jclass>* g_flutter_jni_class = nullptr;
 
 static fml::jni::ScopedJavaGlobalRef<jclass>* g_surface_texture_class = nullptr;
 
+static fml::jni::ScopedJavaGlobalRef<jclass>* g_image_loader_callback_class = nullptr;
+
 // Called By Native
 
 static jmethodID g_flutter_callback_info_constructor = nullptr;
@@ -166,6 +168,11 @@ void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj) {
   // 暂时清理异常防止crash
   fml::jni::ClearException(env);
   FML_CHECK(CheckException(env));
+}
+
+static jmethodID g_image_loader_load_method = nullptr;
+void CallJavaImageLoader(jobject android_image_loader, const std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
+
 }
 
 // Called By Java
@@ -536,6 +543,36 @@ static void UnregisterTexture(JNIEnv* env,
       static_cast<int64_t>(texture_id));
 }
 
+static void ExternalImageLoadSuccess(JNIEnv *env,
+        jobject jcaller,
+        jlong successCallbackPtr,
+        jobject jBitmap) {
+
+}
+
+static void ExternalImageLoadFail(JNIEnv *env,
+        jobject jcaller,
+        jlong failCallbackPtr) {
+
+}
+
+static void RegisterAndroidImageLoader(JNIEnv *env,
+                            jobject jcaller,
+                            jlong shell_holder,
+                            jstring key,
+                            jobject android_image_loader) {
+    ANDROID_SHELL_HOLDER->GetPlatformView()->RegisterExternalImageLoader(
+            fml::jni::JavaObjectWeakGlobalRef(env, android_image_loader)  //
+    );
+}
+
+static void UnRegisterAndroidImageLoader(JNIEnv *env,
+                                       jobject jcaller,
+                                       jlong shell_holder,
+                                       jstring key) {
+
+}
+
 static void InvokePlatformMessageResponseCallback(JNIEnv* env,
                                                   jobject jcaller,
                                                   jlong shell_holder,
@@ -673,6 +710,16 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(JJ)V",
           .fnPtr = reinterpret_cast<void*>(&UnregisterTexture),
       },
+      {
+          .name = "nativeRegisterAndroidImageLoader",
+          .signature = "(Ljava/lang/String;Lio/flutter/view/AndroidImageLoader;)V",
+          .fnPtr = reinterpret_cast<void*>(&MarkTextureFrameAvailable),
+      },
+      {
+          .name = "nativeUnregisterAndroidImageLoader",
+          .signature = "(Ljava/lang/String;)V",
+          .fnPtr = reinterpret_cast<void*>(&UnregisterTexture),
+      },
   };
 
   if (env->RegisterNatives(g_flutter_jni_class->obj(), flutter_jni_methods,
@@ -770,6 +817,33 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
     FML_LOG(ERROR) << "Could not locate SurfaceTexture class";
     return false;
   }
+
+  g_image_loader_callback_class = new fml::jni::ScopedJavaGlobalRef<jclass>(env, env->FindClass("io/flutter/view/NativeLoadCallback"));
+  if (g_image_loader_callback_class->is_null()) {
+      FML_LOG(ERROR) << "Could not locate NativeLoadCallback class";
+      return false;
+  }
+
+  static const JNINativeMethod native_load_callback_methods[] = {
+          {
+                  .name = "nativeSuccessCallback",
+                  .signature = "(JLandroid/graphics/Bitmap;)V",
+                  .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadSuccess),
+          },
+          {
+                  .name = "nativeFailCallback",
+                  .signature = "(J)V",
+                  .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadFail),
+          },
+  };
+
+  if (env->RegisterNatives(g_image_loader_callback_class->obj(),
+                           native_load_callback_methods,
+                           arraysize(native_load_callback_methods)) != 0) {
+      FML_LOG(ERROR) << "Failed to RegisterNatives with FlutterCallbackInfo";
+      return false;
+  }
+
 
   static const JNINativeMethod callback_info_methods[] = {
       {

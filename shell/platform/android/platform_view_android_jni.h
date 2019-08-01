@@ -46,6 +46,8 @@ void SurfaceTextureGetTransformMatrix(JNIEnv* env,
 
 void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj);
 
+void CallJavaImageLoader(jobject android_image_loader, const std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback);
+
 }  // namespace flutter
 
 #endif  // FLUTTER_SHELL_PLATFORM_ANDROID_PLATFORM_VIEW_ANDROID_JNI_H_

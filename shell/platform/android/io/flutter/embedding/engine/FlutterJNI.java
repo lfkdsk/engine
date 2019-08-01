@@ -23,6 +23,7 @@ import io.flutter.embedding.engine.renderer.FlutterRenderer;
 import io.flutter.embedding.engine.renderer.OnFirstFrameRenderedListener;
 import io.flutter.plugin.common.StandardMessageCodec;
 import io.flutter.view.AccessibilityBridge;
+import io.flutter.view.AndroidImageLoader;
 
 /**
  * Interface between Flutter embedding's Java code and Flutter engine's C/C++ code.
@@ -385,6 +386,23 @@ public class FlutterJNI {
   }
 
   private native void nativeSetAccessibilityFeatures(long nativePlatformViewId, int flags);
+
+  @UiThread
+  public void registerAndroidImageLoader(String key, AndroidImageLoader androidImageLoader) {
+    ensureAttachedToNative();
+    nativeRegisterImageLoader(key, androidImageLoader);
+  }
+
+  private native void nativeRegisterAndroidImageLoader(String key, AndroidImageLoader androidImageLoader);
+
+
+  @UiThread
+  public void unRegisterAndroidImageLoader(String key) {
+    ensureAttachedToNative();
+    nativeUnregisterImageLoader(key);
+  }
+
+  private native void nativeUnregisterAndroidImageLoader(String key);
 
   @UiThread
   public void registerTexture(long textureId, SurfaceTexture surfaceTexture) {
