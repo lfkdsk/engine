@@ -119,23 +119,15 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         }
     };
 
-    // BYTEDANCE MOD:
     public FlutterView(Context context) {
-        this(context, null, null, null);
+        this(context, null);
     }
 
-    // BYTEDANCE MOD:
     public FlutterView(Context context, AttributeSet attrs) {
-        this(context, attrs, null, null);
+        this(context, attrs, null);
     }
 
-    // BYTEDANCE ADD:
-    public FlutterView(Context context, String[] args) {
-        this(context, null, null, args);
-    }
-
-    // BYTEDANCE MOD:
-    public FlutterView(Context context, AttributeSet attrs, FlutterNativeView nativeView, String[] args) {
+    public FlutterView(Context context, AttributeSet attrs, FlutterNativeView nativeView) {
         super(context, attrs);
 
         Activity activity = getActivity(getContext());
@@ -144,7 +136,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         }
 
         if (nativeView == null) {
-            mNativeView = new FlutterNativeView(activity.getApplicationContext(), args);
+            mNativeView = new FlutterNativeView(activity.getApplicationContext());
         } else {
             mNativeView = nativeView;
         }

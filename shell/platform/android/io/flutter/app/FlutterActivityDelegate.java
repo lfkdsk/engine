@@ -158,8 +158,7 @@ public final class FlutterActivityDelegate
         flutterView = viewFactory.createFlutterView(activity);
         if (flutterView == null) {
             FlutterNativeView nativeView = viewFactory.createFlutterNativeView();
-            // BYTEDANCE MOD:
-            flutterView = new FlutterView(activity, null, nativeView, args);
+            flutterView = new FlutterView(activity, null, nativeView);
             flutterView.setLayoutParams(matchParent);
             activity.setContentView(flutterView);
             launchView = createLaunchView();
@@ -287,7 +286,8 @@ public final class FlutterActivityDelegate
     @Override
     public void onConfigurationChanged(Configuration newConfig) {}
 
-    private static String[] getArgsFromIntent(Intent intent) {
+    // BYTEDANCE MOD
+    static String[] getArgsFromIntent(Intent intent) {
         // Before adding more entries to this list, consider that arbitrary
         // Android applications can generate intents with extra data and that
         // there are many security-sensitive args in the binary.
