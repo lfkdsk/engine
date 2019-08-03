@@ -9,6 +9,7 @@
 
 #include "flutter/common/settings.h"
 #include "flutter/fml/macros.h"
+#include "flutter/lib/ui/window/platform_message.h"
 #include "flutter/shell/common/run_configuration.h"
 #include "flutter/shell/common/thread_host.h"
 #include "flutter/testing/test_dart_native_resolver.h"
@@ -26,6 +27,9 @@ class ShellTest : public ::testing::ThreadTest {
   Settings CreateSettingsForFixture();
 
   TaskRunners GetTaskRunnersForFixture();
+
+  void SendEnginePlatformMessage(Shell* shell,
+                                 fml::RefPtr<PlatformMessage> message);
 
   void AddNativeCallback(std::string name, Dart_NativeFunction callback);
 
