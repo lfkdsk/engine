@@ -49,7 +49,7 @@ class WindowClient {
   virtual void UpdateIsolateDescription(const std::string isolate_name,
                                         int64_t isolate_port) = 0;
   // BD ADD:
-  virtual double GetFps(int thread_type, int fps_type, bool do_clear) = 0;
+  virtual std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) = 0;
 
  protected:
   virtual ~WindowClient();

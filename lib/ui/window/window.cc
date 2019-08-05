@@ -166,15 +166,25 @@ void _RespondToPlatformMessage(Dart_NativeArguments args) {
 }
 
 // BD ADD: START
+void GetMaxSamples(Dart_NativeArguments args) {
+    int max_samples = Stopwatch::GetMaxSamples();
+    Dart_SetIntegerReturnValue(args, max_samples);
+}
+
 void GetFps(Dart_NativeArguments args) {
   Dart_Handle exception = nullptr;
   int thread_type =
       tonic::DartConverter<int>::FromArguments(args, 1, exception);
   int fps_type = tonic::DartConverter<int>::FromArguments(args, 2, exception);
   bool do_clear = tonic::DartConverter<bool>::FromArguments(args, 3, exception);
-  double fps = UIDartState::Current()->window()->client()->GetFps(
+  std::vector<double> fpsInfo = UIDartState::Current()->window()->client()->GetFps(
       thread_type, fps_type, do_clear);
-  Dart_SetDoubleReturnValue(args, fps);
+  Dart_Handle data_handle = Dart_NewList(fpsInfo.size());
+  for(std::vector<int>::size_type i = 0; i != fpsInfo.size(); i++) {
+    Dart_Handle value = Dart_NewDouble(fpsInfo[i]);
+    Dart_ListSetAt(data_handle, i, value);
+  }
+  Dart_SetReturnValue(args, data_handle);
 }
 // END
 }  // namespace
@@ -397,6 +407,7 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_addNextFrameCallback", _AddNextFrameCallback, 2, true},
       // BD ADD:
       {"Window_getFps", GetFps, 4, true},
+      {"Window_getFpsMaxSamples", GetMaxSamples, 1, true},
   });
 }
 

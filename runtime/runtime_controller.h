@@ -175,7 +175,7 @@ class RuntimeController final : public WindowClient {
                                 int64_t isolate_port) override;
 
   // BD ADD:
-  double GetFps(int thread_type, int fps_type, bool do_clear) override;
+  std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(RuntimeController);
 };
