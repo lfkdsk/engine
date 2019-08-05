@@ -7,6 +7,7 @@
 
 #include "flutter/lib/ui/painting/image_loader.h"
 #include "flutter/fml/macros.h"
+#include "flutter/fml/platform/android/jni_weak_ref.h"
 
 namespace flutter {
     class AndroidExternalImageLoader : public flutter::ImageLoader {
@@ -17,7 +18,7 @@ namespace flutter {
         void Load(const std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) override;
 
     private:
-        fml::jni::JavaObjectWeakGlobalRef& android_image_loader_;
+        fml::jni::JavaObjectWeakGlobalRef android_image_loader_;
         FML_DISALLOW_COPY_AND_ASSIGN(AndroidExternalImageLoader);
     };
 }

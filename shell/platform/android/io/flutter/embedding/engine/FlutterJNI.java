@@ -96,7 +96,7 @@ public class FlutterJNI {
 
   @UiThread
   public static native String nativeGetObservatoryUri();
-  
+
   private Long nativePlatformViewId;
   private FlutterRenderer.RenderSurface renderSurface;
   private AccessibilityDelegate accessibilityDelegate;
@@ -390,7 +390,7 @@ public class FlutterJNI {
   @UiThread
   public void registerAndroidImageLoader(String key, AndroidImageLoader androidImageLoader) {
     ensureAttachedToNative();
-    nativeRegisterImageLoader(key, androidImageLoader);
+    nativeRegisterAndroidImageLoader(key, androidImageLoader);
   }
 
   private native void nativeRegisterAndroidImageLoader(String key, AndroidImageLoader androidImageLoader);
@@ -399,7 +399,7 @@ public class FlutterJNI {
   @UiThread
   public void unRegisterAndroidImageLoader(String key) {
     ensureAttachedToNative();
-    nativeUnregisterImageLoader(key);
+    nativeUnregisterAndroidImageLoader(key);
   }
 
   private native void nativeUnregisterAndroidImageLoader(String key);
