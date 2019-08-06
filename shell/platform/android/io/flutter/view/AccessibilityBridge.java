@@ -360,7 +360,7 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
 
                     if (onAccessibilityChangeListener != null) {
                         onAccessibilityChangeListener.onAccessibilityChanged(
-                            accessibilityManager.isEnabled(),
+                            AccessibilityBridge.this.accessibilityManager.isEnabled(),
                             isTouchExplorationEnabled
                         );
                     }

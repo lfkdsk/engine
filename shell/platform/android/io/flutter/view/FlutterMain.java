@@ -196,7 +196,7 @@ public class FlutterMain {
      * @param applicationContext The Android application context.
      * @param settings Configuration settings.
      */
-    public static void startInitialization(Context applicationContext, Settings settings) {
+    public static void startInitialization(final Context applicationContext, Settings settings) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
           throw new IllegalStateException("startInitialization must be called on the main thread");
         }
@@ -293,10 +293,10 @@ public class FlutterMain {
      * thread, then invoking {@code callback} on the {@code callbackHandler}.
      */
     public static void ensureInitializationCompleteAsync(
-        Context applicationContext,
-        String[] args,
-        Handler callbackHandler,
-        Runnable callback
+        final Context applicationContext,
+        final String[] args,
+        final Handler callbackHandler,
+        final Runnable callback
     ) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             throw new IllegalStateException("ensureInitializationComplete must be called on the main thread");
