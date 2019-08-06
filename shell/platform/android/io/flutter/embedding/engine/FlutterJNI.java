@@ -390,19 +390,19 @@ public class FlutterJNI {
   @UiThread
   public void registerAndroidImageLoader(String key, AndroidImageLoader androidImageLoader) {
     ensureAttachedToNative();
-    nativeRegisterAndroidImageLoader(key, androidImageLoader);
+    nativeRegisterAndroidImageLoader(nativePlatformViewId, key, androidImageLoader);
   }
 
-  private native void nativeRegisterAndroidImageLoader(String key, AndroidImageLoader androidImageLoader);
+  private native void nativeRegisterAndroidImageLoader(long nativePlatformViewId, String key, AndroidImageLoader androidImageLoader);
 
 
   @UiThread
   public void unRegisterAndroidImageLoader(String key) {
     ensureAttachedToNative();
-    nativeUnregisterAndroidImageLoader(key);
+    nativeUnregisterAndroidImageLoader(nativePlatformViewId, key);
   }
 
-  private native void nativeUnregisterAndroidImageLoader(String key);
+  private native void nativeUnregisterAndroidImageLoader(long nativePlatformViewId, String key);
 
   @UiThread
   public void registerTexture(long textureId, SurfaceTexture surfaceTexture) {

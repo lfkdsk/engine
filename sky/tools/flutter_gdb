@@ -24,7 +24,7 @@ previous run for a given device, then you can skip this step by passing
 --no-pull-libs.
 """
 
-ADB_LOCAL_PATH = 'third_party/android_tools/sdk/platform-tools/adb'
+ADB_LOCAL_PATH = '/Users/jay/Library/Android/sdk/platform-tools/adb'
 
 
 def _get_flutter_root():

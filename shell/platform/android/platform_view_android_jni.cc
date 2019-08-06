@@ -792,12 +792,12 @@ bool RegisterApi(JNIEnv* env) {
       },
       {
           .name = "nativeRegisterAndroidImageLoader",
-          .signature = "(Ljava/lang/String;Lio/flutter/view/AndroidImageLoader;)V",
+          .signature = "(JLjava/lang/String;Lio/flutter/view/AndroidImageLoader;)V",
           .fnPtr = reinterpret_cast<void*>(&RegisterAndroidImageLoader),
       },
       {
           .name = "nativeUnregisterAndroidImageLoader",
-          .signature = "(Ljava/lang/String;)V",
+          .signature = "(JLjava/lang/String;)V",
           .fnPtr = reinterpret_cast<void*>(&UnRegisterAndroidImageLoader),
       },
   };
