@@ -434,6 +434,14 @@ static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
 
 - (UITextPosition*)positionFromPosition:(UITextPosition*)position offset:(NSInteger)offset {
   NSUInteger offsetPosition = ((FlutterTextPosition*)position).index;
+
+  // BD ADD: START
+  NSInteger newLocation = (NSInteger)offsetPosition + offset;
+  if (newLocation < 0 || newLocation > (NSInteger)self.text.length) {
+    return nil;
+  }
+  // END
+
   if (offset >= 0) {
     for (NSInteger i = 0; i < offset && offsetPosition < self.text.length; ++i)
       offsetPosition = [self incrementOffsetPosition:offsetPosition];
