@@ -211,7 +211,6 @@ public:
     androidImageLoader(_imageLoader),
     callback(std::move(_callback)),
     contextPtr(_contextPtr){}
-    ~ImageLoadContext(){}
     void onLoadSuccess(std::string cKey, jobject jbitmap) {
         JNIEnv* env = fml::jni::AttachCurrentThread();
         void* pixels = nullptr;
@@ -219,7 +218,7 @@ public:
         uint32_t height = 0;
         int32_t format = 0;
         uint32_t stride;
-        javaBitmap = env->NewGlobalRef(jbitmap);
+        javaBitmap = jbitmap;
         ObtainPixelsFromJavaBitmap(env, jbitmap, &width, &height, &format, &stride, &pixels);
         sk_sp<SkImage> skImage;
         SkColorType ct;
@@ -261,11 +260,12 @@ public:
 
     void releaseResources(std::string cKey) {
         JNIEnv* env = fml::jni::AttachCurrentThread();
-        if (ANDROID_BITMAP_RESULT_SUCCESS != AndroidBitmap_unlockPixels(env, javaBitmap)) {
-            FML_LOG(ERROR)<<"FlutterViewHandleBitmapPixels: unlock dst bitmap failed"<<std::endl;
+        auto res = AndroidBitmap_unlockPixels(env, javaBitmap);
+        if (ANDROID_BITMAP_RESULT_SUCCESS != res) {
+            FML_LOG(ERROR)<<"FlutterViewHandleBitmapPixels: unlock dst bitmap failed code is " + std::to_string(res)<<std::endl;
         }
-        env->DeleteGlobalRef(javaBitmap);
         env->CallVoidMethod(androidImageLoader, g_image_loader_class_release, fml::jni::StringToJavaString(env, cKey).obj());
+        env->DeleteGlobalRef(javaBitmap);
         env->DeleteGlobalRef(androidImageLoader);
     }
 private:
@@ -280,12 +280,11 @@ private:
 static std::map<std::string, std::shared_ptr<ImageLoadContext>> g_image_load_contexts;
 void CallJavaImageLoader(jobject android_image_loader, std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  auto loadContext = std::make_shared<ImageLoadContext>(url, callback, contextPtr, android_image_loader);
+  auto loadContext = std::make_shared<ImageLoadContext>(url, callback, contextPtr, env->NewGlobalRef(android_image_loader));
   auto key = url + std::to_string(reinterpret_cast<jlong>(loadContext.get()));
   g_image_load_contexts[key] = loadContext;
 
   jobject nativeCallbackObj = env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor);
-
   env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(), nativeCallbackObj, fml::jni::StringToJavaString(env, key).obj());
 }
 
@@ -677,7 +676,7 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
     if (loadContext == nullptr) {
         return;
     }
-    loadContext->onLoadSuccess(cKey, jBitmap);
+    loadContext->onLoadSuccess(cKey, env->NewGlobalRef(jBitmap));
 }
 
 static void ExternalImageLoadFail(JNIEnv *env,
