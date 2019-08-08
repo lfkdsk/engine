@@ -220,8 +220,8 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         settingsChannel = new SettingsChannel(dartExecutor);
 
         // Create and setup plugins
-        PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
-        addActivityLifecycleListener(platformPlugin);
+        // PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
+        // addActivityLifecycleListener(platformPlugin);
         mTextInputPlugin = new TextInputPlugin(this, dartExecutor);
         androidKeyProcessor = new AndroidKeyProcessor(keyEventChannel, mTextInputPlugin);
         androidTouchProcessor = new AndroidTouchProcessor(flutterRenderer);

@@ -254,8 +254,8 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         settingsChannel = new SettingsChannel(dartExecutor);
 
         // Create and setup plugins
-        PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
-        addActivityLifecycleListener(platformPlugin);
+        // PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
+        // addActivityLifecycleListener(platformPlugin);
         mTextInputPlugin = new TextInputPlugin(this, dartExecutor);
         androidKeyProcessor = new AndroidKeyProcessor(keyEventChannel, mTextInputPlugin);
         androidTouchProcessor = new AndroidTouchProcessor(flutterRenderer);
