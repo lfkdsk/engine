@@ -56,10 +56,9 @@ static fml::jni::ScopedJavaGlobalRef<jclass>* g_surface_texture_class = nullptr;
 
 static fml::jni::ScopedJavaGlobalRef<jclass>* g_image_loader_callback_class = nullptr;
 
-// Called By Native
+static fml::jni::ScopedJavaGlobalRef<jclass>* g_image_loader_class = nullptr;
 
-typedef void (*loadSuccess)(jobject);
-typedef void (*loadFail)();
+// Called By Native
 
 static jmethodID g_flutter_callback_info_constructor = nullptr;
 jobject CreateFlutterCallbackInformation(
@@ -176,17 +175,20 @@ void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj) {
   FML_CHECK(CheckException(env));
 }
 
-static std::map<std::string, jobject> g_bitmap_cache;
-void FlutterViewHandleBitmapPixels(JNIEnv* env, jobject jbitmap, std::string url, uint32_t* width, uint32_t* height, int32_t* format, uint32_t* stride, void** pixels) {
+static jmethodID g_native_callback_constructor = nullptr;
+static jmethodID g_image_loader_class_load = nullptr;
+static jmethodID g_image_loader_class_release = nullptr;
+static std::map<const void*, std::string> g_pixel_address_to_key_mapper;
+void ObtainPixelsFromJavaBitmap(JNIEnv* env, jobject jbitmap, uint32_t* width, uint32_t* height, int32_t* format, uint32_t* stride, void** pixels) {
     FML_CHECK(CheckException(env));
     AndroidBitmapInfo info;
     if (ANDROID_BITMAP_RESULT_SUCCESS != AndroidBitmap_getInfo(env, jbitmap, &info)) {
-        FML_LOG(ERROR)<<"FlutterViewHandleBitmapPixels: get bitmap info failed"<<std::endl;
+        FML_LOG(ERROR)<<"ObtainPixelsFromJavaBitmap: get bitmap info failed"<<std::endl;
         return;
     }
 
     if(info.format == ANDROID_BITMAP_FORMAT_NONE){
-        FML_LOG(ERROR)<<"FlutterViewHandleBitmapPixels: format not support"<<std::endl;
+        FML_LOG(ERROR)<<"ObtainPixelsFromJavaBitmap: format not support"<<std::endl;
         return;
     }
 
@@ -195,33 +197,30 @@ void FlutterViewHandleBitmapPixels(JNIEnv* env, jobject jbitmap, std::string url
     *stride = info.stride;
     *format = info.format;
     if (ANDROID_BITMAP_RESULT_SUCCESS != AndroidBitmap_lockPixels(env, jbitmap, pixels) || *pixels == nullptr) {
-        FML_LOG(ERROR)<<"FlutterViewHandleBitmapPixels: lock dst bitmap failed"<<std::endl;
+        FML_LOG(ERROR)<<"ObtainPixelsFromJavaBitmap: lock dst bitmap failed"<<std::endl;
         return ;
-    }
-
-
-    if(g_bitmap_cache[url]== nullptr){
-        g_bitmap_cache[url] = env->NewGlobalRef(jbitmap);
     }
 }
 
-class ImageLoadSuccessCallback {
+void ReleaseLoadContext(const void* pixels, SkImage::ReleaseContext releaseContext);
+
+class ImageLoadContext {
 public:
-    ImageLoadSuccessCallback(std::string _url, std::function<void(sk_sp<SkImage> image)> _callback, void* _contextPtr)
-    :url(std::move(_url)),
+    ImageLoadContext(std::string _url, std::function<void(sk_sp<SkImage> image)> _callback, void* _contextPtr, jobject _imageLoader):
+    url(std::move(_url)),
+    androidImageLoader(_imageLoader),
     callback(std::move(_callback)),
-    contextPtr(_contextPtr)
-    {}
-    ~ImageLoadSuccessCallback(){
-    }
-    void operator()(jobject jbitmap) {
+    contextPtr(_contextPtr){}
+    ~ImageLoadContext(){}
+    void onLoadSuccess(std::string cKey, jobject jbitmap) {
         JNIEnv* env = fml::jni::AttachCurrentThread();
         void* pixels = nullptr;
         uint32_t width = 0;
         uint32_t height = 0;
         int32_t format = 0;
         uint32_t stride;
-        FlutterViewHandleBitmapPixels(env, jbitmap, url, &width, &height, &format, &stride, &pixels);
+        javaBitmap = env->NewGlobalRef(jbitmap);
+        ObtainPixelsFromJavaBitmap(env, jbitmap, &width, &height, &format, &stride, &pixels);
         sk_sp<SkImage> skImage;
         SkColorType ct;
         // if android
@@ -243,44 +242,62 @@ public:
                 SkImageInfo::Make(width, height, ct, kPremul_SkAlphaType);
         size_t row_bytes = stride;
         if (row_bytes < sk_info.minRowBytes()) {
+            releaseResources(cKey);
             return;
         }
+        g_pixel_address_to_key_mapper[pixels] = cKey;
         SkPixmap pixmap(sk_info, pixels, row_bytes);
-        skImage = SkImage::MakeFromRaster(pixmap, nullptr, nullptr);
+        skImage = SkImage::MakeFromRaster(pixmap, ReleaseLoadContext, nullptr);
         auto dartState = static_cast<UIDartState*>(contextPtr);
         dartState->GetTaskRunners().GetIOTaskRunner()->PostTask(
                 [skImage = std::move(skImage), callback = std::move(callback)]()mutable{
                     callback(skImage);
                 });
     }
+
+    void onLoadFail(std::string cKey) {
+        releaseResources(cKey);
+    }
+
+    void releaseResources(std::string cKey) {
+        JNIEnv* env = fml::jni::AttachCurrentThread();
+        if (ANDROID_BITMAP_RESULT_SUCCESS != AndroidBitmap_unlockPixels(env, javaBitmap)) {
+            FML_LOG(ERROR)<<"FlutterViewHandleBitmapPixels: unlock dst bitmap failed"<<std::endl;
+        }
+        env->DeleteGlobalRef(javaBitmap);
+        env->CallVoidMethod(androidImageLoader, g_image_loader_class_release, fml::jni::StringToJavaString(env, cKey).obj());
+        env->DeleteGlobalRef(androidImageLoader);
+    }
 private:
     std::string url;
+    jobject javaBitmap;
+    jobject androidImageLoader;
     std::function<void(sk_sp<SkImage> image)> callback;
     void* contextPtr;
 };
 
-static jmethodID g_native_callback_constructor = nullptr;
-static std::map<jlong, std::shared_ptr<ImageLoadSuccessCallback>> g_callbacks;
+
+static std::map<std::string, std::shared_ptr<ImageLoadContext>> g_image_load_contexts;
 void CallJavaImageLoader(jobject android_image_loader, std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  jclass imageLoaderClazz = env->GetObjectClass(android_image_loader);
-  jmethodID loadMethod = env->GetMethodID(imageLoaderClazz, "load", "(Ljava/lang/String;Lio/flutter/view/NativeLoadCallback;)V");
-  if (loadMethod == nullptr) {
-    return;
-  }
+  auto loadContext = std::make_shared<ImageLoadContext>(url, callback, contextPtr, android_image_loader);
+  auto key = url + std::to_string(reinterpret_cast<jlong>(loadContext.get()));
+  g_image_load_contexts[key] = loadContext;
 
-  auto successCallback = std::make_shared<ImageLoadSuccessCallback>(url, callback, contextPtr);
-  auto successPtr = reinterpret_cast<jlong>(successCallback.get());
-  g_callbacks[successPtr] = successCallback;
-  auto failCallback = [](){
-      FML_DLOG(ERROR)
-      << "image load fail";
-  };
+  jobject nativeCallbackObj = env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor);
 
-  jobject nativeCallbackObj = env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor,
-                                             successPtr, reinterpret_cast<jlong>(&failCallback));
+  env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(), nativeCallbackObj, fml::jni::StringToJavaString(env, key).obj());
+}
 
-  env->CallVoidMethod(android_image_loader, loadMethod, fml::jni::StringToJavaString(env, url).obj(), nativeCallbackObj);
+void ReleaseLoadContext(const void* pixels, SkImage::ReleaseContext releaseContext){
+    auto contextKey = g_pixel_address_to_key_mapper[pixels];
+    auto loadContext = g_image_load_contexts[contextKey];
+    if (loadContext == nullptr) {
+        return;
+    }
+    g_pixel_address_to_key_mapper.erase(pixels);
+    loadContext->releaseResources(contextKey);
+    g_image_load_contexts.erase(contextKey);
 }
 
 // Called By Java
@@ -653,23 +670,30 @@ static void UnregisterTexture(JNIEnv* env,
 
 static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jcaller,
-        jlong successCallbackPtr,
+        jstring key,
         jobject jBitmap) {
-    auto callback = g_callbacks[successCallbackPtr];
-    callback->operator()(jBitmap);
+    auto cKey = fml::jni::JavaStringToString(env, key);
+    auto loadContext = g_image_load_contexts[cKey];
+    if (loadContext == nullptr) {
+        return;
+    }
+    loadContext->onLoadSuccess(cKey, jBitmap);
 }
 
 static void ExternalImageLoadFail(JNIEnv *env,
         jobject jcaller,
-        jlong failCallbackPtr) {
-    auto callback = (loadFail)failCallbackPtr;
-    callback();
+        jstring key) {
+    auto cKey = fml::jni::JavaStringToString(env, key);
+    auto loadContext = g_image_load_contexts[cKey];
+    if (loadContext == nullptr) {
+        return;
+    }
+    loadContext->onLoadFail(cKey);
 }
 
 static void RegisterAndroidImageLoader(JNIEnv *env,
                             jobject jcaller,
                             jlong shell_holder,
-                            jstring key,
                             jobject android_image_loader) {
     ANDROID_SHELL_HOLDER->GetPlatformView()->RegisterExternalImageLoader(
             fml::jni::JavaObjectWeakGlobalRef(env, android_image_loader)  //
@@ -678,8 +702,7 @@ static void RegisterAndroidImageLoader(JNIEnv *env,
 
 static void UnRegisterAndroidImageLoader(JNIEnv *env,
                                        jobject jcaller,
-                                       jlong shell_holder,
-                                       jstring key) {
+                                       jlong shell_holder) {
 
 }
 
@@ -822,12 +845,12 @@ bool RegisterApi(JNIEnv* env) {
       },
       {
           .name = "nativeRegisterAndroidImageLoader",
-          .signature = "(JLjava/lang/String;Lio/flutter/view/AndroidImageLoader;)V",
+          .signature = "(JLio/flutter/view/AndroidImageLoader;)V",
           .fnPtr = reinterpret_cast<void*>(&RegisterAndroidImageLoader),
       },
       {
           .name = "nativeUnregisterAndroidImageLoader",
-          .signature = "(JLjava/lang/String;)V",
+          .signature = "(J)V",
           .fnPtr = reinterpret_cast<void*>(&UnRegisterAndroidImageLoader),
       },
   };
@@ -895,12 +918,12 @@ bool RegisterApi(JNIEnv* env) {
 
 static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jcaller,
-        jlong successCallbackPtr,
+        jstring key,
         jobject jBitmap);
 
 static void ExternalImageLoadFail(JNIEnv *env,
         jobject jcaller,
-        jlong failCallbackPtr);
+        jstring key);
 
 bool PlatformViewAndroid::Register(JNIEnv* env) {
   if (env == nullptr) {
@@ -937,34 +960,53 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
     return false;
   }
 
+  g_image_loader_class = new fml::jni::ScopedJavaGlobalRef<jclass>(env, env->FindClass("io/flutter/view/AndroidImageLoader"));
+  if (g_image_loader_class->is_null()) {
+      FML_LOG(ERROR) << "Could not locate AndroidImageLoader class";
+      return false;
+  }
+
+  g_image_loader_class_load = env->GetMethodID(g_image_loader_class->obj(), "load", "(Ljava/lang/String;Lio/flutter/view/NativeLoadCallback;Ljava/lang/String;)V");
+  if (g_image_loader_class_load == nullptr) {
+    FML_LOG(ERROR) << "Could not locate AndroidImageLoader load method";
+    return false;
+  }
+
+  g_image_loader_class_release = env->GetMethodID(g_image_loader_class->obj(), "release", "(Ljava/lang/String;)V");
+  if (g_image_loader_class_release == nullptr) {
+    FML_LOG(ERROR) << "Could not locate AndroidImageLoader release method";
+    return false;
+  }
+
   g_image_loader_callback_class = new fml::jni::ScopedJavaGlobalRef<jclass>(env, env->FindClass("io/flutter/view/NativeLoadCallback"));
   if (g_image_loader_callback_class->is_null()) {
       FML_LOG(ERROR) << "Could not locate NativeLoadCallback class";
       return false;
   }
 
-  g_native_callback_constructor = env->GetMethodID(g_image_loader_callback_class->obj(), "<init>", "(JJ)V");
+  g_native_callback_constructor = env->GetMethodID(g_image_loader_callback_class->obj(), "<init>", "()V");
   if (g_native_callback_constructor == nullptr) {
     FML_LOG(ERROR) << "Could not locate NativeLoadCallback constructor";
     return false;
   }
+
   static const JNINativeMethod native_load_callback_methods[] = {
           {
-                  .name = "nativeSuccessCallback",
-                  .signature = "(JLandroid/graphics/Bitmap;)V",
-                  .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadSuccess),
+              .name = "nativeSuccessCallback",
+              .signature = "(Ljava/lang/String;Landroid/graphics/Bitmap;)V",
+              .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadSuccess),
           },
           {
-                  .name = "nativeFailCallback",
-                  .signature = "(J)V",
-                  .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadFail),
+              .name = "nativeFailCallback",
+              .signature = "(Ljava/lang/String;)V",
+              .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadFail),
           },
   };
 
   if (env->RegisterNatives(g_image_loader_callback_class->obj(),
                            native_load_callback_methods,
                            arraysize(native_load_callback_methods)) != 0) {
-      FML_LOG(ERROR) << "Failed to RegisterNatives with FlutterCallbackInfo";
+      FML_LOG(ERROR) << "Failed to RegisterNatives with NativeLoadCallback";
       return false;
   }
 

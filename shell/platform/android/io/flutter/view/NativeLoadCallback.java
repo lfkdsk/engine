@@ -7,23 +7,15 @@ import android.graphics.Bitmap;
  */
 public class NativeLoadCallback {
 
-    protected long cppSuccessCallbackPtr;
-    protected long cppFailCallbackPtr;
+    public native void nativeSuccessCallback(String key, Bitmap bitmap);
 
-    public NativeLoadCallback(long successCallbackPtr, long failCallbackPtr) {
-        cppSuccessCallbackPtr = successCallbackPtr;
-        cppFailCallbackPtr = failCallbackPtr;
+    public native void nativeFailCallback(String key);
+
+    public void onLoadSuccess(String key, Bitmap bitmap) {
+        nativeSuccessCallback(key, bitmap);
     }
 
-    public native void nativeSuccessCallback(long cppSuccessCallbackPtr, Bitmap bitmap);
-
-    public native void nativeFailCallback(long cppFailCallbackPtr);
-
-    public void onLoadSuccess(Bitmap bitmap) {
-        nativeSuccessCallback(cppSuccessCallbackPtr, bitmap);
-    }
-
-    public void onLoadFail() {
-        nativeFailCallback(cppFailCallbackPtr);
+    public void onLoadFail(String key) {
+        nativeFailCallback(key);
     }
 }

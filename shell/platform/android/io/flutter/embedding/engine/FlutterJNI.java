@@ -388,21 +388,20 @@ public class FlutterJNI {
   private native void nativeSetAccessibilityFeatures(long nativePlatformViewId, int flags);
 
   @UiThread
-  public void registerAndroidImageLoader(String key, AndroidImageLoader androidImageLoader) {
+  public void registerAndroidImageLoader(AndroidImageLoader androidImageLoader) {
     ensureAttachedToNative();
-    nativeRegisterAndroidImageLoader(nativePlatformViewId, key, androidImageLoader);
+    nativeRegisterAndroidImageLoader(nativePlatformViewId, androidImageLoader);
   }
 
-  private native void nativeRegisterAndroidImageLoader(long nativePlatformViewId, String key, AndroidImageLoader androidImageLoader);
-
+  private native void nativeRegisterAndroidImageLoader(long nativePlatformViewId, AndroidImageLoader androidImageLoader);
 
   @UiThread
-  public void unRegisterAndroidImageLoader(String key) {
+  public void unRegisterAndroidImageLoader() {
     ensureAttachedToNative();
-    nativeUnregisterAndroidImageLoader(nativePlatformViewId, key);
+    nativeUnregisterAndroidImageLoader(nativePlatformViewId);
   }
 
-  private native void nativeUnregisterAndroidImageLoader(long nativePlatformViewId, String key);
+  private native void nativeUnregisterAndroidImageLoader(long nativePlatformViewId);
 
   @UiThread
   public void registerTexture(long textureId, SurfaceTexture surfaceTexture) {

@@ -178,6 +178,7 @@ java_library("flutter_shell_java") {
     "io/flutter/view/VsyncWaiter.java",
     "io/flutter/view/AndroidImageLoader.java",
     "io/flutter/view/NativeLoadCallback.java",
+    "io/flutter/view/ImageLoaderRegistry.java",
   ]
 
   java_files +=
