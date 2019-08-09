@@ -286,6 +286,7 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         if (mPlatformPlugin != null) {
             removeActivityLifecycleListener(mPlatformPlugin);
             mPlatformPlugin = null;
+            platformChannel.setPlatformMessageHandler(null);
             if (mNativeView != null && mNativeView.isAttached()) {
                 mNativeView.detachFromFlutterView();
             }

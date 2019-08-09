@@ -252,6 +252,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         if (mPlatformPlugin != null) {
             removeActivityLifecycleListener(mPlatformPlugin);
             mPlatformPlugin = null;
+            platformChannel.setPlatformMessageHandler(null);
             if (mNativeView != null && mNativeView.isAttached()) {
                 mNativeView.detachFromFlutterView();
             }
