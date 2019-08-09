@@ -121,7 +121,7 @@ allowed_hosts = [
 ]
 
 deps = {
-  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + '0f2485d1c840eafa45465090da1ab8bc9c4a75e8',
+  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + '9a38f8433e0318c7d4a833279ce540ef1fae5a93',
 
    # Fuchsia compatibility
    #
