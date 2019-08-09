@@ -72,15 +72,22 @@ fml::TimeDelta Stopwatch::AverageDelta() const {
 }
 
 // BD ADD: START
-double Stopwatch::GetFps(int type) const {
+int Stopwatch::GetMaxSamples() {
+  return kMaxSamples;
+}
+
+std::vector<double> Stopwatch::GetFps(int type) const {
   double fps = 0;
+  std::vector<double> result;
   if (type == kAvgFpsType) {
     int drop_count = 0;
     int frame_count = 0;
     double frame_time_ms;
+    double totalTime = 0;
     for (size_t i = 0; i < kMaxSamples; i++) {
       frame_time_ms = laps_[i].ToMillisecondsF();
       if (frame_time_ms > 0) {
+        totalTime += frame_time_ms;
         frame_count++;
         if (frame_time_ms > kOneFrameMS) {
           drop_count += (int)UnitFrameInterval(frame_time_ms);
@@ -89,6 +96,12 @@ double Stopwatch::GetFps(int type) const {
     }
     fps =
         frame_count > 0 ? 60.0 * frame_count / (frame_count + drop_count) : 60;
+    result.resize(4);
+    result[0] = fps;
+    result[1] = frame_count > 0 ? totalTime / frame_count : 0;
+    result[2] = frame_count;
+    result[3] = drop_count;
+
   } else if (type == kWorstFpsType) {
     double max_frame_ms = Stopwatch::MaxDelta().ToMillisecondsF();
     if (max_frame_ms < kOneFrameMS) {
@@ -96,8 +109,13 @@ double Stopwatch::GetFps(int type) const {
     } else {
       fps = 1e3 / max_frame_ms;
     }
+    result.resize(4);
+    result[0] = fps;
+    result[1] = max_frame_ms;
+    result[2] = 0;
+    result[3] = 0;
   }
-  return fps;
+  return result;
 }
 
 void Stopwatch::ClearFps() {

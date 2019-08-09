@@ -927,8 +927,20 @@ class Window {
    *
    *  [doClear]
    *    if true, will clear fps buffer after get fps
+   *
+   *  [result]
+   *    result is a list,
+   *    index [0] represents the fps value
+   *    index [1] represents average time (or worst time in fpsType is kWorstFpsType)
+   *    index [2] represents number of frames (or 0 in kWorstFpsType mode)
+   *    index [3] represents number of dropped frames (or 0 in kWorstFpsType mode)
    */
-  double getFps(int threadType, int fpsType, bool doClear) native 'Window_getFps';
+  List getFps(int threadType, int fpsType, bool doClear) native 'Window_getFps';
+
+  /**
+   *  BD ADD:
+   */
+  int getFpsMaxSamples() native 'Window_getFpsMaxSamples';
 }
 
 /// Additional accessibility features that may be enabled by the platform.

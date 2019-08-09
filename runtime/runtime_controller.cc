@@ -349,7 +349,7 @@ RuntimeController::WindowData::WindowData(const WindowData& other) = default;
 RuntimeController::WindowData::~WindowData() = default;
 
 // BD ADD: START
-double RuntimeController::GetFps(int thread_type, int fps_type, bool do_clear) {
+std::vector<double> RuntimeController::GetFps(int thread_type, int fps_type, bool do_clear) {
   return client_.GetFps(thread_type, fps_type, do_clear);
 }
 // END

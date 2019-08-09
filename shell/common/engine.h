@@ -56,7 +56,7 @@ class Engine final : public RuntimeDelegate {
     virtual void AddNextFrameCallback(fml::closure callback) = 0;
 
     // BD ADD:
-    virtual double GetFps(int thread_type, int fps_type, bool do_clear) = 0;
+    virtual std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) = 0;
   };
 
   Engine(Delegate& delegate,
@@ -178,7 +178,7 @@ class Engine final : public RuntimeDelegate {
   RunStatus PrepareAndLaunchIsolate(RunConfiguration configuration);
 
   // BD ADD:
-  double GetFps(int thread_type, int fps_type, bool do_clear) override;
+  std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

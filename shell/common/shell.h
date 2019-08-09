@@ -225,7 +225,7 @@ class Shell final : public PlatformView::Delegate,
       rapidjson::Document& response);
 
   // BD ADD:
-  double GetFps(int thread_type,
+  std::vector<double> GetFps(int thread_type,
                 int fps_type = kAvgFpsType,
                 bool do_clear = false) override;
 

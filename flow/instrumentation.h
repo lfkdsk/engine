@@ -47,8 +47,9 @@ class Stopwatch {
   void SetLapTime(const fml::TimeDelta& delta);
 
   // BD ADD: START
-  double GetFps(int type = kAvgFpsType) const;
+  std::vector<double> GetFps(int type = kAvgFpsType) const;
   void ClearFps();
+  static int GetMaxSamples();
   // END
 
  private:

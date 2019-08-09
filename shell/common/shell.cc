@@ -862,12 +862,12 @@ void Shell::AddNextFrameCallback(fml::closure callback) {
 }
 
 // BD ADD: START
-double Shell::GetFps(int thread_type, int fps_type, bool do_clear) {
-  double fps = 0;
+std::vector<double> Shell::GetFps(int thread_type, int fps_type, bool do_clear) {
+  std::vector<double> result;
   fml::WeakPtr<Rasterizer> rasterizer = rasterizer_->GetWeakPtr();
   if (rasterizer) {
     if (thread_type == kUiThreadType) {
-      fps = rasterizer->compositor_context()->engine_time().GetFps(fps_type);
+      result = rasterizer->compositor_context()->engine_time().GetFps(fps_type);
       if (do_clear) {
         task_runners_.GetUITaskRunner()->PostTask(
             [rasterizer = rasterizer_->GetWeakPtr()] {
@@ -877,7 +877,7 @@ double Shell::GetFps(int thread_type, int fps_type, bool do_clear) {
             });
       }
     } else if (thread_type == kGpuThreadType) {
-      fps = rasterizer->compositor_context()->frame_time().GetFps(fps_type);
+      result = rasterizer->compositor_context()->frame_time().GetFps(fps_type);
       if (do_clear) {
         task_runners_.GetGPUTaskRunner()->PostTask(
             [rasterizer = rasterizer_->GetWeakPtr()] {
@@ -888,7 +888,7 @@ double Shell::GetFps(int thread_type, int fps_type, bool do_clear) {
       }
     }
   }
-  return fps;
+  return result;
 }
 // END
 

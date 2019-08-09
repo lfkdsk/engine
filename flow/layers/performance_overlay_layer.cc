@@ -54,7 +54,7 @@ void VisualizeStopWatch(SkCanvas& canvas,
     double max_ms_per_frame = stopwatch.MaxDelta().ToMillisecondsF();
     double average_ms_per_frame = stopwatch.AverageDelta().ToMillisecondsF();
     // BD ADD:
-    double fps = stopwatch.GetFps();
+    double fps = stopwatch.GetFps()[0];
     std::stringstream stream;
     stream.setf(std::ios::fixed | std::ios::showpoint);
     stream << std::setprecision(1);
