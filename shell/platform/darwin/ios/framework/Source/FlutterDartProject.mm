@@ -209,18 +209,28 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 }
 
 // BD MOD: START
-- (void)setDynamicDillPath:(NSString*)dynamicDillPath {
+- (void)setDynamicDillPath:(NSString*)path {
+  if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
+    return;
+  }
   if (flutter::DartVM::IsRunningDynamicCode()) {
-    // TODO: 这里指定mock的iOS动态资源的zip包路径
-    if (_settings.dynamic_dill_path.empty()) {
-      if (dynamicDillPath && [dynamicDillPath isKindOfClass:[NSString class]] &&
-          dynamicDillPath.length > 0) {
-        _settings.dynamic_dill_path = dynamicDillPath.UTF8String;
-        _dynamicDillPath = [dynamicDillPath copy];
-      }
-    }
+    _settings.dynamic_dill_path = path.UTF8String;
   }
 }
+
+- (void)setDynamicEnginePath:(NSString*)path {
+  if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
+    return;
+  }
+
+  if (flutter::DartVM::IsRunningDynamicCode()) {
+    _settings.icu_data_path = [path stringByAppendingPathComponent:@"icudtl.dat"].UTF8String;
+    _settings.assets_path = [path stringByAppendingPathComponent:@"flutter_assets"].UTF8String;
+    _settings.isolate_snapshot_data_path = [path stringByAppendingPathComponent:@"isolate_snapshot_data"].UTF8String;
+    _settings.vm_snapshot_data_path = [path stringByAppendingPathComponent:@"vm_snapshot_data"].UTF8String;
+  }
+}
+
 // END
 
 #pragma mark - Assets-related utilities

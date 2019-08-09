@@ -27,9 +27,10 @@ FLUTTER_EXPORT
 
 // BYTEDANCE ADD:
 /**
- * dynamic dill zip path.
+ * dynamic settings
  */
-@property (nonatomic, copy)NSString *dynamicDillPath;
+- (void)setDynamicDillPath:(NSString*)path;    // 动态App压缩包路径
+- (void)setDynamicEnginePath:(NSString*)path;  // 动态Engine文件夹路径
 // END
 
 /**
