@@ -17,6 +17,6 @@ namespace flutter {
     fml::jni::ScopedJavaLocalRef<jobject> imageLoader = android_image_loader_.get(env);
     if (imageLoader.is_null())
       return;
-    CallJavaImageLoader(imageLoader.obj(), url, contextPtr, callback);
+    CallJavaImageLoader(imageLoader.obj(), url, contextPtr, std::move(callback));
   }
 }
