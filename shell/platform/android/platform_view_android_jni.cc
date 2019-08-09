@@ -118,15 +118,35 @@ void FlutterViewOnPreEngineRestart(JNIEnv* env, jobject obj) {
   FML_CHECK(CheckException(env));
 }
 
+static jmethodID g_is_released_method = nullptr;
+bool SurfaceTextureIsReleased(JNIEnv* env, jobject obj) {
+  if (g_is_released_method == nullptr) {
+    return false;
+  }
+  jboolean is_released = env->CallBooleanMethod(obj, g_is_released_method);
+  FML_CHECK(CheckException(env));
+  return is_released;
+}
+
 static jmethodID g_attach_to_gl_context_method = nullptr;
 void SurfaceTextureAttachToGLContext(JNIEnv* env, jobject obj, jint textureId) {
+  if (SurfaceTextureIsReleased(env, obj)) {
+    return;
+  }
   env->CallVoidMethod(obj, g_attach_to_gl_context_method, textureId);
+  // 暂时清理异常防止crash
+  fml::jni::ClearException(env);
   FML_CHECK(CheckException(env));
 }
 
 static jmethodID g_update_tex_image_method = nullptr;
 void SurfaceTextureUpdateTexImage(JNIEnv* env, jobject obj) {
+  if (SurfaceTextureIsReleased(env, obj)) {
+    return;
+  }
   env->CallVoidMethod(obj, g_update_tex_image_method);
+  // 暂时清理异常防止crash
+  fml::jni::ClearException(env);
   FML_CHECK(CheckException(env));
 }
 
@@ -135,12 +155,16 @@ void SurfaceTextureGetTransformMatrix(JNIEnv* env,
                                       jobject obj,
                                       jfloatArray result) {
   env->CallVoidMethod(obj, g_get_transform_matrix_method, result);
+  // 暂时清理异常防止crash
+  fml::jni::ClearException(env);
   FML_CHECK(CheckException(env));
 }
 
 static jmethodID g_detach_from_gl_context_method = nullptr;
 void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj) {
   env->CallVoidMethod(obj, g_detach_from_gl_context_method);
+  // 暂时清理异常防止crash
+  fml::jni::ClearException(env);
   FML_CHECK(CheckException(env));
 }
 
@@ -423,7 +447,7 @@ static jobject GetBitmap(JNIEnv* env, jobject jcaller, jlong shell_holder) {
     return nullptr;
   }
 
-  jstring argb = env->NewStringUTF("ARGB_8888");
+  jstring argb = env->NewStringUTF("RGB_565");
   if (argb == nullptr) {
     return nullptr;
   }
@@ -788,6 +812,12 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
     FML_LOG(ERROR) << "Failed to RegisterNatives with FlutterCallbackInfo";
     return false;
   }
+
+  g_is_released_method =
+      env->GetMethodID(g_surface_texture_class->obj(), "isReleased", "()Z");
+
+  // 解决5.x手机上的crash
+  fml::jni::ClearException(env);
 
   g_attach_to_gl_context_method = env->GetMethodID(
       g_surface_texture_class->obj(), "attachToGLContext", "(I)V");

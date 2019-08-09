@@ -159,6 +159,9 @@ class RuntimeController final : public WindowClient {
   void Render(Scene* scene) override;
 
   // |WindowClient|
+  void AddNextFrameCallback(fml::closure callback) override;
+
+  // |WindowClient|
   void UpdateSemantics(SemanticsUpdate* update) override;
 
   // |WindowClient|
@@ -170,6 +173,9 @@ class RuntimeController final : public WindowClient {
   // |WindowClient|
   void UpdateIsolateDescription(const std::string isolate_name,
                                 int64_t isolate_port) override;
+
+  // BD ADD:
+  double GetFps(int thread_type, int fps_type, bool do_clear) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(RuntimeController);
 };

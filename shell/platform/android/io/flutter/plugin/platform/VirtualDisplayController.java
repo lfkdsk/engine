@@ -5,6 +5,7 @@
 package io.flutter.plugin.platform;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -56,6 +57,7 @@ class VirtualDisplayController {
     private VirtualDisplay mVirtualDisplay;
     private SingleViewPresentation mPresentation;
     private Surface mSurface;
+    private int mPresentationThemeId;
 
 
     private VirtualDisplayController(
@@ -74,9 +76,12 @@ class VirtualDisplayController {
         mSurface = surface;
         mVirtualDisplay = virtualDisplay;
         mDensityDpi = context.getResources().getDisplayMetrics().densityDpi;
+        mPresentationThemeId = viewFactory.getPresentationTheme();
         mPresentation = new SingleViewPresentation(
                 context, mVirtualDisplay.getDisplay(), viewFactory, accessibilityEventsDelegate, viewId, createParams);
-        mPresentation.show();
+        if (mContext instanceof Activity && !((Activity) mContext).isFinishing()) {
+            mPresentation.show();
+        }
     }
 
     public void resize(final int width, final int height, final Runnable onNewSizeFrameAvailable) {
@@ -125,12 +130,18 @@ class VirtualDisplayController {
             public void onViewDetachedFromWindow(View v) {}
         });
 
-        mPresentation = new SingleViewPresentation(mContext, mVirtualDisplay.getDisplay(), mAccessibilityEventsDelegate, presentationState);
-        mPresentation.show();
+        mPresentation = new SingleViewPresentation(mContext, mVirtualDisplay.getDisplay(), mAccessibilityEventsDelegate, presentationState, mPresentationThemeId);
+        if (mContext instanceof Activity && !((Activity) mContext).isFinishing()) {
+            mPresentation.show();
+        }
     }
 
     public void dispose() {
         PlatformView view = mPresentation.getView();
+        // Activity已销毁后调用该方法会抛出异常
+        try {
+            mPresentation.cancel();
+        } catch (Exception ignore) {}
         mPresentation.detachState();
         view.dispose();
         mVirtualDisplay.release();
@@ -141,7 +152,10 @@ class VirtualDisplayController {
         if (mPresentation == null)
             return null;
         PlatformView platformView = mPresentation.getView();
-        return platformView.getView();
+        if (platformView != null) {
+            return platformView.getView();
+        }
+        return null;
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)

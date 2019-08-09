@@ -61,8 +61,9 @@ void IOSExternalTextureGL::Paint(SkCanvas& canvas,
                                  CVOpenGLESTextureGetName(texture_ref_), GL_RGBA8_OES};
   GrBackendTexture backendTexture(bounds.width(), bounds.height(), GrMipMapped::kNo, textureInfo);
   sk_sp<SkImage> image =
-      SkImage::MakeFromTexture(context, backendTexture, kTopLeft_GrSurfaceOrigin,
-                               kRGBA_8888_SkColorType, kPremul_SkAlphaType, nullptr);
+      SkImage::MakeFromTexture(context, backendTexture,
+                               kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType,
+                               kPremul_SkAlphaType, nullptr);
   FML_DCHECK(image) << "Failed to create SkImage from Texture.";
   if (image) {
     canvas.drawImage(image, bounds.x(), bounds.y());
@@ -72,7 +73,9 @@ void IOSExternalTextureGL::Paint(SkCanvas& canvas,
 void IOSExternalTextureGL::OnGrContextCreated() {}
 
 void IOSExternalTextureGL::OnGrContextDestroyed() {
-  texture_ref_.Reset(nullptr);
+  // Avoid video_player showing a black background when the app goes into the background and becomes
+  // active.
+  //  texture_ref_.Reset(nullptr);
   cache_ref_.Reset(nullptr);
 }
 

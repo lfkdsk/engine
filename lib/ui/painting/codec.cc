@@ -291,9 +291,13 @@ void InstantiateImageCodec(Dart_NativeArguments args) {
            tonic::DartState::Current(), callback_handle),
        buffer = std::move(buffer), trace_id, image_info = std::move(image_info),
        ui_task_runner = task_runners.GetUITaskRunner(),
-       context = dart_state->GetResourceContext(),
+       io_manager = dart_state->GetIOManager(),
        queue = UIDartState::Current()->GetSkiaUnrefQueue(),
        decodedCacheRatioCap]() mutable {
+        fml::WeakPtr<GrContext> context = fml::WeakPtr<GrContext>();
+        if (io_manager && io_manager->IsResourceContextValidForDecodeImage()) {
+          context = io_manager->GetResourceContext();
+        }
         InitCodecAndInvokeCodecCallback(
             std::move(ui_task_runner), context, std::move(queue),
             std::move(callback), std::move(buffer), std::move(image_info),

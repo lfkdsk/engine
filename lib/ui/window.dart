@@ -852,6 +852,8 @@ class Window {
   /// Note that this does not rename any child isolates of the root.
   void setIsolateDebugName(String name) native 'Window_setIsolateDebugName';
 
+  void addNextFrameCallback(VoidCallback callback) native 'Window_addNextFrameCallback';
+
   /// Sends a message to a platform-specific plugin.
   ///
   /// The `name` parameter determines which plugin receives the message. The
@@ -911,6 +913,22 @@ class Window {
       registrationZone.runUnaryGuarded(callback, data);
     };
   }
+
+  /**
+   *  BD ADD:
+   *
+   *  [threadType]
+   *     kUiThreadType = 1, get fps in ui thread
+   *     kGpuThreadType = 2, get fps in gpu thread
+   *
+   *  [fpsType]
+   *    kAvgFpsType = 1, get the average fps in the buffer
+   *    kWorstFpsType = 2, get the worst fps in the buffer
+   *
+   *  [doClear]
+   *    if true, will clear fps buffer after get fps
+   */
+  double getFps(int threadType, int fpsType, bool doClear) native 'Window_getFps';
 }
 
 /// Additional accessibility features that may be enabled by the platform.

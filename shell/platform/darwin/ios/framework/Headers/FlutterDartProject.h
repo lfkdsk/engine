@@ -9,6 +9,17 @@
 
 #include "FlutterMacros.h"
 
+@protocol DynamicFlutterDelegate <NSObject>
+
+@required
+/**
+ * 当Flutter被加载时，调用接口请求需要动态替换的flutter_assets文件夹路径
+ * 如果返回nil或不合法路径，则使用预置包
+ */
+- (NSString*)assetsPath;
+
+@end
+
 /**
  * A set of Flutter and Dart assets used by a `FlutterEngine` to initialize execution.
  */
@@ -32,6 +43,11 @@ FLUTTER_EXPORT
 - (void)setDynamicDillPath:(NSString*)path;    // 动态App压缩包路径
 - (void)setDynamicEnginePath:(NSString*)path;  // 动态Engine文件夹路径
 // END
+
+/**
+ * Register the delegate for dynamic flutter
+ */
++ (void)registerDynamicDelegate:(id<DynamicFlutterDelegate>)delegate;
 
 /**
  * Returns the file name for the given asset. If the bundle with the identifier

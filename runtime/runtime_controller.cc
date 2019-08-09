@@ -275,6 +275,10 @@ void RuntimeController::Render(Scene* scene) {
   client_.Render(scene->takeLayerTree());
 }
 
+void RuntimeController::AddNextFrameCallback(fml::closure callback) {
+  client_.AddNextFrameCallback(callback);
+}
+
 void RuntimeController::UpdateSemantics(SemanticsUpdate* update) {
   if (window_data_.semantics_enabled) {
     client_.UpdateSemantics(update->takeNodes(), update->takeActions());
@@ -343,5 +347,11 @@ RuntimeController::WindowData::WindowData() = default;
 RuntimeController::WindowData::WindowData(const WindowData& other) = default;
 
 RuntimeController::WindowData::~WindowData() = default;
+
+// BD ADD: START
+double RuntimeController::GetFps(int thread_type, int fps_type, bool do_clear) {
+  return client_.GetFps(thread_type, fps_type, do_clear);
+}
+// END
 
 }  // namespace flutter

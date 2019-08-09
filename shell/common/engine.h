@@ -52,6 +52,11 @@ class Engine final : public RuntimeDelegate {
 
     virtual void UpdateIsolateDescription(const std::string isolate_name,
                                           int64_t isolate_port) = 0;
+
+    virtual void AddNextFrameCallback(fml::closure callback) = 0;
+
+    // BD ADD:
+    virtual double GetFps(int thread_type, int fps_type, bool do_clear) = 0;
   };
 
   Engine(Delegate& delegate,
@@ -119,6 +124,7 @@ class Engine final : public RuntimeDelegate {
 
   // |RuntimeDelegate|
   FontCollection& GetFontCollection() override;
+  void ScheduleBackgroundFrame();
 
  private:
   Engine::Delegate& delegate_;
@@ -147,6 +153,9 @@ class Engine final : public RuntimeDelegate {
   void HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) override;
 
   // |RuntimeDelegate|
+  void AddNextFrameCallback(fml::closure callback) override;
+
+  // |RuntimeDelegate|
   void UpdateIsolateDescription(const std::string isolate_name,
                                 int64_t isolate_port) override;
 
@@ -167,6 +176,9 @@ class Engine final : public RuntimeDelegate {
   bool GetAssetAsBuffer(const std::string& name, std::vector<uint8_t>* data);
 
   RunStatus PrepareAndLaunchIsolate(RunConfiguration configuration);
+
+  // BD ADD:
+  double GetFps(int thread_type, int fps_type, bool do_clear) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

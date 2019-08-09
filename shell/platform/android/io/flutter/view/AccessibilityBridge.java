@@ -360,7 +360,7 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
 
                     if (onAccessibilityChangeListener != null) {
                         onAccessibilityChangeListener.onAccessibilityChanged(
-                            accessibilityManager.isEnabled(),
+                            AccessibilityBridge.this.accessibilityManager.isEnabled(),
                             isTouchExplorationEnabled
                         );
                     }
@@ -453,8 +453,17 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
         // to set it if we're exiting a list to a non-list, so that we can get the "out of list"
         // announcement when A11y focus moves out of a list and not into another list.
         return semanticsNode.scrollChildren > 0
-                && (SemanticsNode.nullableHasAncestor(accessibilityFocusedSemanticsNode, o -> o == semanticsNode)
-                    || !SemanticsNode.nullableHasAncestor(accessibilityFocusedSemanticsNode, o -> o.hasFlag(Flag.HAS_IMPLICIT_SCROLLING)));
+                && (SemanticsNode.nullableHasAncestor(accessibilityFocusedSemanticsNode, new Predicate<SemanticsNode>() {
+                    @Override
+                    public boolean test(SemanticsNode o) {
+                        return o == semanticsNode;
+                    }
+                }) || !SemanticsNode.nullableHasAncestor(accessibilityFocusedSemanticsNode, new Predicate<SemanticsNode>() {
+                    @Override
+                    public boolean test(SemanticsNode o) {
+                        return o.hasFlag(Flag.HAS_IMPLICIT_SCROLLING);
+                    }
+                }));
     }
 
     /**
@@ -605,7 +614,9 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
         if (semanticsNode.parent != null) {
             Rect parentBounds = semanticsNode.parent.getGlobalRect();
             Rect boundsInParent = new Rect(bounds);
-            boundsInParent.offset(-parentBounds.left, -parentBounds.top);
+            if (parentBounds != null) {
+                boundsInParent.offset(-parentBounds.left, -parentBounds.top);
+            }
             result.setBoundsInParent(boundsInParent);
         } else {
             result.setBoundsInParent(bounds);
@@ -2014,6 +2025,12 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
             if (forceUpdate) {
                 if (globalTransform == null) {
                     globalTransform = new float[16];
+                }
+                if (ancestorTransform == null) {
+                    ancestorTransform = new float[16];
+                }
+                if (transform == null) {
+                    transform = new float[16];
                 }
                 Matrix.multiplyMM(globalTransform, 0, ancestorTransform, 0, transform, 0);
 

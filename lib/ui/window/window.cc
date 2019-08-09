@@ -4,6 +4,7 @@
 
 #include "flutter/lib/ui/window/window.h"
 
+#include "flutter/fml/make_copyable.h"
 #include "flutter/lib/ui/compositing/scene.h"
 #include "flutter/lib/ui/ui_dart_state.h"
 #include "flutter/lib/ui/window/platform_message_response_dart.h"
@@ -81,6 +82,34 @@ void ReportUnhandledException(Dart_NativeArguments args) {
                                                    std::move(stack_trace));
 }
 
+void AddNextFrameCallback(Dart_Handle callback) {
+  UIDartState* dart_state = UIDartState::Current();
+  if (!dart_state->window()) {
+    return;
+  }
+
+  tonic::DartPersistentValue* next_frame_callback =
+      new tonic::DartPersistentValue(dart_state, callback);
+  dart_state->window()->client()->AddNextFrameCallback(
+      [next_frame_callback]() mutable {
+        std::shared_ptr<tonic::DartState> dart_state_ =
+            next_frame_callback->dart_state().lock();
+        if (!dart_state_) {
+          return;
+        }
+        tonic::DartState::Scope scope(dart_state_);
+        tonic::DartInvokeVoid(next_frame_callback->value());
+
+        // next_frame_callback is associated with the Dart isolate and must be
+        // deleted on the UI thread
+        delete next_frame_callback;
+      });
+}
+
+void _AddNextFrameCallback(Dart_NativeArguments args) {
+  tonic::DartCall(&AddNextFrameCallback, args);
+}
+
 Dart_Handle SendPlatformMessage(Dart_Handle window,
                                 const std::string& name,
                                 Dart_Handle callback,
@@ -136,6 +165,18 @@ void _RespondToPlatformMessage(Dart_NativeArguments args) {
   tonic::DartCallStatic(&RespondToPlatformMessage, args);
 }
 
+// BD ADD: START
+void GetFps(Dart_NativeArguments args) {
+  Dart_Handle exception = nullptr;
+  int thread_type =
+      tonic::DartConverter<int>::FromArguments(args, 1, exception);
+  int fps_type = tonic::DartConverter<int>::FromArguments(args, 2, exception);
+  bool do_clear = tonic::DartConverter<bool>::FromArguments(args, 3, exception);
+  double fps = UIDartState::Current()->window()->client()->GetFps(
+      thread_type, fps_type, do_clear);
+  Dart_SetDoubleReturnValue(args, fps);
+}
+// END
 }  // namespace
 
 Dart_Handle ToByteData(const std::vector<uint8_t>& buffer) {
@@ -353,6 +394,9 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_updateSemantics", UpdateSemantics, 2, true},
       {"Window_setIsolateDebugName", SetIsolateDebugName, 2, true},
       {"Window_reportUnhandledException", ReportUnhandledException, 2, true},
+      {"Window_addNextFrameCallback", _AddNextFrameCallback, 2, true},
+      // BD ADD:
+      {"Window_getFps", GetFps, 4, true},
   });
 }
 

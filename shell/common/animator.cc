@@ -27,7 +27,14 @@ Animator::Animator(Delegate& delegate,
       waiter_(std::move(waiter)),
       last_begin_frame_time_(),
       dart_frame_deadline_(0),
-      layer_tree_pipeline_(fml::MakeRefCounted<LayerTreePipeline>(2)),
+      // TODO(dnfield): We should remove this logic and set the pipeline depth
+      // back to 2 in this case. See https://github.com/flutter/engine/pull/9132
+      // for discussion.
+      layer_tree_pipeline_(fml::MakeRefCounted<LayerTreePipeline>(
+          task_runners.GetPlatformTaskRunner() ==
+                  task_runners.GetGPUTaskRunner()
+              ? 1
+              : 2)),
       pending_frame_semaphore_(1),
       frame_number_(1),
       paused_(false),
@@ -227,6 +234,38 @@ void Animator::AwaitVSync() {
           } else {
             self->BeginFrame(frame_start_time, frame_target_time);
           }
+        }
+      });
+
+  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+}
+
+void Animator::RequestBackgroundFrame() {
+  if (!paused_) {
+    return;
+  }
+
+  if (!pending_frame_semaphore_.TryWait()) {
+    return;
+  }
+  regenerate_layer_tree_ = true;
+  frame_scheduled_ = true;
+  task_runners_.GetUITaskRunner()->PostTask([self = weak_factory_.GetWeakPtr(),
+                                             frame_number = frame_number_]() {
+    if (!self.get()) {
+      return;
+    }
+    TRACE_EVENT_ASYNC_BEGIN0("flutter", "Frame Request Pending", frame_number);
+    self->AwaitVSyncForBackground();
+  });
+}
+
+void Animator::AwaitVSyncForBackground() {
+  waiter_->AsyncWaitForVsync(
+      [self = weak_factory_.GetWeakPtr()](fml::TimePoint frame_start_time,
+                                          fml::TimePoint frame_target_time) {
+        if (self) {
+          self->BeginFrame(frame_start_time, frame_target_time);
         }
       });
 

@@ -20,6 +20,8 @@ class IOManager {
   virtual fml::WeakPtr<GrContext> GetResourceContext() const = 0;
 
   virtual fml::RefPtr<flutter::SkiaUnrefQueue> GetSkiaUnrefQueue() const = 0;
+
+  virtual bool IsResourceContextValidForDecodeImage() const = 0;
 };
 
 }  // namespace flutter

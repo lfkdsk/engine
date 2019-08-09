@@ -398,6 +398,10 @@ void Engine::ScheduleFrame(bool regenerate_layer_tree) {
   animator_->RequestFrame(regenerate_layer_tree);
 }
 
+void Engine::ScheduleBackgroundFrame() {
+  animator_->RequestBackgroundFrame();
+}
+
 void Engine::Render(std::unique_ptr<flutter::LayerTree> layer_tree) {
   if (!layer_tree)
     return;
@@ -422,6 +426,10 @@ void Engine::HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) {
   } else {
     delegate_.OnEngineHandlePlatformMessage(std::move(message));
   }
+}
+
+void Engine::AddNextFrameCallback(fml::closure callback) {
+  delegate_.AddNextFrameCallback(callback);
 }
 
 void Engine::UpdateIsolateDescription(const std::string isolate_name,
@@ -453,5 +461,11 @@ void Engine::HandleAssetPlatformMessage(fml::RefPtr<PlatformMessage> message) {
 
   response->CompleteEmpty();
 }
+
+// BD ADD: START
+double Engine::GetFps(int thread_type, int fps_type, bool do_clear) {
+  return delegate_.GetFps(thread_type, fps_type, do_clear);
+}
+// END
 
 }  // namespace flutter

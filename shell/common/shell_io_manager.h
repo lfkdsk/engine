@@ -25,7 +25,8 @@ class ShellIOManager final : public IOManager {
       sk_sp<const GrGLInterface> gl_interface);
 
   ShellIOManager(sk_sp<GrContext> resource_context,
-                 fml::RefPtr<fml::TaskRunner> unref_queue_task_runner);
+                 fml::RefPtr<fml::TaskRunner> unref_queue_task_runner,
+                 bool should_defer_decode_image_when_platform_view_invalid);
 
   ~ShellIOManager() override;
 
@@ -46,6 +47,9 @@ class ShellIOManager final : public IOManager {
 
   fml::WeakPtr<ShellIOManager> GetWeakPtr();
 
+  void UpdatePlatformViewValid(bool valid);
+  bool IsResourceContextValidForDecodeImage() const override;
+
  private:
   // Resource context management.
   sk_sp<GrContext> resource_context_;
@@ -58,6 +62,9 @@ class ShellIOManager final : public IOManager {
   fml::WeakPtrFactory<ShellIOManager> weak_factory_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(ShellIOManager);
+
+  bool is_platform_view_valid_ = false;
+  bool should_defer_decode_image_when_platform_view_invalid_ = false;
 };
 
 }  // namespace flutter

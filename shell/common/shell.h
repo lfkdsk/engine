@@ -50,17 +50,6 @@ class Shell final : public PlatformView::Delegate,
       CreateCallback<PlatformView> on_create_platform_view,
       CreateCallback<Rasterizer> on_create_rasterizer);
 
-  // Creates a shell with the given task runners and settings. The isolate
-  // snapshot is specified upfront.
-  static std::unique_ptr<Shell> Create(
-      TaskRunners task_runners,
-      Settings settings,
-      fml::RefPtr<const DartSnapshot> isolate_snapshot,
-      fml::RefPtr<const DartSnapshot> shared_snapshot,
-      CreateCallback<PlatformView> on_create_platform_view,
-      CreateCallback<Rasterizer> on_create_rasterizer,
-      DartVMRef vm);
-
   ~Shell();
 
   const Settings& GetSettings() const;
@@ -72,8 +61,6 @@ class Shell final : public PlatformView::Delegate,
   fml::WeakPtr<Engine> GetEngine();
 
   fml::WeakPtr<PlatformView> GetPlatformView();
-
-  DartVM* GetDartVM();
 
   bool IsSetup() const;
 
@@ -87,7 +74,9 @@ class Shell final : public PlatformView::Delegate,
 
   const TaskRunners task_runners_;
   const Settings settings_;
-  DartVMRef vm_;
+  std::atomic_bool engine_created_;
+  fml::ManualResetWaitableEvent ui_latch_;
+  DartVM* vm_;
   std::unique_ptr<PlatformView> platform_view_;  // on platform task runner
   std::unique_ptr<Engine> engine_;               // on UI task runner
   std::unique_ptr<Rasterizer> rasterizer_;       // on GPU task runner
@@ -103,19 +92,14 @@ class Shell final : public PlatformView::Delegate,
   uint64_t next_pointer_flow_id_ = 0;
 
   Shell(TaskRunners task_runners, Settings settings);
-  Shell(DartVMRef vm, TaskRunners task_runners, Settings settings);
 
   static std::unique_ptr<Shell> CreateShellOnPlatformThread(
-      DartVMRef vm,
       TaskRunners task_runners,
       Settings settings,
-      fml::RefPtr<const DartSnapshot> isolate_snapshot,
-      fml::RefPtr<const DartSnapshot> shared_snapshot,
       Shell::CreateCallback<PlatformView> on_create_platform_view,
       Shell::CreateCallback<Rasterizer> on_create_rasterizer);
 
   bool Setup(std::unique_ptr<PlatformView> platform_view,
-             std::unique_ptr<Engine> engine,
              std::unique_ptr<Rasterizer> rasterizer,
              std::unique_ptr<ShellIOManager> io_manager);
 
@@ -193,6 +177,9 @@ class Shell final : public PlatformView::Delegate,
   void UpdateIsolateDescription(const std::string isolate_name,
                                 int64_t isolate_port) override;
 
+  // |Engine::Delegate|
+  void AddNextFrameCallback(fml::closure callback) override;
+
   // |ServiceProtocol::Handler|
   fml::RefPtr<fml::TaskRunner> GetServiceProtocolHandlerTaskRunner(
       fml::StringView method) const override;
@@ -236,6 +223,11 @@ class Shell final : public PlatformView::Delegate,
   bool OnServiceProtocolGetDisplayRefreshRate(
       const ServiceProtocol::Handler::ServiceProtocolMap& params,
       rapidjson::Document& response);
+
+  // BD ADD:
+  double GetFps(int thread_type,
+                int fps_type = kAvgFpsType,
+                bool do_clear = false) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Shell);
 };

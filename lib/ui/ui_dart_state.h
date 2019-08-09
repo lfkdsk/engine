@@ -71,6 +71,8 @@ class UIDartState : public tonic::DartState {
     return {std::move(object), std::move(queue)};
   };
 
+  fml::WeakPtr<IOManager> GetIOManager() const;
+
  protected:
   UIDartState(TaskRunners task_runners,
               TaskObserverAdd add_callback,
