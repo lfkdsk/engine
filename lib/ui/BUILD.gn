@@ -95,6 +95,8 @@ source_set("ui") {
     "window/viewport_metrics.h",
     "window/window.cc",
     "window/window.h",
+    "boost.cc",
+    "boost.h",
   ]
 
   public_configs = [ "$flutter_root:config" ]

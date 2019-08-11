@@ -35,6 +35,9 @@
 #include "flutter/flow/layers/child_scene_layer.h"
 #endif
 
+//BD ADD:
+#include "flutter/lib/ui/boost.h"
+
 namespace flutter {
 
 static void SceneBuilder_constructor(Dart_NativeArguments args) {
@@ -111,7 +114,7 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushClipRect(double left,
   // BD MOD: START
   // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
   flutter::Clip clip_behavior;
-  if (UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (Boost::Current()->IsAADisabled()) {
     clip_behavior = flutter::Clip::hardEdge;
   } else {
     clip_behavior = static_cast<flutter::Clip>(clipBehavior);
@@ -128,7 +131,7 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushClipRRect(const RRect& rrect,
   // BD MOD: START
   // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
   flutter::Clip clip_behavior;
-  if (UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (Boost::Current()->IsAADisabled()) {
     clip_behavior = flutter::Clip::hardEdge;
   } else {
     clip_behavior = static_cast<flutter::Clip>(clipBehavior);
@@ -145,7 +148,7 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushClipPath(const CanvasPath* path,
   // BD MOD: START
   // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
   flutter::Clip clip_behavior;
-  if (UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (Boost::Current()->IsAADisabled()) {
     clip_behavior = flutter::Clip::hardEdge;
   } else {
     clip_behavior = static_cast<flutter::Clip>(clipBehavior);
@@ -209,7 +212,7 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushPhysicalShape(const CanvasPath* path,
   // BD MOD: START
   // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
   flutter::Clip clip_behavior;
-  if (UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (Boost::Current()->IsAADisabled()) {
     clip_behavior = flutter::Clip::hardEdge;
   } else {
     clip_behavior = static_cast<flutter::Clip>(clipBehavior);

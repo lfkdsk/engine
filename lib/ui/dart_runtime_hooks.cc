@@ -27,6 +27,8 @@
 #include "third_party/tonic/logging/dart_invoke.h"
 #include "third_party/tonic/scopes/dart_api_scope.h"
 #include "third_party/tonic/scopes/dart_isolate_scope.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 #if defined(OS_ANDROID)
 #include <android/log.h>
@@ -53,10 +55,13 @@ namespace flutter {
   V(ScheduleMicrotask, 1)      \
   V(GetCallbackHandle, 1)      \
   V(GetCallbackFromHandle, 1)  \
-  /** BD ADD: */               \
+  /** BD ADD: START */         \
   V(SkipGCFromNow, 1)          \
-  V(ForceGC, 0)
-  
+  V(ForceGC, 0)                \
+  V(StartBoost, 2)             \
+  V(FinishBoost, 1)
+/** END */
+
 BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
 
 void DartRuntimeHooks::RegisterNatives(tonic::DartLibraryNatives* natives) {
@@ -346,7 +351,7 @@ void GetCallbackFromHandle(Dart_NativeArguments args) {
   int64_t handle = DartConverter<int64_t>::FromDart(h);
   Dart_SetReturnValue(args, DartCallbackCache::GetCallback(handle));
 }
-  
+
 // BD ADD: START
 void SkipGCFromNow(Dart_NativeArguments args) {
 #if defined(DART_PERFORMANCE_EXTENSION)
@@ -360,6 +365,17 @@ void ForceGC(Dart_NativeArguments args) {
 #if defined(DART_PERFORMANCE_EXTENSION)
   Dart_ForceGC();
 #endif
+}
+
+void StartBoost(Dart_NativeArguments args) {
+  int flags = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  int millis = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 1));
+  Boost::Current()->StartUp(flags, millis);
+}
+
+void FinishBoost(Dart_NativeArguments args) {
+  int flags = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  Boost::Current()->Finish(flags);
 }
 // END
 }  // namespace flutter

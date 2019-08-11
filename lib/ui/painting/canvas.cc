@@ -19,6 +19,8 @@
 #include "third_party/tonic/dart_args.h"
 #include "third_party/tonic/dart_binding_macros.h"
 #include "third_party/tonic/dart_library_natives.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 using tonic::ToDart;
 
@@ -99,7 +101,7 @@ void Canvas::save() {
  * force close antialias if need
  */
 void Canvas::ensureAntiAlias(const Paint* paint) const {
-  if (!UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (!Boost::Current()->IsAADisabled()) {
     return;
   }
   SkPaint* sPaint = const_cast<SkPaint*>(paint->paint());
@@ -182,7 +184,7 @@ void Canvas::clipRect(double left,
   if (!canvas_)
     return;
   // BD ADD: START
-  if (doAntiAlias && UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (doAntiAlias && Boost::Current()->IsAADisabled()) {
     doAntiAlias = false;
   }
   // END
@@ -194,7 +196,7 @@ void Canvas::clipRRect(const RRect& rrect, bool doAntiAlias) {
   if (!canvas_)
     return;
   // BD ADD: START
-  if (doAntiAlias && UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (doAntiAlias && Boost::Current()->IsAADisabled()) {
     doAntiAlias = false;
   }
   // END
@@ -208,7 +210,7 @@ void Canvas::clipPath(const CanvasPath* path, bool doAntiAlias) {
     Dart_ThrowException(
         ToDart("Canvas.clipPath called with non-genuine Path."));
   // BD ADD: START
-  if (doAntiAlias && UIDartState::Current()->IsAntiAliasDisabled()) {
+  if (doAntiAlias && Boost::Current()->IsAADisabled()) {
     doAntiAlias = false;
   }
   // END

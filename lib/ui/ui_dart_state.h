@@ -73,13 +73,6 @@ class UIDartState : public tonic::DartState {
 
   fml::WeakPtr<IOManager> GetIOManager() const;
 
-  // BD ADD:
-  void StartBoost(int type, int millis);
-  void EnsureBoostStatus();
-  bool IsAntiAliasDisabled();
-  bool IsGCDisabled();
-  void CloseBoost();
-  
  protected:
   UIDartState(TaskRunners task_runners,
               TaskObserverAdd add_callback,
@@ -119,10 +112,6 @@ class UIDartState : public tonic::DartState {
   const std::shared_ptr<IsolateNameServer> isolate_name_server_;
 
   void AddOrRemoveTaskObserver(bool add);
-  // BD ADD:
-  int64_t boost_deadline_ = 0;
-  bool isAntiAliasDisabled_ = true;
-  bool isGCDisabled_ = false;
 };
 
 }  // namespace flutter
