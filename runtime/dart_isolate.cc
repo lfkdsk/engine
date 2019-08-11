@@ -190,9 +190,10 @@ void DartIsolate::SetMessageHandlingTaskRunner(
   }
 
   message_handling_task_runner_ = runner;
-
   message_handler().Initialize(
-      [runner](std::function<void()> task) { runner->PostTask(task); });
+      // BD MOD:
+      //[runner](std::function<void()> task) { runner->PostTask(task); });
+      [runner](std::function<void()> task) { runner->PostTask(task, true); });
 }
 
 // Updating thread names here does not change the underlying OS thread names.
