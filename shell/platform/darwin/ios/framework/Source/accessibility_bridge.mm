@@ -553,7 +553,8 @@ AccessibilityBridge::AccessibilityBridge(UIView* view,
 AccessibilityBridge::~AccessibilityBridge() {
   clearState();
   view_.accessibilityElements = nil;
-  [accessibility_channel_.get() setMessageHandler:nil];
+  // BD MOD:
+  // [accessibility_channel_.get() setMessageHandler:nil];
 }
 
 UIView<UITextInput>* AccessibilityBridge::textInputView() {

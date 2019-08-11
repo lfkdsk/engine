@@ -696,6 +696,16 @@ class Window {
     _onDrawFrameZone = Zone.current;
   }
 
+  // BD ADD: START
+  VoidCallback get exitApp => _exitApp;
+  VoidCallback _exitApp;
+  Zone _exitAppZone;
+  set exitApp(VoidCallback callback) {
+    _exitApp = callback;
+    _exitAppZone = Zone.current;
+  }
+  // END
+
   /// A callback that is invoked when pointer data is available.
   ///
   /// The framework invokes this callback in the same zone in which the

@@ -331,6 +331,14 @@ std::pair<bool, uint32_t> RuntimeController::GetRootIsolateReturnCode() {
   return root_isolate_return_code_;
 }
 
+// BD ADD: START
+void RuntimeController::ExitApp() {
+  if (auto* window = GetWindowIfAvailable()) {
+    window->ExitApp();
+  }
+}
+// END
+
 RuntimeController::Locale::Locale(std::string language_code_,
                                   std::string country_code_,
                                   std::string script_code_,
@@ -349,7 +357,9 @@ RuntimeController::WindowData::WindowData(const WindowData& other) = default;
 RuntimeController::WindowData::~WindowData() = default;
 
 // BD ADD: START
-std::vector<double> RuntimeController::GetFps(int thread_type, int fps_type, bool do_clear) {
+std::vector<double> RuntimeController::GetFps(int thread_type,
+                                              int fps_type,
+                                              bool do_clear) {
   return client_.GetFps(thread_type, fps_type, do_clear);
 }
 // END
