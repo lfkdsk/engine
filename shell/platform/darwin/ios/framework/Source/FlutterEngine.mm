@@ -164,9 +164,17 @@
 }
 
 - (void)destroyContext {
-  [self resetChannels];
-  _shell.reset();
-  _threadHost.Reset();
+  // BD MOD: START
+  // [self resetChannels];
+  // _shell.reset();
+  // _threadHost.Reset();
+  _shell->ExitApp([scoped_engine = fml::scoped_nsobject<FlutterEngine>([self retain])] {
+    [scoped_engine.get() resetChannels];
+    scoped_engine.get()->_platformViewsController.reset();
+    scoped_engine.get()->_shell.reset();
+    scoped_engine.get()->_threadHost.Reset();
+  });
+  // END
 }
 
 - (FlutterViewController*)viewController {
@@ -563,7 +571,9 @@
 - (NSObject<FlutterPluginRegistrar>*)registrarForPlugin:(NSString*)pluginKey {
   NSAssert(self.pluginPublications[pluginKey] == nil, @"Duplicate plugin key: %@", pluginKey);
   self.pluginPublications[pluginKey] = [NSNull null];
-  return [[FlutterEngineRegistrar alloc] initWithPlugin:pluginKey flutterEngine:self];
+  // BD MOD:
+  // return [[FlutterEngineRegistrar alloc] initWithPlugin:pluginKey flutterEngine:self];
+  return [[[FlutterEngineRegistrar alloc] initWithPlugin:pluginKey flutterEngine:self] autorelease];
 }
 
 - (BOOL)hasPlugin:(NSString*)pluginKey {

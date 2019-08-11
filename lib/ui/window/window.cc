@@ -167,8 +167,8 @@ void _RespondToPlatformMessage(Dart_NativeArguments args) {
 
 // BD ADD: START
 void GetMaxSamples(Dart_NativeArguments args) {
-    int max_samples = Stopwatch::GetMaxSamples();
-    Dart_SetIntegerReturnValue(args, max_samples);
+  int max_samples = Stopwatch::GetMaxSamples();
+  Dart_SetIntegerReturnValue(args, max_samples);
 }
 
 void GetFps(Dart_NativeArguments args) {
@@ -177,10 +177,11 @@ void GetFps(Dart_NativeArguments args) {
       tonic::DartConverter<int>::FromArguments(args, 1, exception);
   int fps_type = tonic::DartConverter<int>::FromArguments(args, 2, exception);
   bool do_clear = tonic::DartConverter<bool>::FromArguments(args, 3, exception);
-  std::vector<double> fpsInfo = UIDartState::Current()->window()->client()->GetFps(
-      thread_type, fps_type, do_clear);
+  std::vector<double> fpsInfo =
+      UIDartState::Current()->window()->client()->GetFps(thread_type, fps_type,
+                                                         do_clear);
   Dart_Handle data_handle = Dart_NewList(fpsInfo.size());
-  for(std::vector<int>::size_type i = 0; i != fpsInfo.size(); i++) {
+  for (std::vector<int>::size_type i = 0; i != fpsInfo.size(); i++) {
     Dart_Handle value = Dart_NewDouble(fpsInfo[i]);
     Dart_ListSetAt(data_handle, i, value);
   }
@@ -393,6 +394,17 @@ void Window::CompletePlatformMessageResponse(int response_id,
   pending_responses_.erase(it);
   response->Complete(std::make_unique<fml::DataMapping>(std::move(data)));
 }
+
+// BD ADD: START
+void Window::ExitApp() {
+  std::shared_ptr<tonic::DartState> dart_state = library_.dart_state().lock();
+  if (!dart_state)
+    return;
+  tonic::DartState::Scope scope(dart_state);
+
+  tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_exitApp", {}));
+}
+// END
 
 void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
   natives->Register({

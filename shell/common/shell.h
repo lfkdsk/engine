@@ -67,6 +67,13 @@ class Shell final : public PlatformView::Delegate,
   Rasterizer::Screenshot Screenshot(Rasterizer::ScreenshotType type,
                                     bool base64_encode);
 
+  /**
+   * BD ADD:
+   * Native容器销毁时，通知Flutter退出App
+   * @param closure执行完后回调
+   */
+  void ExitApp(fml::closure closure);
+
  private:
   using ServiceProtocolHandler =
       std::function<bool(const ServiceProtocol::Handler::ServiceProtocolMap&,
@@ -226,8 +233,8 @@ class Shell final : public PlatformView::Delegate,
 
   // BD ADD:
   std::vector<double> GetFps(int thread_type,
-                int fps_type = kAvgFpsType,
-                bool do_clear = false) override;
+                             int fps_type = kAvgFpsType,
+                             bool do_clear = false) override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Shell);
 };
