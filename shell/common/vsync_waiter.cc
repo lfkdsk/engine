@@ -6,6 +6,8 @@
 
 #include "flutter/fml/task_runner.h"
 #include "flutter/fml/trace_event.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 namespace flutter {
 
@@ -88,6 +90,8 @@ void VsyncWaiter::FireCallback(fml::TimePoint frame_start_time,
         TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
       },
       frame_start_time);
+  // BD ADD:
+  Boost::Current()->UpdateVsync(true, frame_target_time);
 }
 
 float VsyncWaiter::GetDisplayRefreshRate() const {

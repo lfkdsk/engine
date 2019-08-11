@@ -89,3 +89,9 @@ int _isolateId; // ignore: unused_element
 Function _getPrintClosure() => _print;  // ignore: unused_element
 @pragma('vm:entry-point')
 Function _getScheduleMicrotaskClosure() => _scheduleMicrotask; // ignore: unused_element
+
+/// BD ADD: START
+void startBoost(int flags, int millis) native 'StartBoost';
+
+void finishBoost(int flags) native 'FinishBoost';
+/// END
