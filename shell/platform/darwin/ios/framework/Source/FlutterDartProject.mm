@@ -241,8 +241,10 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   if (flutter::DartVM::IsRunningDynamicCode()) {
     _settings.icu_data_path = [path stringByAppendingPathComponent:@"icudtl.dat"].UTF8String;
     _settings.assets_path = [path stringByAppendingPathComponent:@"flutter_assets"].UTF8String;
-    _settings.isolate_snapshot_data_path = [path stringByAppendingPathComponent:@"isolate_snapshot_data"].UTF8String;
-    _settings.vm_snapshot_data_path = [path stringByAppendingPathComponent:@"vm_snapshot_data"].UTF8String;
+    _settings.isolate_snapshot_data_path =
+        [path stringByAppendingPathComponent:@"isolate_snapshot_data"].UTF8String;
+    _settings.vm_snapshot_data_path =
+        [path stringByAppendingPathComponent:@"vm_snapshot_data"].UTF8String;
   }
 }
 
