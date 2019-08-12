@@ -209,49 +209,59 @@ public:
     callback(std::move(_callback)),
     contextPtr(_contextPtr){}
     ~ImageLoadContext(){}
+
     void onLoadSuccess(JNIEnv *env, std::string cKey, jobject jbitmap) {
-        void* pixels = nullptr;
-        uint32_t width = 0;
-        uint32_t height = 0;
-        int32_t format = 0;
-        uint32_t stride;
-        ObtainPixelsFromJavaBitmap(env, jbitmap, &width, &height, &format, &stride, &pixels);
-        sk_sp<SkImage> skImage;
-        SkColorType ct;
-        // if android
-        switch(format){
-            case 1:
-                ct = kRGBA_8888_SkColorType;
-                break;
-            case 4:
-                ct = kRGB_565_SkColorType;
-                break;
-            case 7:
-                ct = kARGB_4444_SkColorType;
-                break;
-            case 8:
-                ct = kAlpha_8_SkColorType;
-                break;
-        }
-        SkImageInfo sk_info =
-                SkImageInfo::Make(width, height, ct, kPremul_SkAlphaType);
-        size_t row_bytes = stride;
-        if (row_bytes < sk_info.minRowBytes()) {
-            return;
-        }
-        auto dartState = static_cast<UIDartState*>(contextPtr);
-        auto context = dartState->GetResourceContext();
-        sk_sp<SkData> buffer = SkData::MakeWithProc(pixels, row_bytes*height, ReleaseLoadContext, contextPtr);
-        SkPixmap pixelMap(sk_info, buffer->data(), row_bytes);
-        skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixelMap, false, sk_info.colorSpace(), true);
-        auto res = AndroidBitmap_unlockPixels(env, jbitmap);
-        if (ANDROID_BITMAP_RESULT_SUCCESS != res) {
-            FML_LOG(ERROR)<<"FlutterViewHandleBitmapPixels: unlock dst bitmap failed code is " + std::to_string(res)<<std::endl;
-        }
-        env->CallVoidMethod(androidImageLoader, g_image_loader_class_release, fml::jni::StringToJavaString(env, cKey).obj());
-        env->DeleteGlobalRef(androidImageLoader);
+        auto dartState = static_cast<UIDartState *>(contextPtr);
         dartState->GetTaskRunners().GetIOTaskRunner()->PostTask(
-                [skImage = std::move(skImage), callback = std::move(callback)]()mutable{
+                [cKey, jbitmap, dartState, androidImageLoader = androidImageLoader, contextPtr = contextPtr,
+                        callback = std::move(callback)]() {
+                    JNIEnv *env = fml::jni::AttachCurrentThread();
+                    void *pixels = nullptr;
+                    uint32_t width = 0;
+                    uint32_t height = 0;
+                    int32_t format = 0;
+                    uint32_t stride;
+                    ObtainPixelsFromJavaBitmap(env, jbitmap, &width, &height, &format, &stride, &pixels);
+                    sk_sp<SkImage> skImage;
+                    SkColorType ct;
+                    // if android
+                    switch (format) {
+                        case 1:
+                            ct = kRGBA_8888_SkColorType;
+                            break;
+                        case 4:
+                            ct = kRGB_565_SkColorType;
+                            break;
+                        case 7:
+                            ct = kARGB_4444_SkColorType;
+                            break;
+                        case 8:
+                            ct = kAlpha_8_SkColorType;
+                            break;
+                    }
+                    SkImageInfo sk_info =
+                            SkImageInfo::Make(width, height, ct, kPremul_SkAlphaType);
+                    size_t row_bytes = stride;
+                    if (row_bytes < sk_info.minRowBytes()) {
+                        return;
+                    }
+
+                    auto context = dartState->GetResourceContext();
+                    sk_sp<SkData> buffer = SkData::MakeWithProc(pixels, row_bytes * height, ReleaseLoadContext,
+                                                                contextPtr);
+                    SkPixmap pixelMap(sk_info, buffer->data(), row_bytes);
+                    skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixelMap, false, sk_info.colorSpace(),
+                                                                  true);
+                    auto res = AndroidBitmap_unlockPixels(env, jbitmap);
+                    if (ANDROID_BITMAP_RESULT_SUCCESS != res) {
+                        FML_LOG(ERROR)
+                        << "FlutterViewHandleBitmapPixels: unlock dst bitmap failed code is " + std::to_string(res)
+                        << std::endl;
+                    }
+                    env->CallVoidMethod(androidImageLoader, g_image_loader_class_release,
+                                        fml::jni::StringToJavaString(env, cKey).obj());
+                    env->DeleteGlobalRef(androidImageLoader);
+
                     callback(skImage);
                 });
     }
