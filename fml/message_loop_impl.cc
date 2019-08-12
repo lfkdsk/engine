@@ -120,7 +120,9 @@ void MessageLoopImpl::FlushTasks(FlushType type) {
   {
     std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
 
-    if (delayed_tasks_.empty()) {
+    // BD MOD:
+    //if (delayed_tasks_.empty()) {
+    if (delayed_tasks_.empty() && low_priority_tasks_.empty()) {
       return;
     }
 
