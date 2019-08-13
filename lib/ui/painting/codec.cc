@@ -551,6 +551,10 @@ Dart_Handle SingleFrameCodec::getNextFrame(Dart_Handle callback_handle) {
   return Dart_Null();
 }
 
+/**
+ * BD ADD:
+ *
+ */
 static void InvokeGetNativeImageCallback(fml::RefPtr<CanvasImage> image,
                                          std::unique_ptr<DartPersistentValue> callback,
                                          size_t trace_id) {
@@ -567,7 +571,11 @@ static void InvokeGetNativeImageCallback(fml::RefPtr<CanvasImage> image,
     }
     TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
 }
-    
+  
+/**
+ * BD ADD:
+ *
+ */
 void GetNativeImage(Dart_NativeArguments args) {
   static size_t trace_counter = 1;
   const size_t trace_id = trace_counter++;
@@ -613,9 +621,11 @@ void GetNativeImage(Dart_NativeArguments args) {
 }
 
 void Codec::RegisterNatives(tonic::DartLibraryNatives* natives) {
+  // BD ADD: START
   natives->Register({
       {"getNativeImage", GetNativeImage, 2, true},
   });
+  // END
   natives->Register({
       {"instantiateImageCodec", InstantiateImageCodec, 4, true},
   });

@@ -576,6 +576,10 @@
   return self;
 }
 
+/**
+ * BD ADD:
+ *
+ */
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
@@ -637,6 +641,10 @@
   return _flutterEngine;
 }
 
+/**
+ * BD ADD:
+ *
+ */
 - (NSObject<FlutterImageLoaderRegistry>*)imageLoaders {
     return _flutterEngine;
 }

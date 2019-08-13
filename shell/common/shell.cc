@@ -713,6 +713,9 @@ void Shell::OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) {
   });
 }
 
+/**
+ * BD ADD:
+ */
 // |PlatformView::Delegate|
 void Shell::OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) {
     FML_DCHECK(is_setup_);

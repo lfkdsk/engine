@@ -61,7 +61,10 @@ class PlatformView {
 
     virtual void OnPlatformViewMarkTextureFrameAvailable(
         int64_t texture_id) = 0;
-      
+    /**
+     * BD ADD:
+     *
+     */
     virtual void OnPlatformViewRegisterImageLoader(
         std::shared_ptr<flutter::ImageLoader> imageLoader) = 0;
   };

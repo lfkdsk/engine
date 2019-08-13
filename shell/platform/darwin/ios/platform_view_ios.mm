@@ -77,6 +77,10 @@ void PlatformViewIOS::RegisterExternalImageLoader(NSObject<FlutterImageLoader>* 
   RegisterImageLoader(std::make_shared<IOSExternalImageLoader>(imageLoader));
 }
 
+/**
+ * BD ADD:
+ *
+ */
 // |PlatformView|
 std::unique_ptr<Surface> PlatformViewIOS::CreateRenderingSurface() {
   if (!ios_surface_) {

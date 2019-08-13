@@ -1128,6 +1128,10 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
   return _engine;
 }
 
+/**
+ * BD ADD:
+ *
+ */
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
