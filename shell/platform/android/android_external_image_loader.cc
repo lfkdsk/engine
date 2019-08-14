@@ -5,7 +5,9 @@
 #include "android_external_image_loader.h"
 #include "platform_view_android_jni.h"
 #include "flutter/fml/macros.h"
-
+/**
+ * BD ADD: android image loader
+ */
 namespace flutter {
   AndroidExternalImageLoader::AndroidExternalImageLoader(
     const fml::jni::JavaObjectWeakGlobalRef &android_image_loader):android_image_loader_(android_image_loader) {}

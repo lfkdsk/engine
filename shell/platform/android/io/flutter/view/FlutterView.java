@@ -852,19 +852,25 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
     public interface FirstFrameListener {
         void onFirstFrame();
     }
-
+    /**
+     * BD ADD: register android image loader
+     */
     @Override
     public void registerImageLoader(RealImageLoader realImageLoader) {
       ensureAndroidImageLoaderAttached();
       mAndroidImageLoader.registerImageLoader(realImageLoader);
     }
-
+    /**
+     * BD ADD: unregister android image loader
+     */
     @Override
     public void unRegisterImageLoader() {
       enableTransparentBackground();
       mAndroidImageLoader.unRegisterImageLoader();
     }
-
+    /**
+     * BD ADD: initialize android image loader
+     */
     private void ensureAndroidImageLoaderAttached() {
       if (mAndroidImageLoader != null) {
         return;
@@ -873,11 +879,15 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
       mAndroidImageLoader = new AndroidImageLoader();
       registerAndroidImageLoader(mAndroidImageLoader);
     }
-
+    /**
+     * BD ADD: register android image loader
+     */
     private void registerAndroidImageLoader(AndroidImageLoader androidImageLoader) {
         mNativeView.getFlutterJNI().registerAndroidImageLoader(androidImageLoader);
     }
-
+    /**
+     * BD ADD: unregister android image loader
+     */
     private void unRegisterAndroidImageLoader() {
         mNativeView.getFlutterJNI().unRegisterAndroidImageLoader();
     }

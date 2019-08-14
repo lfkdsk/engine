@@ -3,7 +3,7 @@ package io.flutter.view;
 import android.graphics.Bitmap;
 
 /**
- * Interface for image load callback
+ * BD ADD: Interface for image load callback
  */
 public class NativeLoadCallback {
 

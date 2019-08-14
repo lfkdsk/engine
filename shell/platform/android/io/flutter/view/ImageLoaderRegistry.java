@@ -3,7 +3,7 @@ package io.flutter.view;
 import io.flutter.view.AndroidImageLoader.RealImageLoader;
 
 /**
- * register image loader impl to flutter
+ * BD ADD: register image loader impl to flutter
  */
 public interface ImageLoaderRegistry {
   /**

@@ -54,8 +54,13 @@ static fml::jni::ScopedJavaGlobalRef<jclass>* g_flutter_jni_class = nullptr;
 
 static fml::jni::ScopedJavaGlobalRef<jclass>* g_surface_texture_class = nullptr;
 
+/**
+ * BD ADD: android image loader callback class
+ */
 static fml::jni::ScopedJavaGlobalRef<jclass>* g_image_loader_callback_class = nullptr;
-
+/**
+ * BD ADD: android image loader class
+ */
 static fml::jni::ScopedJavaGlobalRef<jclass>* g_image_loader_class = nullptr;
 
 // Called By Native
@@ -175,9 +180,21 @@ void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj) {
   FML_CHECK(CheckException(env));
 }
 
+/**
+ * BD ADD: add for c++ image load result callback
+ */
 static jmethodID g_native_callback_constructor = nullptr;
+/**
+ * BD ADD: android image loader load method
+ */
 static jmethodID g_image_loader_class_load = nullptr;
+/**
+ * BD ADD: android image loader release method
+ */
 static jmethodID g_image_loader_class_release = nullptr;
+/**
+ * BD ADD: lock pixel buffer from android Bitmap
+ */
 void ObtainPixelsFromJavaBitmap(JNIEnv* env, jobject jbitmap, uint32_t* width, uint32_t* height, int32_t* format, uint32_t* stride, void** pixels) {
     FML_CHECK(CheckException(env));
     AndroidBitmapInfo info;
@@ -199,9 +216,13 @@ void ObtainPixelsFromJavaBitmap(JNIEnv* env, jobject jbitmap, uint32_t* width, u
         FML_LOG(ERROR)<<"ObtainPixelsFromJavaBitmap: lock dst bitmap failed"<<std::endl;
     }
 }
-
+/**
+ * BD ADD: release image load context
+ */
 void ReleaseLoadContext(const void* pixels, SkImage::ReleaseContext releaseContext);
-
+/**
+ * BD ADD: hold image load callback when android async load image finish
+ */
 class ImageLoadContext {
 public:
     ImageLoadContext(std::function<void(sk_sp<SkImage> image)> _callback, void* _contextPtr, jobject _imageLoader):
@@ -274,8 +295,13 @@ private:
     void* contextPtr;
 };
 
-
+/**
+ * BD ADD: global map for image load context
+ */
 static std::map<std::string, std::shared_ptr<ImageLoadContext>> g_image_load_contexts;
+/**
+ * BD ADD: call android to load image
+ */
 void CallJavaImageLoader(jobject android_image_loader, std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
   JNIEnv* env = fml::jni::AttachCurrentThread();
   auto loadContext = std::make_shared<ImageLoadContext>(callback, contextPtr, env->NewGlobalRef(android_image_loader));
@@ -284,7 +310,9 @@ void CallJavaImageLoader(jobject android_image_loader, std::string url, void* co
   auto nativeCallback = new fml::jni::ScopedJavaLocalRef<jobject>(env, env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor));
   env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(), nativeCallback->obj(), fml::jni::StringToJavaString(env, key).obj());
 }
-
+/**
+ * BD ADD: called by skia to release pixel resource
+ */
 void ReleaseLoadContext(const void* pixels, SkImage::ReleaseContext releaseContext){
 }
 
@@ -655,7 +683,9 @@ static void UnregisterTexture(JNIEnv* env,
   ANDROID_SHELL_HOLDER->GetPlatformView()->UnregisterTexture(
       static_cast<int64_t>(texture_id));
 }
-
+/**
+ * BD ADD: jni call to notify android  image load success
+ */
 static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jcaller,
         jstring key,
@@ -668,7 +698,9 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
     loadContext->onLoadSuccess(env, cKey, env->NewGlobalRef(jBitmap));
     g_image_load_contexts.erase(cKey);
 }
-
+/**
+ * BD ADD: jni call to notify android image load fail
+ */
 static void ExternalImageLoadFail(JNIEnv *env,
         jobject jcaller,
         jstring key) {
@@ -680,7 +712,9 @@ static void ExternalImageLoadFail(JNIEnv *env,
     loadContext->onLoadFail(env, cKey);
     g_image_load_contexts.erase(cKey);
 }
-
+/**
+ * BD ADD: register android image loader
+ */
 static void RegisterAndroidImageLoader(JNIEnv *env,
                             jobject jcaller,
                             jlong shell_holder,
@@ -689,7 +723,9 @@ static void RegisterAndroidImageLoader(JNIEnv *env,
             fml::jni::JavaObjectWeakGlobalRef(env, android_image_loader)  //
     );
 }
-
+/**
+ * BD ADD: unregister android image loader
+ */
 static void UnRegisterAndroidImageLoader(JNIEnv *env,
                                        jobject jcaller,
                                        jlong shell_holder) {
@@ -833,11 +869,13 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(JJ)V",
           .fnPtr = reinterpret_cast<void*>(&UnregisterTexture),
       },
+      // BD ADD: add for register android image loader
       {
           .name = "nativeRegisterAndroidImageLoader",
           .signature = "(JLio/flutter/view/AndroidImageLoader;)V",
           .fnPtr = reinterpret_cast<void*>(&RegisterAndroidImageLoader),
       },
+      // BD ADD: add for unregister android image loader
       {
           .name = "nativeUnregisterAndroidImageLoader",
           .signature = "(J)V",
@@ -905,12 +943,16 @@ bool RegisterApi(JNIEnv* env) {
 
   return true;
 }
-
+/**
+ * BD ADD:
+ */
 static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jcaller,
         jstring key,
         jobject jBitmap);
-
+/**
+ * BD ADD:
+ */
 static void ExternalImageLoadFail(JNIEnv *env,
         jobject jcaller,
         jstring key);
@@ -949,37 +991,49 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
     FML_LOG(ERROR) << "Could not locate SurfaceTexture class";
     return false;
   }
-
+  /**
+   * BD ADD: add to register android image loader
+   */
   g_image_loader_class = new fml::jni::ScopedJavaGlobalRef<jclass>(env, env->FindClass("io/flutter/view/AndroidImageLoader"));
   if (g_image_loader_class->is_null()) {
       FML_LOG(ERROR) << "Could not locate AndroidImageLoader class";
       return false;
   }
-
+  /**
+   * BD ADD: load method
+   */
   g_image_loader_class_load = env->GetMethodID(g_image_loader_class->obj(), "load", "(Ljava/lang/String;Lio/flutter/view/NativeLoadCallback;Ljava/lang/String;)V");
   if (g_image_loader_class_load == nullptr) {
     FML_LOG(ERROR) << "Could not locate AndroidImageLoader load method";
     return false;
   }
-
+  /**
+   * BD ADD: release method
+   */
   g_image_loader_class_release = env->GetMethodID(g_image_loader_class->obj(), "release", "(Ljava/lang/String;)V");
   if (g_image_loader_class_release == nullptr) {
     FML_LOG(ERROR) << "Could not locate AndroidImageLoader release method";
     return false;
   }
-
+  /**
+   * BD ADD: image load c++ callback
+   */
   g_image_loader_callback_class = new fml::jni::ScopedJavaGlobalRef<jclass>(env, env->FindClass("io/flutter/view/NativeLoadCallback"));
   if (g_image_loader_callback_class->is_null()) {
       FML_LOG(ERROR) << "Could not locate NativeLoadCallback class";
       return false;
   }
-
+  /**
+   * BD ADD: image load c++ callback constructor
+   */
   g_native_callback_constructor = env->GetMethodID(g_image_loader_callback_class->obj(), "<init>", "()V");
   if (g_native_callback_constructor == nullptr) {
     FML_LOG(ERROR) << "Could not locate NativeLoadCallback constructor";
     return false;
   }
-
+  /**
+   * BD ADD: c++ callback methods
+   */
   static const JNINativeMethod native_load_callback_methods[] = {
           {
               .name = "nativeSuccessCallback",
@@ -992,7 +1046,9 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
               .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadFail),
           },
   };
-
+  /**
+   * BD ADD: c++ image load callback
+   */
   if (env->RegisterNatives(g_image_loader_callback_class->obj(),
                            native_load_callback_methods,
                            arraysize(native_load_callback_methods)) != 0) {

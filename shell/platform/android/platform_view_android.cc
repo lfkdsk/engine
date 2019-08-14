@@ -411,7 +411,9 @@ void PlatformViewAndroid::RegisterExternalTexture(
   RegisterTexture(
       std::make_shared<AndroidExternalTextureGL>(texture_id, surface_texture));
 }
-
+/**
+ * BD ADD: register android image loader
+ */
 void PlatformViewAndroid::RegisterExternalImageLoader(const fml::jni::JavaObjectWeakGlobalRef& android_image_loader) {
     RegisterImageLoader(std::make_shared<AndroidExternalImageLoader>(android_image_loader));
 }

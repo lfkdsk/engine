@@ -8,7 +8,9 @@
 #include "flutter/lib/ui/painting/image_loader.h"
 #include "flutter/fml/macros.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
-
+/**
+ * BD ADD: android image loader
+ */
 namespace flutter {
     class AndroidExternalImageLoader : public flutter::ImageLoader {
     public:

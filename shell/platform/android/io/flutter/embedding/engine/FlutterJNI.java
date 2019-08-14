@@ -386,21 +386,30 @@ public class FlutterJNI {
   }
 
   private native void nativeSetAccessibilityFeatures(long nativePlatformViewId, int flags);
-
+  /**
+   * BD ADD: register android image loader
+   */
   @UiThread
   public void registerAndroidImageLoader(AndroidImageLoader androidImageLoader) {
     ensureAttachedToNative();
     nativeRegisterAndroidImageLoader(nativePlatformViewId, androidImageLoader);
   }
-
+  /**
+   * BD ADD: register android image loader
+   */
   private native void nativeRegisterAndroidImageLoader(long nativePlatformViewId, AndroidImageLoader androidImageLoader);
 
+  /**
+   * BD ADD: unregister android image loader
+   */
   @UiThread
   public void unRegisterAndroidImageLoader() {
     ensureAttachedToNative();
     nativeUnregisterAndroidImageLoader(nativePlatformViewId);
   }
-
+  /**
+   * BD ADD: unregister android image loader
+   */
   private native void nativeUnregisterAndroidImageLoader(long nativePlatformViewId);
 
   @UiThread
