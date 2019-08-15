@@ -2,6 +2,9 @@ package io.flutter.view;
 
 import io.flutter.view.NativeLoadCallback;
 
+/**
+ * BD ADD: android image loader
+ */
 public class AndroidImageLoader {
   /**
    * Interface for those objects that load a image

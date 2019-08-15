@@ -66,6 +66,7 @@ import io.flutter.view.ImageLoaderRegistry;
 /**
  * An Android view containing a Flutter app.
  */
+// BD MOD: add ImageLoaderRegistry
 public class FlutterView extends SurfaceView implements BinaryMessenger, TextureRegistry, IFlutterView, ImageLoaderRegistry {
     /**
      * Interface for those objects that maintain and expose a reference to a
@@ -157,6 +158,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
     private final AtomicLong nextTextureId = new AtomicLong(0L);
     private FlutterNativeView mNativeView;
     private boolean mIsSoftwareRenderingEnabled = false; // using the software renderer or not
+    // BD ADD
     private AndroidImageLoader mAndroidImageLoader;
 
     private final AccessibilityBridge.OnAccessibilityChangeListener onAccessibilityChangeListener = new AccessibilityBridge.OnAccessibilityChangeListener() {

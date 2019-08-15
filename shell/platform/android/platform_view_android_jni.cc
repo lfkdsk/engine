@@ -220,9 +220,8 @@ void ObtainPixelsFromJavaBitmap(JNIEnv* env, jobject jbitmap, uint32_t* width, u
  * BD ADD: release image load context
  */
 void ReleaseLoadContext(const void* pixels, SkImage::ReleaseContext releaseContext);
-/**
- * BD ADD: hold image load callback when android async load image finish
- */
+
+// BD ADD: START
 class ImageLoadContext {
 public:
     ImageLoadContext(std::function<void(sk_sp<SkImage> image)> _callback, void* _contextPtr, jobject _imageLoader):
@@ -247,16 +246,19 @@ public:
                     SkColorType ct;
                     // if android
                     switch (format) {
-                        case 1:
+                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_NONE:
+                            ct = kUnknown_SkColorType;
+                            break;
+                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGBA_8888:
                             ct = kRGBA_8888_SkColorType;
                             break;
-                        case 4:
+                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGB_565:
                             ct = kRGB_565_SkColorType;
                             break;
-                        case 7:
+                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGBA_4444:
                             ct = kARGB_4444_SkColorType;
                             break;
-                        case 8:
+                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_A_8:
                             ct = kAlpha_8_SkColorType;
                             break;
                     }
@@ -294,6 +296,7 @@ private:
     std::function<void(sk_sp<SkImage> image)> callback;
     void* contextPtr;
 };
+// END
 
 /**
  * BD ADD: global map for image load context
@@ -991,49 +994,37 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
     FML_LOG(ERROR) << "Could not locate SurfaceTexture class";
     return false;
   }
-  /**
-   * BD ADD: add to register android image loader
-   */
+  // BD ADD: START
   g_image_loader_class = new fml::jni::ScopedJavaGlobalRef<jclass>(env, env->FindClass("io/flutter/view/AndroidImageLoader"));
   if (g_image_loader_class->is_null()) {
       FML_LOG(ERROR) << "Could not locate AndroidImageLoader class";
       return false;
   }
-  /**
-   * BD ADD: load method
-   */
+
   g_image_loader_class_load = env->GetMethodID(g_image_loader_class->obj(), "load", "(Ljava/lang/String;Lio/flutter/view/NativeLoadCallback;Ljava/lang/String;)V");
   if (g_image_loader_class_load == nullptr) {
     FML_LOG(ERROR) << "Could not locate AndroidImageLoader load method";
     return false;
   }
-  /**
-   * BD ADD: release method
-   */
+
   g_image_loader_class_release = env->GetMethodID(g_image_loader_class->obj(), "release", "(Ljava/lang/String;)V");
   if (g_image_loader_class_release == nullptr) {
     FML_LOG(ERROR) << "Could not locate AndroidImageLoader release method";
     return false;
   }
-  /**
-   * BD ADD: image load c++ callback
-   */
+
   g_image_loader_callback_class = new fml::jni::ScopedJavaGlobalRef<jclass>(env, env->FindClass("io/flutter/view/NativeLoadCallback"));
   if (g_image_loader_callback_class->is_null()) {
       FML_LOG(ERROR) << "Could not locate NativeLoadCallback class";
       return false;
   }
-  /**
-   * BD ADD: image load c++ callback constructor
-   */
+
   g_native_callback_constructor = env->GetMethodID(g_image_loader_callback_class->obj(), "<init>", "()V");
   if (g_native_callback_constructor == nullptr) {
     FML_LOG(ERROR) << "Could not locate NativeLoadCallback constructor";
     return false;
   }
-  /**
-   * BD ADD: c++ callback methods
-   */
+
   static const JNINativeMethod native_load_callback_methods[] = {
           {
               .name = "nativeSuccessCallback",
@@ -1046,15 +1037,14 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
               .fnPtr = reinterpret_cast<void*>(&ExternalImageLoadFail),
           },
   };
-  /**
-   * BD ADD: c++ image load callback
-   */
+
   if (env->RegisterNatives(g_image_loader_callback_class->obj(),
                            native_load_callback_methods,
                            arraysize(native_load_callback_methods)) != 0) {
       FML_LOG(ERROR) << "Failed to RegisterNatives with NativeLoadCallback";
       return false;
   }
+  // END
 
 
   static const JNINativeMethod callback_info_methods[] = {
