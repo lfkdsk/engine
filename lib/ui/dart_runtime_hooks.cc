@@ -60,7 +60,7 @@ namespace flutter {
   V(ForceGC, 0)                \
   V(StartBoost, 2)             \
   V(FinishBoost, 1)
-/** END */
+  /** END */
 
 BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
 
