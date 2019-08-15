@@ -14,7 +14,7 @@ Boost::Boost()
       ui_gpu_queue_length_(2),
       is_aa_disabled_(false),
       is_gc_disagled_(false),
-      is_wait_swap_buffer_enabled_(true),
+      is_wait_swap_buffer_enabled_(false),
       vsync_received_(false),
       dart_frame_deadline_(TimePoint::Now()),
       can_extend_(false),
