@@ -5,6 +5,7 @@
 #include "flutter/fml/platform/darwin/cf_utils.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterImageLoader.h"
 
+// BD ADD: START
 namespace flutter {
     
     class IOSExternalImageLoader : public flutter::ImageLoader {
@@ -22,5 +23,6 @@ namespace flutter {
     };
     
 }  // namespace flutter
+// END
 
 #endif  // FLUTTER_SHELL_PLATFORM_IOS_EXTERNAL_IMAGE_LOADER_GL_H_

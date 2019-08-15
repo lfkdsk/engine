@@ -4,6 +4,7 @@
 
 #include "flutter/lib/ui/painting/image_loader.h"
 
+// BD ADD: START
 namespace flutter {
     
     ImageLoader::ImageLoader() {}
@@ -11,3 +12,4 @@ namespace flutter {
     ImageLoader::~ImageLoader() = default;
     
 }  // namespace flutter
+// END

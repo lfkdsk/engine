@@ -49,9 +49,11 @@ class ShellIOManager final : public IOManager {
 
   void UpdatePlatformViewValid(bool valid);
   bool IsResourceContextValidForDecodeImage() const override;
-    
+  
+  // BD ADD:
   void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
-    
+  
+  // BD ADD:
   std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override;
 
  private:
@@ -64,7 +66,11 @@ class ShellIOManager final : public IOManager {
   fml::RefPtr<flutter::SkiaUnrefQueue> unref_queue_;
 
   fml::WeakPtrFactory<ShellIOManager> weak_factory_;
-    
+  
+  /**
+   * BD ADD:
+   *
+   */ 
   std::shared_ptr<flutter::ImageLoader> imageLoader_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(ShellIOManager);

@@ -1666,12 +1666,20 @@ Future<Codec> instantiateImageCodec(Uint8List list, {
 String _instantiateImageCodec(Uint8List list, _Callback<Codec> callback, _ImageInfo imageInfo, double decodedCacheRatioCap)
   native 'instantiateImageCodec';
 
+/**
+ * BD ADD:
+ *
+ */
 Future<Image> getNativeImage(String url) {
   return _futurize(
         (_Callback<Image> callback) => _getNativeImage(url, callback),
   );
 }
 
+/**
+ * BD ADD:
+ *
+ */
 String _getNativeImage(String url, _Callback<Image> callback)
   native 'getNativeImage';
 

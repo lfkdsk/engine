@@ -8,6 +8,7 @@
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "flutter/fml/macros.h"
 
+// BD ADD: START
 namespace flutter {
     
     class ImageLoader {
@@ -20,5 +21,6 @@ namespace flutter {
     };
     
 }  // namespace flutter
+// END
 
 #endif  // FLUTTER_FLOW_IMAGE_LOADER_H_

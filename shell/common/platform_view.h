@@ -120,7 +120,8 @@ class PlatformView {
 
   // Called once per texture update (e.g. video frame), on the platform thread.
   void MarkTextureFrameAvailable(int64_t texture_id);
-    
+  
+  // BD ADD:
   void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
 
  protected:

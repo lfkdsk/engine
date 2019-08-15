@@ -27,6 +27,7 @@ namespace {
 
 static constexpr const char* kInitCodecTraceTag = "InitCodec";
 static constexpr const char* kCodecNextFrameTraceTag = "CodecNextFrame";
+// BD ADD:
 static constexpr const char* kGetNativeImageTraceTag = "GetNativeImage";
 
 // This must be kept in sync with the enum in painting.dart

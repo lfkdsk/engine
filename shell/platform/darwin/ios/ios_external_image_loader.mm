@@ -15,6 +15,7 @@
 #include "flutter/fml/make_copyable.h"
 #include "flutter/lib/ui/ui_dart_state.h"
 
+// BD ADD: START
 namespace flutter {
     
     IOSExternalImageLoader::IOSExternalImageLoader(NSObject<FlutterImageLoader>* imageLoader): imageLoader_(imageLoader) {
@@ -90,3 +91,4 @@ namespace flutter {
     }
     
 }  // namespace flutter
+// END
