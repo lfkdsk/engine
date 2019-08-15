@@ -32,6 +32,7 @@ source_set("flutter_channels") {
     "ios/framework/Source/FlutterCodecs.mm",
     "ios/framework/Source/FlutterStandardCodec.mm",
     "ios/framework/Source/FlutterStandardCodec_Internal.h",
+    "ios/framework/Source/FlutterBinaryMessengerProvider.h"
   ]
   set_sources_assignment_filter(sources_assignment_filter)
 
@@ -55,10 +56,15 @@ source_set("framework_shared") {
     "ios/framework/Source/FlutterCodecs.mm",
     "ios/framework/Source/FlutterStandardCodec.mm",
     "ios/framework/Source/FlutterStandardCodec_Internal.h",
+    "ios/framework/Source/FlutterBinaryMessengerProvider.h"
   ]
 
   public = framework_shared_headers
   set_sources_assignment_filter(sources_assignment_filter)
+
+  deps = [
+    "$flutter_root/fml"
+  ]
 
   defines = [ "FLUTTER_FRAMEWORK" ]
 

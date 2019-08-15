@@ -25,8 +25,12 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/platform_message_response_darwin.h"
 #include "flutter/shell/platform/darwin/ios/ios_surface.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
+// BD ADD:
+#include "FlutterBinaryMessengerProvider.h"
 
-@interface FlutterEngine () <FlutterTextInputDelegate>
+// BD MOD:
+// @interface FlutterEngine () <FlutterTextInputDelegate>
+@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessengerProvider>
 // Maintains a dictionary of plugin names that have registered with the engine.  Used by
 // FlutterEngineRegistrar to implement a FlutterPluginRegistrar.
 @property(nonatomic, readonly) NSMutableDictionary* pluginPublications;
@@ -42,6 +46,9 @@
   std::unique_ptr<flutter::Shell> _shell;
   NSString* _labelPrefix;
   std::unique_ptr<fml::WeakPtrFactory<FlutterEngine>> _weakFactory;
+  // BD ADD:
+  std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>
+      _weakBinaryMessengerFactory;
 
   fml::WeakPtr<FlutterViewController> _viewController;
   fml::scoped_nsobject<FlutterObservatoryPublisher> _publisher;
@@ -82,6 +89,9 @@
   _labelPrefix = [labelPrefix copy];
 
   _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterEngine>>(self);
+  // BD ADD:
+  _weakBinaryMessengerFactory =
+      std::make_unique<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>(self);
 
   if (projectOrNil == nil)
     _dartProject.reset([[FlutterDartProject alloc] init]);
@@ -583,6 +593,14 @@
 - (NSObject*)valuePublishedByPlugin:(NSString*)pluginKey {
   return _pluginPublications[pluginKey];
 }
+
+// BD ADD: START
+#pragma mark - FlutterPluginRegistry
+
+- (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
+  return _weakBinaryMessengerFactory->GetWeakPtr();
+}
+// END
 
 @end
 
