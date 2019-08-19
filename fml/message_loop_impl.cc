@@ -159,6 +159,10 @@ void MessageLoopImpl::FlushTasks(FlushType type) {
 // BD ADD: START
 void MessageLoopImpl::PostBarrier(bool barrier_enabled) {
     barrier_enabled_ = barrier_enabled;
+    if (!barrier_enabled_) {
+      std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
+      WakeUp(low_priority_tasks_.top().target_time);
+    }
 }
 
 void MessageLoopImpl::PostTask(fml::closure task, fml::TimePoint target_time, bool is_low_priority) {

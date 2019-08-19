@@ -368,13 +368,13 @@ void ForceGC(Dart_NativeArguments args) {
 }
 
 void StartBoost(Dart_NativeArguments args) {
-  int flags = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  uint16_t flags = (uint16_t)DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
   int millis = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 1));
   Boost::Current()->StartUp(flags, millis);
 }
 
 void FinishBoost(Dart_NativeArguments args) {
-  int flags = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  uint16_t flags = (uint16_t)DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
   Boost::Current()->Finish(flags);
 }
 // END

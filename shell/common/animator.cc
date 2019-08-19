@@ -5,8 +5,6 @@
 #include "flutter/shell/common/animator.h"
 
 #include "flutter/fml/trace_event.h"
-// BD ADD:
-#include "flutter/lib/ui/boost.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
 
 namespace flutter {
@@ -36,9 +34,7 @@ Animator::Animator(Delegate& delegate,
           task_runners.GetPlatformTaskRunner() ==
                   task_runners.GetGPUTaskRunner()
               ? 1
-              // BD MOD:
-              // : 2
-              : Boost::Current()->GetQueueLength())),
+              : 2)),
       pending_frame_semaphore_(1),
       frame_number_(1),
       paused_(false),

@@ -21,15 +21,15 @@ using namespace std;
 class Boost {
  public:
   enum Flags {
-    kDisableAA = 1 << 0,
-    kDisableGC = 1 << 1,
+    kDisableGC = 1 << 0,
+    kDisableAA = 1 << 1,
     kEnableWaitSwapBuffer = 1 << 2,
     kDelayFuture = 1 << 3,
     kDelayPlatformMessage = 1 << 4,
     kEnableExtendBuffer = 1 << 5,
   };
 
-  static constexpr unsigned kAllFlags = 0x3F;
+  static constexpr uint16_t kAllFlags = 0x3F;
 
  public:
   static Boost* Current() {
@@ -37,12 +37,11 @@ class Boost {
     return &instance;
   }
 
-  int GetQueueLength();
+  void Init(bool disable_anti_alias);
 
-  void Init(bool disable_anti_alias, int queue_length = 2);
-
-  void StartUp(int flags, int millis);
+  void StartUp(uint16_t flags, int millis);
   void CheckFinished();
+  void Finish(uint16_t flags, const TaskRunners* task_runners = nullptr);
 
   bool IsAADisabled();
   bool IsGCDisabled();
@@ -53,32 +52,34 @@ class Boost {
   void UpdateVsync(bool received,
                    TimePoint frame_target_time = TimePoint::Now());
 
+  bool IsEnableExtendBuffer();
   bool IsValidExtension();
   bool TryWaitExtension();
   bool SignalExtension();
-
-  void Finish(int flags);
 
  private:
   Boost();
   ~Boost();
 
-  int64_t boost_deadline_;
+  uint16_t boost_flags_;
+  
+  int64_t gc_deadline_;
+  
+  int64_t aa_deadline_;
 
-  int ui_gpu_queue_length_;
+  int64_t delay_future_deadline_;
 
-  bool is_aa_disabled_;
-  bool is_gc_disagled_;
-  bool is_wait_swap_buffer_enabled_;
-  bool is_delay_future_;
-  bool is_delay_platform_message_;
+  int64_t delay_platform_message_deadline_;
 
+  int64_t wait_swap_buffer_deadline_;
   atomic_bool vsync_received_;
   TimePoint dart_frame_deadline_;
 
-  bool can_extend_;
+  int64_t extend_buffer_deadline_;
   atomic_char extend_count_;
   fml::Semaphore extend_semaphore_;
+  
+  fml::WeakPtrFactory<Boost> weak_factory_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Boost);
 };

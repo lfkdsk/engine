@@ -10,94 +10,170 @@
 namespace flutter {
 
 Boost::Boost()
-    : boost_deadline_(0),
-      ui_gpu_queue_length_(2),
-      is_aa_disabled_(false),
-      is_gc_disagled_(false),
-      is_wait_swap_buffer_enabled_(false),
+    : boost_flags_(0),
+      gc_deadline_(0),
+      aa_deadline_(0),
+      delay_future_deadline_(0),
+      delay_platform_message_deadline_(0),
+      wait_swap_buffer_deadline_(0),
       vsync_received_(false),
       dart_frame_deadline_(TimePoint::Now()),
-      can_extend_(false),
+      extend_buffer_deadline_(0),
       extend_count_(0),
-      extend_semaphore_(6) {}
+      extend_semaphore_(6),
+      weak_factory_(this){}
 
 Boost::~Boost() = default;
 
-int Boost::GetQueueLength() {
-  return ui_gpu_queue_length_;
-}
-
-void Boost::Init(bool disable_anti_alias, int queue_length) {
+void Boost::Init(bool disable_anti_alias) {
 #if defined(SKIA_PERFORMANCE_EXTENSION)
   gSkDisableAntiAlias = disable_anti_alias;
 #endif
-  ui_gpu_queue_length_ = queue_length;
 }
 
-void Boost::StartUp(int flags, int millis) {
-  boost_deadline_ = millis * 1000 + Dart_TimelineGetMicros();
-  if (flags & Flags::kDisableAA) {
-    is_aa_disabled_ = true;
-  }
-  if (flags & Flags::kDisableGC) {
-    is_gc_disagled_ = true;
-#if defined(DART_PERFORMANCE_EXTENSION)
-    Dart_SkipGCFromNow(millis);
+void Boost::StartUp(uint16_t flags, int millis) {
+#if defined(DEBUG)
+  printf("StartUp Flags: 0x%x, Current:0x%x, Time: %dms \n", flags, boost_flags_, millis);
 #endif
+
+  int64_t current_deadline_ = millis * 1000 + Dart_TimelineGetMicros();
+  
+#if defined(DART_PERFORMANCE_EXTENSION)
+  if (flags & Flags::kDisableGC) {
+    gc_deadline_ = current_deadline_;
+    Dart_SkipGCFromNow(millis);
+  }
+#endif
+
+  if (flags & Flags::kDisableAA) {
+    aa_deadline_ = current_deadline_;
   }
   if (flags & Flags::kEnableWaitSwapBuffer) {
-    is_wait_swap_buffer_enabled_ = true;
-  }
-  if (flags & Flags::kDelayFuture) {
-    is_delay_future_ = true;
-    UIDartState::Current()->GetTaskRunners().GetUITaskRunner()->PostBarrier(
-        true);
-  }
-  if (flags & Flags::kDelayPlatformMessage) {
-    is_delay_platform_message_ = true;
-    UIDartState::Current()
-        ->GetTaskRunners()
-        .GetPlatformTaskRunner()
-        ->PostBarrier(true);
+    wait_swap_buffer_deadline_ = current_deadline_;
   }
   if (flags & Flags::kEnableExtendBuffer) {
-    can_extend_ = true;
+    extend_buffer_deadline_ = current_deadline_;
   }
+  if (flags & Flags::kDelayFuture) {
+    delay_future_deadline_ = current_deadline_;
+    if (!(boost_flags_ & Flags::kDelayFuture)) {
+      const auto& task_runners = UIDartState::Current()->GetTaskRunners();
+      task_runners.GetUITaskRunner()->PostBarrier(true);
+      task_runners.GetUITaskRunner()->PostDelayedTask(
+            [&task_runners]() {
+              Boost::Current()->Finish(Flags::kDelayFuture, &task_runners);
+            }, TimeDelta::FromMilliseconds(millis));
+    }
+  }
+  if (flags & Flags::kDelayPlatformMessage) {
+    delay_platform_message_deadline_ = current_deadline_;
+    if (!(boost_flags_ & Flags::kDelayFuture)) {
+      const auto& task_runners = UIDartState::Current()->GetTaskRunners();
+      task_runners.GetPlatformTaskRunner()->PostBarrier(true);
+      task_runners.GetUITaskRunner()->PostDelayedTask(
+          [&task_runners]() {
+            Boost::Current()->Finish(Flags::kDelayPlatformMessage, &task_runners);
+          }, TimeDelta::FromMilliseconds(millis));
+    }
+  }
+  boost_flags_ |= flags;
+#if defined(DEBUG)
+  printf("StartUp Boost Flags:0x%x \n", boost_flags_);
+#endif
 }
 
 void Boost::CheckFinished() {
-  if (boost_deadline_ <= 0 || boost_deadline_ > Dart_TimelineGetMicros()) {
+  int64_t current_micros = Dart_TimelineGetMicros();
+  uint16_t finish_flags = 0;
+  if (gc_deadline_ > 0 && gc_deadline_ < current_micros) {
+    finish_flags |= kDisableGC;
+  }
+  if (aa_deadline_ > 0 && aa_deadline_ < current_micros) {
+    finish_flags |= kDisableAA;
+  }
+  if (wait_swap_buffer_deadline_ > 0 &&
+      wait_swap_buffer_deadline_ < current_micros) {
+    finish_flags |= kEnableWaitSwapBuffer;
+  }
+  if (extend_buffer_deadline_ > 0 && extend_buffer_deadline_ < current_micros) {
+    finish_flags |= kEnableExtendBuffer;
+  }
+  if (delay_future_deadline_ > 0 && delay_future_deadline_ < current_micros) {
+    finish_flags |= kDelayFuture;
+  }
+  if (delay_platform_message_deadline_ > 0 &&
+      delay_platform_message_deadline_ < current_micros) {
+    finish_flags |= kDelayPlatformMessage;
+  }
+  Finish(finish_flags);
+}
+
+void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
+  if (flags <= 0) {
     return;
   }
-  Finish(kAllFlags);
+#if defined(DEBUG)
+  printf("Finish Flags: 0x%x, Current: 0x%x \n", flags, boost_flags_);
+#endif
+  boost_flags_ &= ~flags;
+#if defined(DART_PERFORMANCE_EXTENSION)
+  if (flags & kDisableGC) {
+    gc_deadline_ = 0;
+    Dart_SkipGCFromNow(0);
+  }
+#endif
+  if (flags & kDisableAA) {
+    aa_deadline_ = 0;
+  }
+  if (flags & kEnableWaitSwapBuffer) {
+    wait_swap_buffer_deadline_ = 0;
+  }
+  if (flags & Flags::kEnableExtendBuffer) {
+    extend_buffer_deadline_ = 0;
+  }
+  if (flags & Flags::kDelayFuture) {
+    delay_future_deadline_ = 0;
+    task_runners->GetUITaskRunner()->PostBarrier(false);
+  }
+  if (flags & Flags::kDelayPlatformMessage) {
+    delay_platform_message_deadline_ = 0;
+    task_runners->GetPlatformTaskRunner()->PostBarrier(false);
+  }
+#if defined(DEBUG)
+  printf("Finish Boost Flags: 0x%x \n", boost_flags_);
+#endif
 }
 
 bool Boost::IsAADisabled() {
 #if defined(SKIA_PERFORMANCE_EXTENSION)
-  return is_aa_disabled_ || gSkDisableAntiAlias;
+  return boost_flags_ & kDisableAA || gSkDisableAntiAlias;
 #else
-  return is_aa_disabled_;
+  return boost_flags_ & kDisableAA;
 #endif
 }
 
 bool Boost::IsGCDisabled() {
-  return is_gc_disagled_;
+  return boost_flags_ & kDisableGC;
 }
 
 bool Boost::IsDelayFuture() {
-  return is_delay_future_;
+  return boost_flags_ & kDelayFuture;
 }
 
 bool Boost::IsDelayPlatformMessage() {
-  return is_delay_platform_message_;
+  return boost_flags_ & kDelayPlatformMessage;
+}
+
+bool Boost::IsEnableExtendBuffer() {
+  return boost_flags_ & kEnableExtendBuffer;
 }
 
 bool Boost::IsValidExtension() {
-  return can_extend_ && extend_semaphore_.IsValid();
+  return IsEnableExtendBuffer() && extend_semaphore_.IsValid();
 }
 
 bool Boost::TryWaitExtension() {
-  if (can_extend_ && extend_semaphore_.TryWait()) {
+  if (IsEnableExtendBuffer() && extend_semaphore_.TryWait()) {
     extend_count_++;
     return true;
   }
@@ -122,53 +198,20 @@ void Boost::UpdateVsync(bool received, TimePoint frame_target_time) {
 
 // If haven't received the vsync signal, wait util the frame dead line.
 void Boost::WaitSwapBufferIfNeed() {
-  if (vsync_received_ || !is_wait_swap_buffer_enabled_) {
+  if (vsync_received_ || !(boost_flags_ & kEnableWaitSwapBuffer)) {
     return;
   }
-  int next_frame_time =
-      (dart_frame_deadline_ - TimePoint::Now()).ToMilliseconds() + 1;
+  double next_frame_time =
+      (dart_frame_deadline_ - TimePoint::Now()).ToMillisecondsF() + 0.5;
+  if (next_frame_time < 0) {
+    return;
+  }
   if (next_frame_time > 16) {
     next_frame_time = 16;
   }
-  if (next_frame_time > 0) {
-    AutoResetWaitableEvent swap_buffer_wait;
-    swap_buffer_wait.WaitWithTimeout(
-        TimeDelta::FromMilliseconds(next_frame_time));
-  }
-}
-
-void Boost::Finish(int flags) {
-  if (boost_deadline_ <= 0) {
-    return;
-  }
-  boost_deadline_ = 0;
-  if (flags & kDisableAA) {
-    is_aa_disabled_ = false;
-  }
-  if (flags & kDisableGC) {
-    is_gc_disagled_ = false;
-#if defined(DART_PERFORMANCE_EXTENSION)
-    Dart_SkipGCFromNow(0);
-#endif
-  }
-  if (flags & kEnableWaitSwapBuffer) {
-    is_wait_swap_buffer_enabled_ = false;
-  }
-  if (flags & Flags::kDelayFuture) {
-    is_delay_future_ = false;
-    UIDartState::Current()->GetTaskRunners().GetUITaskRunner()->PostBarrier(
-        false);
-  }
-  if (flags & Flags::kDelayPlatformMessage) {
-    is_delay_platform_message_ = false;
-    UIDartState::Current()
-        ->GetTaskRunners()
-        .GetPlatformTaskRunner()
-        ->PostBarrier(false);
-  }
-  if (flags & Flags::kEnableExtendBuffer) {
-    can_extend_ = false;
-  }
+  AutoResetWaitableEvent swap_buffer_wait;
+  swap_buffer_wait.WaitWithTimeout(
+      TimeDelta::FromMilliseconds(next_frame_time));
 }
 
 }  // namespace flutter
