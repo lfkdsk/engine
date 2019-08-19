@@ -117,7 +117,9 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
 
         auto vm = DartVMRef::Create(shell->settings_);
         FML_CHECK(vm) << "Must be able to initialize the VM.";
-        shell->vm_ = vm.get();
+        // BD MOD:
+        // shell->vm_ = vm.get();
+        shell->vm_ = vm.GetVM();
 
         const auto& task_runners = shell->GetTaskRunners();
 
@@ -293,6 +295,8 @@ Shell::~Shell() {
         vm_->GetServiceProtocol()->RemoveHandler(this);
         engine_.reset();
         ui_latch.Signal();
+        // BD ADD:
+        vm_.reset();
       }));
   ui_latch.Wait();
 

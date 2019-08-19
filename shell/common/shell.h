@@ -83,7 +83,9 @@ class Shell final : public PlatformView::Delegate,
   const Settings settings_;
   std::atomic_bool engine_created_;
   fml::ManualResetWaitableEvent ui_latch_;
-  DartVM* vm_;
+  // BD MOD:
+  // DartVM* vm_;
+  std::shared_ptr<DartVM> vm_;
   std::unique_ptr<PlatformView> platform_view_;  // on platform task runner
   std::unique_ptr<Engine> engine_;               // on UI task runner
   std::unique_ptr<Rasterizer> rasterizer_;       // on GPU task runner

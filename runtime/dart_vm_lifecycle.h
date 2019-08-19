@@ -64,6 +64,9 @@ class DartVMRef {
     return vm_.get();
   }
 
+  // BD ADD:
+  std::shared_ptr<DartVM> GetVM() { return vm_; }
+
  private:
   friend class DartIsolate;
 

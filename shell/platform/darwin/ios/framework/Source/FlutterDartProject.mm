@@ -190,6 +190,12 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   return self;
 }
 
+// BD ADD: START
+- (void)setLeakDartVMEnabled:(BOOL)enabled {
+  _settings.leak_vm = enabled;
+}
+// END
+
 #pragma mark - Dynamic
 
 + (void)registerDynamicDelegate:(id<DynamicFlutterDelegate>)delegate {

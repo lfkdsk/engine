@@ -45,6 +45,12 @@ FLUTTER_EXPORT
 // END
 
 /**
+ * BD ADD:
+ * @param enabled FlutterEngine释放以后是否保留dart vm，默认是YES
+ */
+- (void)setLeakDartVMEnabled:(BOOL)enabled;
+
+/**
  * Register the delegate for dynamic flutter
  */
 + (void)registerDynamicDelegate:(id<DynamicFlutterDelegate>)delegate;
