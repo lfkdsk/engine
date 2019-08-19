@@ -55,12 +55,12 @@ namespace flutter {
   V(ScheduleMicrotask, 1)      \
   V(GetCallbackHandle, 1)      \
   V(GetCallbackFromHandle, 1)  \
-  /** BD ADD: START */         \
+  /** BD ADD: START **/        \
   V(SkipGCFromNow, 1)          \
   V(ForceGC, 0)                \
   V(StartBoost, 2)             \
   V(FinishBoost, 1)
-  /** END */
+  /** END **/
 
 BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
 
