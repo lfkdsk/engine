@@ -37,6 +37,12 @@ FLUTTER_EXPORT
 - (instancetype)initFromDefaultSourceForConfiguration FLUTTER_UNAVAILABLE("Use -init instead.");
 
 /**
+ * BD ADD:
+ * @param enabled FlutterEngine释放以后是否保留dart vm，默认是YES
+ */
+- (void)setLeakDartVMEnabled:(BOOL)enabled;
+
+/**
  * Register the delegate for dynamic flutter
  */
 + (void)registerDynamicDelegate:(id<DynamicFlutterDelegate>)delegate;
