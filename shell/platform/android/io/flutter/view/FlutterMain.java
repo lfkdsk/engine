@@ -311,20 +311,22 @@ public class FlutterMain {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                //BD ADD: START
                 try {
                     sInitTask.get();
-                    sResourceExtractor.waitForCompletion();
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            ensureInitializationComplete(applicationContext.getApplicationContext(), args);
-                            callbackHandler.post(callback);
-                        }
-                    });
                 } catch (Exception e) {
                     Log.e(TAG, "Flutter initialization failed.", e);
                     throw new RuntimeException(e);
                 }
+                //END
+                sResourceExtractor.waitForCompletion();
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        ensureInitializationComplete(applicationContext.getApplicationContext(), args);
+                        callbackHandler.post(callback);
+                    }
+                });
             }
         }).start();
     }

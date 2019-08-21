@@ -1317,7 +1317,8 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
                     event.setScrollX((int) position);
                     event.setMaxScrollX((int) max);
                 }
-                //BD ADD : object.childrenInHitTestOrder != null
+                //BD MOD
+                //if (object.scrollChildren > 0) {
                 if (object.scrollChildren > 0 && object.childrenInHitTestOrder != null) {
                     // We don't need to add 1 to the scroll index because TalkBack does this automagically.
                     event.setItemCount(object.scrollChildren);
