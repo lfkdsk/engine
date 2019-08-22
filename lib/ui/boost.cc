@@ -38,13 +38,9 @@ void Boost::StartUp(uint16_t flags, int millis) {
 
   int64_t current_deadline_ = millis * 1000 + Dart_TimelineGetMicros();
   
-#if defined(DART_PERFORMANCE_EXTENSION)
   if (flags & Flags::kDisableGC) {
     gc_deadline_ = current_deadline_;
-    Dart_SkipGCFromNow(millis);
   }
-#endif
-
   if (flags & Flags::kDisableAA) {
     aa_deadline_ = current_deadline_;
   }
@@ -116,12 +112,10 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
   printf("Finish Flags: 0x%x, Current: 0x%x \n", flags, boost_flags_);
 #endif
   boost_flags_ &= ~flags;
-#if defined(DART_PERFORMANCE_EXTENSION)
+  
   if (flags & kDisableGC) {
     gc_deadline_ = 0;
-    Dart_SkipGCFromNow(0);
   }
-#endif
   if (flags & kDisableAA) {
     aa_deadline_ = 0;
   }
@@ -133,10 +127,16 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
   }
   if (flags & Flags::kDelayFuture) {
     delay_future_deadline_ = 0;
+    if (task_runners == nullptr) {
+      task_runners = UIDartState::Current()->GetTaskRunners();
+    }
     task_runners->GetUITaskRunner()->PostBarrier(false);
   }
   if (flags & Flags::kDelayPlatformMessage) {
     delay_platform_message_deadline_ = 0;
+    if (task_runners == nullptr) {
+      task_runners = UIDartState::Current()->GetTaskRunners();
+    }
     task_runners->GetPlatformTaskRunner()->PostBarrier(false);
   }
 #if defined(DEBUG)
