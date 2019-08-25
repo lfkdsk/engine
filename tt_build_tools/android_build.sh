@@ -9,12 +9,13 @@ fi
 
 isFast=$2
 
+# 现在fast和非fast相同
 if [ $isFast = 'fast' ]; then
     platforms=('arm' 'arm64' 'x64' 'x86')
-    dynamics=('normal')
+    dynamics=('normal' 'dynamicart')
 else
     platforms=('arm' 'x64' 'x86' 'arm64')
-    dynamics=('normal' 'dynamic')
+    dynamics=('normal' 'dynamicart')
 fi
 
 doCompile=$3
@@ -82,14 +83,15 @@ for mode in 'debug' 'profile' 'release'; do
                 platformPostFix=_${platform}
             fi
 
-            # dynamic只打非debug
-            if [ $dynamic = 'dynamic' ]; then
-                if [ $mode = 'debug' ]; then
+            # dynamicart只打release
+            if [ $dynamic = 'dynamicart' ]; then
+                if [ $mode = 'release' ]; then
+                    ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamicart
+                    androidDir=out/android_${mode}${platformPostFix}_dynamicart
+                    modeDir=$modeDir-dynamicart
+                else
                     continue
                 fi
-                ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamic
-                androidDir=out/android_dynamic_${mode}${platformPostFix}
-                modeDir=$modeDir-dynamic
             else
                 ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform
                 androidDir=out/android_${mode}${platformPostFix}
