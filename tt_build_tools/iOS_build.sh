@@ -31,11 +31,15 @@ fi
 
 cd ..
 
-for mode in 'debug' 'profile' 'release'
+for mode in 'debug' 'profile' 'release' 'release_dynamicart'
 	do
 #		hostDir=out/host_${mode}
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
+		if [ "$mode" == "release_dynamicart" ]
+		then
+			iOSArmV7Dir=out/ios_release_arm_dynamicart
+		fi
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
 		dSYMInfoPlist=flutter/tt_build_tools/Info.plist
@@ -46,20 +50,32 @@ for mode in 'debug' 'profile' 'release'
 #		./flutter/tools/gn --runtime-mode=$mode
 #		ninja -C $hostDir -j $jcount
 
+		# 编译各种架构引擎
         if [ -z "$doCompile" ]; then
-		    ./flutter/tools/gn --ios --runtime-mode=$mode
-		    ninja -C $iOSArm64Dir -j $jcount
+        	if [ "$mode" == "release_dynamicart" ]
+        	then 
+		    	./flutter/tools/gn --ios --runtime-mode=release --dynamicart
+		    	ninja -C $iOSArm64Dir -j $jcount
 
-            ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
-            ninja -C $iOSArmV7Dir -j $jcount
+	            ./flutter/tools/gn --ios --runtime-mode=release --ios-cpu=arm --dynamicart
+    	        ninja -C $iOSArmV7Dir -j $jcount
+    	    else
+    	    	./flutter/tools/gn --ios --runtime-mode=$mode
+		    	ninja -C $iOSArm64Dir -j $jcount
+
+	            ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
+    	        ninja -C $iOSArmV7Dir -j $jcount
+    	    fi
 
             ./flutter/tools/gn --ios --runtime-mode=debug --simulator
             ninja -C $iOSSimDir -j $jcount
 		fi
 
+		# 多种引擎架构合成一个
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
 
-		if [ "$mode" == "release" ]
+		# release模式引擎裁剪符号表
+		if [ "$mode" == "release" -o "$mode" == "release_dynamicart" ]
 		then
 			echo "Generate dSYM"
 			cd $cacheDir
@@ -74,10 +90,10 @@ for mode in 'debug' 'profile' 'release'
 		cp -r $iOSArm64Dir/Flutter.framework $cacheDir/Flutter.framework
 		mv $cacheDir/Flutter $cacheDir/Flutter.framework/Flutter
 
+		# 多种架构gen_snapshot合成一个
 		lipo -create $iOSArm64Dir/clang_x64/gen_snapshot $iOSArmV7Dir/clang_x86/gen_snapshot -output $cacheDir/gen_snapshot
 
 		cp $iOSArm64Dir/Flutter.podspec $cacheDir/Flutter.podspec
-		cp flutter/lib/snapshot/snapshot.dart $cacheDir/snapshot.dart
 
 		cd $cacheDir
 
@@ -86,11 +102,10 @@ for mode in 'debug' 'profile' 'release'
 		cd ..
 		mv Flutter.framework/Flutter.framework.zip Flutter.framework.zip
 		[ -d Flutter.framework ] && rm -rf Flutter.framework
-		zip -rq artifacts.zip Flutter.framework.zip gen_snapshot Flutter.podspec snapshot.dart
+		zip -rq artifacts.zip Flutter.framework.zip gen_snapshot Flutter.podspec
 		[ -e Flutter.framework.zip ] && rm -rf Flutter.framework.zip
 		[ -e gen_snapshot ] && rm -rf gen_snapshot
 		[ -e Flutter.podspec ] && rm -rf Flutter.podspec
-		[ -e snapshot.dart ] && rm -rf snapshot.dart
 
 		cd ..
 		cd ..
@@ -102,13 +117,16 @@ for mode in 'debug' 'profile' 'release'
 		elif [ "$mode" == "release" ]
 		then
 			modeDir=ios-release
+		elif [ "$mode" == "release_dynamicart" ]
+		then
+			modeDir=ios-release-dynamicart
 		else
 			modeDir=ios
 		fi
 
 		node ./flutter/tt_build_tools/tosUpload.js $cacheDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 
-		if [ "$mode" == "release" ]
+		if [ "$mode" == "release" -o "$mode" == "release_dynamicart" ]
 		then
 			node ./flutter/tt_build_tools/tosUpload.js $cacheDir/Flutter.dSYM.zip flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
             echo uploaded flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
