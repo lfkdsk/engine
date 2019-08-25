@@ -150,6 +150,7 @@ DEF_SWITCH(DynamicDillPath,
            "dynamic_dill_path",
            "Dart Dynamic Mode (interpreter + AOT) "
            )
+DEF_SWITCH(DisableLeakVM, "disable-leak-vm", "Set leak_vm in setting.h to false.")
 DEF_SWITCHES_END
 
 void PrintUsage(const std::string& executable_name);

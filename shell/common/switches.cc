@@ -246,6 +246,9 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
 
   command_line.GetOptionValue(FlagForSwitch(Switch::CacheDirPath),
                               &settings.temp_directory_path);
+  if (command_line.HasOption(FlagForSwitch(Switch::DisableLeakVM))) {
+      settings.leak_vm = false;
+  }
 
   if (settings.icu_initialization_required) {
     command_line.GetOptionValue(FlagForSwitch(Switch::ICUDataFilePath),

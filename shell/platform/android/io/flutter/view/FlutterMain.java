@@ -152,6 +152,7 @@ public class FlutterMain {
         private String logTag;
         private String nativeLibraryDir;
         private SoLoader soLoader;
+        private boolean disableLeakVM = false;
 
         public String getLogTag() {
             return logTag;
@@ -163,6 +164,10 @@ public class FlutterMain {
 
         public SoLoader getSoLoader() {
             return soLoader;
+        }
+
+        public boolean isDisableLeakVM() {
+            return disableLeakVM;
         }
 
         /**
@@ -181,6 +186,9 @@ public class FlutterMain {
             soLoader = loader;
         }
 
+        public void disableLeakVM() {
+            disableLeakVM = true;
+        }
     }
 
     /**
@@ -273,6 +281,9 @@ public class FlutterMain {
 
             if (sSettings.getLogTag() != null) {
                 shellArgs.add("--log-tag=" + sSettings.getLogTag());
+            }
+            if (sSettings.isDisableLeakVM()) {
+                shellArgs.add("--disable-leak-vm");
             }
 
             String appBundlePath = findAppBundlePath(applicationContext);

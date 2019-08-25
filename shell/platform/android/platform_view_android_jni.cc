@@ -189,8 +189,8 @@ static jlong AttachJNI(JNIEnv* env,
   }
 }
 
-static void DestroyJNI(JNIEnv* env, jobject jcaller, jlong shell_holder) {
-  delete ANDROID_SHELL_HOLDER;
+static void DestroyJNI(JNIEnv *env, jobject jcaller, jlong shell_holder) {
+    ANDROID_SHELL_HOLDER->ExitApp([holder = ANDROID_SHELL_HOLDER]() { delete holder; });
 }
 
 static jstring GetObservatoryUri(JNIEnv* env, jclass clazz) {
