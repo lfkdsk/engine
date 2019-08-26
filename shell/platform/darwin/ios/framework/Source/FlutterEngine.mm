@@ -46,10 +46,10 @@
   std::unique_ptr<flutter::Shell> _shell;
   NSString* _labelPrefix;
   std::unique_ptr<fml::WeakPtrFactory<FlutterEngine>> _weakFactory;
-  // BD ADD:
+  // BD ADD: START
   std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>
       _weakBinaryMessengerFactory;
-
+  // END
   fml::WeakPtr<FlutterViewController> _viewController;
   fml::scoped_nsobject<FlutterObservatoryPublisher> _publisher;
 
@@ -89,10 +89,10 @@
   _labelPrefix = [labelPrefix copy];
 
   _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterEngine>>(self);
-  // BD ADD:
+  // BD ADD: START
   _weakBinaryMessengerFactory =
       std::make_unique<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>(self);
-
+  // END
   if (projectOrNil == nil)
     _dartProject.reset([[FlutterDartProject alloc] init]);
   else

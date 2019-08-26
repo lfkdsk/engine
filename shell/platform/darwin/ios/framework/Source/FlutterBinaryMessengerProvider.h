@@ -1,3 +1,4 @@
+// BD ADD: START
 //
 //  FlutterBinaryMessengerProvider.h
 //  sources
@@ -17,3 +18,4 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+// END
