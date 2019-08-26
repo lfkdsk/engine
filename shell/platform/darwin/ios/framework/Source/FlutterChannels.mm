@@ -5,8 +5,8 @@
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterChannels.h"
 /**
  * BD ADD:
- * getBinaryMessengerWeakPtr和getBinaryMessenger是为了避免MethodChannel直接持有FlutterEngine，因为FlutterEngine里面通过PlatformMessageRouter已经间接持有了Channel，
- * 同时避免了因为plugin持有channel导致engine不能释放的问题，同时兼容macos的情况
+ * getBinaryMessengerWeakPtr和getBinaryMessenger是为了避免MethodChannel直接持有FlutterEngine，因为FlutterEngine里面通过PlatformMessageRouter已经间接持有了Channel
+ * 同时避免了因为plugin持有channel导致engine不能释放的问题，以及兼容macos
  */
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterBinaryMessengerProvider.h"
 
@@ -366,17 +366,19 @@ NSObject const* FlutterEndOfEventStream = [NSObject new];
           // [_messenger sendOnChannel:_name message:nil];
           [getBinaryMessenger(self) sendOnChannel:_name message:nil];
         } else if ([event isKindOfClass:[FlutterError class]]) {
-          // BD MOD:
+          // BD MOD: START
           // [_messenger sendOnChannel:_name
           //                   message:[_codec encodeErrorEnvelope:(FlutterError*)event]];
           [getBinaryMessenger(self)
               sendOnChannel:_name
                     message:[_codec encodeErrorEnvelope:(FlutterError*)event]];
+          // END
         } else {
-          // BD MOD:
+          // BD MOD: START
           // [_messenger sendOnChannel:_name message:[_codec encodeSuccessEnvelope:event]];
           [getBinaryMessenger(self) sendOnChannel:_name
                                           message:[_codec encodeSuccessEnvelope:event]];
+          // END
         }
       };
       FlutterError* error = [handler onListenWithArguments:call.arguments eventSink:currentSink];
