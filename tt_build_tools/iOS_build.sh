@@ -119,7 +119,7 @@ for mode in 'debug' 'profile' 'release' 'release_dynamicart'
 			modeDir=ios-release
 		elif [ "$mode" == "release_dynamicart" ]
 		then
-			modeDir=ios-release-dynamicart
+			modeDir=ios-dynamicart-release
 		else
 			modeDir=ios
 		fi
