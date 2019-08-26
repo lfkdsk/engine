@@ -152,7 +152,7 @@ public class FlutterMain {
         private String logTag;
         private String nativeLibraryDir;
         private SoLoader soLoader;
-        //BD ADD
+        // BD ADD
         private boolean disableLeakVM = false;
 
         public String getLogTag() {
@@ -167,10 +167,11 @@ public class FlutterMain {
             return soLoader;
         }
 
-        //BD ADD
+        // BD ADD:START
         public boolean isDisableLeakVM() {
             return disableLeakVM;
         }
+        // END
 
         /**
          * Set the tag associated with Flutter app log messages.
@@ -188,10 +189,11 @@ public class FlutterMain {
             soLoader = loader;
         }
 
-        //BD ADD
+        // BD ADD:START
         public void disableLeakVM() {
             disableLeakVM = true;
         }
+        // END
     }
 
     /**
@@ -285,11 +287,11 @@ public class FlutterMain {
             if (sSettings.getLogTag() != null) {
                 shellArgs.add("--log-tag=" + sSettings.getLogTag());
             }
-            //BD ADD:START
+            // BD ADD:START
             if (sSettings.isDisableLeakVM()) {
                 shellArgs.add("--disable-leak-vm");
             }
-            //END
+            // END
 
             String appBundlePath = findAppBundlePath(applicationContext);
             String appStoragePath = PathUtils.getFilesDir(applicationContext);

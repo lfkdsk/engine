@@ -44,7 +44,7 @@ class AndroidShellHolder {
 
   void UpdateAssetManager(fml::RefPtr<flutter::AssetManager> asset_manager);
 
-  //BD ADD
+  // BD ADD
   void ExitApp(fml::closure closure);
 
  private:

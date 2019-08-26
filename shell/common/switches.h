@@ -150,7 +150,7 @@ DEF_SWITCH(DynamicDillPath,
            "dynamic_dill_path",
            "Dart Dynamic Mode (interpreter + AOT) "
            )
-//BD ADD
+// BD ADD
 DEF_SWITCH(DisableLeakVM, "disable-leak-vm", "Set leak_vm in setting.h to false.")
 DEF_SWITCHES_END
 
