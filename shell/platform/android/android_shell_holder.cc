@@ -223,6 +223,7 @@ fml::WeakPtr<PlatformViewAndroid> AndroidShellHolder::GetPlatformView() {
   return platform_view_;
 }
 
+//BD ADD
 void AndroidShellHolder::ExitApp(fml::closure closure) {
     if (!IsValid()) {
         return;

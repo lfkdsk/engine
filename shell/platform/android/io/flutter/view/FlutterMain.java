@@ -297,9 +297,11 @@ public class FlutterMain {
             if (sSettings.getLogTag() != null) {
                 shellArgs.add("--log-tag=" + sSettings.getLogTag());
             }
+            //BD ADD:START
             if (sSettings.isDisableLeakVM()) {
                 shellArgs.add("--disable-leak-vm");
             }
+            //END
 
             String appBundlePath = findAppBundlePath(applicationContext);
             String appStoragePath = PathUtils.getFilesDir(applicationContext);
