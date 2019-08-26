@@ -190,6 +190,7 @@ public class FlutterMain {
         }
 
         // BD ADD:START
+        // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
         public void disableLeakVM() {
             disableLeakVM = true;
         }
