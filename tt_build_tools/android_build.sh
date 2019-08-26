@@ -50,9 +50,17 @@ cd ..
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/flutter_patched_sdk.zip flutter/framework/$tosDir/flutter_patched_sdk.zip
 echo uploaded flutter/framework/$tosDir/flutter_patched_sdk.zip
 
-hostDir=out/host_release
+cd third_party/dart
+dartCid=$(git rev-parse HEAD)
+cd ..
+cd ..
+hostDir=out/host_release_dynamicart
 #./flutter/tools/gn --runtime-mode=release
 #ninja -C $hostDir -j $jcount
+rm -f $cacheDir/dart-sdk-darwin-x64.zip
+zip -rq $cacheDir/dart-sdk-darwin-x64.zip out/host_release_dynamicart/dart-sdk
+node ./flutter/tt_build_tools/tosUpload.js $cacheDir/dart-sdk-darwin-x64.zip flutter_infra/flutter/$dartCid/dart-sdk-darwin-x64.zip
+echo uploaded flutter_infra/flutter/$dartCid/dart-sdk-darwin-x64.zip
 
 # flutter_patched_sdk.zip
 rm -f $cacheDir/flutter_patched_sdk_product.zip
