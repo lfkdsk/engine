@@ -148,7 +148,7 @@ rm -rf $cacheDir/$modeDir
 mkdir $cacheDir/$modeDir
 cp out/android_release/gen/flutter/lib/snapshot/isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin
 cp out/android_release/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
-zip -rjq $cacheDir/$modeDir/artifacts.zip out/host_debug/flutter_tester out/host_debug/gen/frontend_server.dart.snapshot \
+zip -rjq $cacheDir/$modeDir/artifacts.zip $hostDir/flutter_tester $hostDir/gen/frontend_server.dart.snapshot \
 out/android_release/flutter_shell_assets/icudtl.dat out/android_debug/gen/flutter/lib/snapshot/isolate_snapshot.bin \
 out/android_debug/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin \
 $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
