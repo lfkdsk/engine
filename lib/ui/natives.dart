@@ -94,4 +94,6 @@ Function _getScheduleMicrotaskClosure() => _scheduleMicrotask; // ignore: unused
 void startBoost(int flags, int millis) native 'StartBoost';
 
 void finishBoost(int flags) native 'FinishBoost';
+
+void preloadFontFamilies(List<String> font_families, String locale) native 'PreloadFontFamilies';
 /// END

@@ -6,6 +6,9 @@
 #include "boost.h"
 #include <thread>
 #include "SkCanvas.h"
+#include "flutter/lib/ui/text/font_collection.h"
+#include "flutter/lib/ui/window/window.h"
+#include "minikin/FontLanguageListCache.h"
 
 namespace flutter {
 
@@ -20,7 +23,7 @@ Boost::Boost()
       dart_frame_deadline_(TimePoint::Now()),
       extend_buffer_deadline_(0),
       extend_count_(0),
-      extend_semaphore_(6),
+      extend_semaphore_(4),
       weak_factory_(this){}
 
 Boost::~Boost() = default;
@@ -33,7 +36,7 @@ void Boost::Init(bool disable_anti_alias) {
 
 void Boost::StartUp(uint16_t flags, int millis) {
 #if defined(DEBUG)
-  printf("StartUp Flags: 0x%x, Current:0x%x, Time: %dms \n", flags, boost_flags_, millis);
+  FML_LOG(INFO) << "StartUp Flags:" << flags << " millis:" millis;
 #endif
 
   int64_t current_deadline_ = millis * 1000 + Dart_TimelineGetMicros();
@@ -74,7 +77,7 @@ void Boost::StartUp(uint16_t flags, int millis) {
   }
   boost_flags_ |= flags;
 #if defined(DEBUG)
-  printf("StartUp Boost Flags:0x%x \n", boost_flags_);
+  FML_LOG(INFO) << "StartUp Boost Flags:" << boost_flags_;
 #endif
 }
 
@@ -109,7 +112,7 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
     return;
   }
 #if defined(DEBUG)
-  printf("Finish Flags: 0x%x, Current: 0x%x \n", flags, boost_flags_);
+  FML_LOG(INFO) << "Finish Flags:" << flags << "Origin:" << boost_flags_;
 #endif
   boost_flags_ &= ~flags;
   
@@ -128,20 +131,17 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
   if (flags & Flags::kDelayFuture) {
     delay_future_deadline_ = 0;
     if (task_runners == nullptr) {
-      task_runners = UIDartState::Current()->GetTaskRunners();
+      task_runners = &UIDartState::Current()->GetTaskRunners();
     }
     task_runners->GetUITaskRunner()->PostBarrier(false);
   }
   if (flags & Flags::kDelayPlatformMessage) {
     delay_platform_message_deadline_ = 0;
     if (task_runners == nullptr) {
-      task_runners = UIDartState::Current()->GetTaskRunners();
+      task_runners = &UIDartState::Current()->GetTaskRunners();
     }
     task_runners->GetPlatformTaskRunner()->PostBarrier(false);
   }
-#if defined(DEBUG)
-  printf("Finish Boost Flags: 0x%x \n", boost_flags_);
-#endif
 }
 
 bool Boost::IsAADisabled() {
@@ -212,6 +212,19 @@ void Boost::WaitSwapBufferIfNeed() {
   AutoResetWaitableEvent swap_buffer_wait;
   swap_buffer_wait.WaitWithTimeout(
       TimeDelta::FromMilliseconds(next_frame_time));
+}
+  
+void Boost::PreloadFontFamilies(const std::vector<std::string>& font_families, const std::string& locale) {
+  FontCollection& collection = UIDartState::Current()->window()->client()->GetFontCollection();
+  std::string minikin_locale;
+  if (!locale.empty()) {
+    uint32_t language_list_id = minikin::FontStyle::registerLanguageList(locale);
+    const minikin::FontLanguages& langs = minikin::FontLanguageListCache::getById(language_list_id);
+    if (langs.size()) {
+      minikin_locale = langs[0].getString();
+    }
+  }
+  collection.GetFontCollection()->GetMinikinFontCollectionForFamilies(font_families, minikin_locale);
 }
 
 }  // namespace flutter

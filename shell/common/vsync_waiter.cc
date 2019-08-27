@@ -56,6 +56,8 @@ void VsyncWaiter::FireCallback(fml::TimePoint frame_start_time,
                                fml::TimePoint frame_target_time) {
   Callback callback;
 
+  // BD ADD:
+  Boost::Current()->UpdateVsync(true, frame_target_time);
   {
     std::lock_guard<std::mutex> lock(callback_mutex_);
     callback = std::move(callback_);
@@ -91,7 +93,7 @@ void VsyncWaiter::FireCallback(fml::TimePoint frame_start_time,
   //      TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
   //    },
   //    frame_start_time);
-  task_runners_.GetUITaskRunner()->RunNowOrPostTaskAtHead(
+  task_runners_.GetUITaskRunner()->PostTaskAtHead(
        [callback, flow_identifier, frame_start_time, frame_target_time]() {
          FML_TRACE_EVENT("flutter", kVsyncTraceName, "StartTime",
                          frame_start_time, "TargetTime", frame_target_time);
@@ -101,7 +103,6 @@ void VsyncWaiter::FireCallback(fml::TimePoint frame_start_time,
          callback(frame_start_time, frame_target_time);
          TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
        });
-  Boost::Current()->UpdateVsync(true, frame_target_time);
   // END
 }
 

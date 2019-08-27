@@ -20,6 +20,8 @@
 #include "flutter/fml/time/time_point.h"
 
 namespace fml {
+// BD ADD:
+static const fml::TimePoint kZeroTimePoint;
 
 class MessageLoopImpl : public fml::RefCountedThreadSafe<MessageLoopImpl> {
  public:
@@ -83,8 +85,7 @@ class MessageLoopImpl : public fml::RefCountedThreadSafe<MessageLoopImpl> {
        */
       // return a.target_time == b.target_time ? a.order > b.order
       //                                       : a.target_time > b.target_time;
-      return a.target_time == b.target_time ? (a.target_time == 0 ? a.order < b.order : a.order > b.order)
-                                            : a.target_time > b.target_time;
+      return a.target_time == b.target_time ? (a.target_time == kZeroTimePoint ? a.order < b.order : a.order > b.order) : a.target_time > b.target_time;
       // END
     }
   };

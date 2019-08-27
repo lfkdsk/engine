@@ -56,6 +56,8 @@ class Boost {
   bool IsValidExtension();
   bool TryWaitExtension();
   bool SignalExtension();
+  
+  void PreloadFontFamilies(const std::vector<std::string>& font_families, const std::string& locale);
 
  private:
   Boost();

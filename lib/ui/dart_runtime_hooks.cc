@@ -59,7 +59,8 @@ namespace flutter {
   V(SkipGCFromNow, 1)          \
   V(ForceGC, 0)                \
   V(StartBoost, 2)             \
-  V(FinishBoost, 1)
+  V(FinishBoost, 1)            \
+  V(PreloadFontFamilies, 2)
   /** END **/
 
 BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
@@ -376,6 +377,12 @@ void StartBoost(Dart_NativeArguments args) {
 void FinishBoost(Dart_NativeArguments args) {
   uint16_t flags = (uint16_t)DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
   Boost::Current()->Finish(flags);
+}
+  
+void PreloadFontFamilies(Dart_NativeArguments args) {
+  std::vector<std::string> font_families = DartConverter<std::vector<std::string>>::FromDart(Dart_GetNativeArgument(args, 0));
+  std::string locale = DartConverter<std::string>::FromDart(Dart_GetNativeArgument(args, 1));
+  Boost::Current()->PreloadFontFamilies(font_families, locale);
 }
 // END
 }  // namespace flutter
