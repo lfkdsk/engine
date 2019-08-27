@@ -58,7 +58,7 @@ hostDir=out/host_release_dynamicart
 #./flutter/tools/gn --runtime-mode=release
 #ninja -C $hostDir -j $jcount
 rm -f $cacheDir/dart-sdk-darwin-x64.zip
-cd out/host_release_dynamicart
+cd $hostDir
 zip -rq ../../$cacheDir/dart-sdk-darwin-x64.zip dart-sdk
 cd ..
 cd ..
@@ -157,7 +157,7 @@ echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDi
 
 rm -rf $cacheDir/pkg
 mkdir $cacheDir/pkg
-cp -rf out/host_release/gen/dart-pkg/sky_engine $cacheDir/pkg/sky_engine
+cp -rf $hostDir/gen/dart-pkg/sky_engine $cacheDir/pkg/sky_engine
 rm -rf $cacheDir/pkg/sky_engine/packages
 cd $cacheDir/pkg
 zip -rq ../../../$cacheDir/pkg/sky_engine.zip sky_engine
