@@ -58,7 +58,10 @@ hostDir=out/host_release_dynamicart
 #./flutter/tools/gn --runtime-mode=release
 #ninja -C $hostDir -j $jcount
 rm -f $cacheDir/dart-sdk-darwin-x64.zip
-zip -rq $cacheDir/dart-sdk-darwin-x64.zip out/host_release_dynamicart/dart-sdk
+cd out/host_release_dynamicart
+zip -rq ../../$cacheDir/dart-sdk-darwin-x64.zip dart-sdk
+cd ..
+cd ..
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/dart-sdk-darwin-x64.zip flutter_infra/flutter/$dartCid/dart-sdk-darwin-x64.zip
 echo uploaded flutter_infra/flutter/$dartCid/dart-sdk-darwin-x64.zip
 
