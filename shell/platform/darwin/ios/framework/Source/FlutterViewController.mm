@@ -23,6 +23,10 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/platform_message_response_darwin.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 
+// BD ADD:
+// 收到Memory Warning的时候重新创建Surface，模拟前后台切换过程，释放更多内存
+static BOOL FlutterRecreateSurfaceWhenReceiveMemorying = NO;
+
 NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemanticsUpdate";
 
 @implementation FlutterViewController {
@@ -892,6 +896,13 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 
 - (void)onMemoryWarning:(NSNotification*)notification {
   [[_engine.get() systemChannel] sendMessage:@{@"type" : @"memoryPressure"}];
+
+  // BD ADD: START
+  if (FlutterRecreateSurfaceWhenReceiveMemorying) {
+    [self surfaceUpdated:NO];
+    [self surfaceUpdated:YES];
+  }
+  // END
 }
 
 #pragma mark - Locale updates
