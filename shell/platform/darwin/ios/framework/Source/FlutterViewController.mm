@@ -52,6 +52,10 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
 
 #pragma mark - Manage and override all designated initializers
 
++ (void)setRecreateSurfaceWhenReceiveMemorying:(BOOL)enabled {
+  FlutterRecreateSurfaceWhenReceiveMemorying = enabled;
+}
+
 - (instancetype)initWithEngine:(FlutterEngine*)engine
                        nibName:(NSString*)nibNameOrNil
                         bundle:(NSBundle*)nibBundleOrNil {

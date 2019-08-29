@@ -44,6 +44,13 @@ FLUTTER_EXPORT
 @interface FlutterViewController
     : UIViewController <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterPluginRegistry>
 
+// BD ADD: START
+/**
+ * 收到Memory Warning的时候重新创建Surface，释放更多内存
+ */
++ (void)setRecreateSurfaceWhenReceiveMemorying:(BOOL)enabled;
+// END
+
 /**
  * Initializes this FlutterViewController with the specified `FlutterEngine`.
  *
