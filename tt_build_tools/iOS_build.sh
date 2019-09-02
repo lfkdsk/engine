@@ -3,7 +3,9 @@
 upload_dsym_to_slardar() {
 	echo "Start upload dSYM to HMD server"
 	STATUS=$(curl "http://symbolicate.byted.org/slardar_ios_upload" -F "file=@${1}" -F "aid=13" -H "Content-Type: multipart/form-data" -w %{http_code} -v)
-	echo "HMD server response: ${STATUS}"
+	echo "HMD cn server response: ${STATUS}"
+	STATUS=$(curl "http://symbolicateus.byted.org/slardar_ios_upload" -F "file=@${1}" -F "aid=1342" -H "Content-Type: multipart/form-data" -w %{http_code} -v)
+	echo "HMD us server response: ${STATUS}"
 }
 
 dSYMInfoPlistPath=$(pwd)"/Info.plist"
