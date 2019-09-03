@@ -172,10 +172,11 @@ public class FlutterMain {
             return soLoader;
         }
 
-        //BD ADD
+        //BD ADD: START
         public Runnable getOnInitAotCallback() {
             return onInitAot;
         }
+        //END
 
         /**
          * Set the tag associated with Flutter app log messages.
@@ -193,10 +194,11 @@ public class FlutterMain {
             soLoader = loader;
         }
 
-        //BD ADD
+        //BD ADD: START
         public void setOnInitAotCallback(Runnable callback) {
             onInitAot = callback;
         }
+        //END
 
     }
 
