@@ -131,6 +131,11 @@ public class FlutterMain {
                 } else {
                     System.loadLibrary("flutter");
                 }
+                //BD ADD: START
+                if (sSettings.onInitAot != null) {
+                    sSettings.onInitAot.run();
+                }
+                //END
 
                 // We record the initialization time using SystemClock because at the start of the
                 // initialization we have not yet loaded the native library to call into dart_tools_api.h.
@@ -152,6 +157,8 @@ public class FlutterMain {
         private String logTag;
         private String nativeLibraryDir;
         private SoLoader soLoader;
+        //BD ADD
+        private Runnable onInitAot;
 
         public String getLogTag() {
             return logTag;
@@ -163,6 +170,11 @@ public class FlutterMain {
 
         public SoLoader getSoLoader() {
             return soLoader;
+        }
+
+        //BD ADD
+        public Runnable getOnInitAotCallback() {
+            return onInitAot;
         }
 
         /**
@@ -179,6 +191,11 @@ public class FlutterMain {
 
         public void setSoLoader(SoLoader loader) {
             soLoader = loader;
+        }
+
+        //BD ADD
+        public void setOnInitAotCallback(Runnable callback) {
+            onInitAot = callback;
         }
 
     }
