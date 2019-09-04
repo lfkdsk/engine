@@ -131,11 +131,6 @@ public class FlutterMain {
                 } else {
                     System.loadLibrary("flutter");
                 }
-                //BD ADD: START
-                if (sSettings.onInitAot != null) {
-                    sSettings.onInitAot.run();
-                }
-                //END
 
                 // We record the initialization time using SystemClock because at the start of the
                 // initialization we have not yet loaded the native library to call into dart_tools_api.h.
@@ -158,7 +153,7 @@ public class FlutterMain {
         private String nativeLibraryDir;
         private SoLoader soLoader;
         //BD ADD
-        private Runnable onInitAot;
+        private Runnable onInitResources;
 
         public String getLogTag() {
             return logTag;
@@ -173,8 +168,8 @@ public class FlutterMain {
         }
 
         //BD ADD: START
-        public Runnable getOnInitAotCallback() {
-            return onInitAot;
+        public Runnable getOnInitResourcesCallback() {
+            return onInitResources;
         }
         //END
 
@@ -195,8 +190,8 @@ public class FlutterMain {
         }
 
         //BD ADD: START
-        public void setOnInitAotCallback(Runnable callback) {
-            onInitAot = callback;
+        public void setOnInitResourcesCallback(Runnable callback) {
+            onInitResources = callback;
         }
         //END
 
@@ -356,7 +351,8 @@ public class FlutterMain {
     private static void initResources(Context applicationContext) {
         Context context = applicationContext;
 
-        sResourceExtractor = new ResourceExtractor(context);
+        // BD MOD
+        sResourceExtractor = new ResourceExtractor(context, sSettings.getOnInitResourcesCallback());
 
         sResourceExtractor
             .addResource(fromFlutterAssets(sFlx))

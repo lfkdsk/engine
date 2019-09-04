@@ -102,6 +102,11 @@ class ResourceExtractor {
                         Log.w(TAG, "Failed to write resource timestamp");
                     }
                 }
+                //BD ADD: START
+                if (mOnInitResources != null) {
+                    mOnInitResources.run();
+                }
+                //END
 
                 return null;
 
@@ -116,10 +121,13 @@ class ResourceExtractor {
     private final Context mContext;
     private final HashSet<String> mResources;
     private ExtractTask mExtractTask;
+    // BD ADD
+    private Runnable mOnInitResources;
 
-    ResourceExtractor(Context context) {
+    ResourceExtractor(Context context, Runnable onInitResources) {
         mContext = context;
         mResources = new HashSet<>();
+        mOnInitResources = onInitResources;
     }
 
     ResourceExtractor addResource(String resource) {
