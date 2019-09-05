@@ -12,19 +12,22 @@
 
 namespace flutter {
 
+static const int64_t kMaxSkipGCTime = 5000 * 1000;
+
 Boost::Boost()
     : boost_flags_(0),
       gc_deadline_(0),
       aa_deadline_(0),
       delay_future_deadline_(0),
       delay_platform_message_deadline_(0),
+      ui_message_athead_deadline_(0),
       wait_swap_buffer_deadline_(0),
       vsync_received_(false),
       dart_frame_deadline_(TimePoint::Now()),
       extend_buffer_deadline_(0),
       extend_count_(0),
       extend_semaphore_(4),
-      weak_factory_(this){}
+      weak_factory_(this) {}
 
 Boost::~Boost() = default;
 
@@ -40,9 +43,10 @@ void Boost::StartUp(uint16_t flags, int millis) {
 #endif
 
   int64_t current_deadline_ = millis * 1000 + Dart_TimelineGetMicros();
-  
+
   if (flags & Flags::kDisableGC) {
-    gc_deadline_ = current_deadline_;
+    gc_deadline_ =
+        current_deadline_ < kMaxSkipGCTime ? current_deadline_ : kMaxSkipGCTime;
   }
   if (flags & Flags::kDisableAA) {
     aa_deadline_ = current_deadline_;
@@ -59,9 +63,10 @@ void Boost::StartUp(uint16_t flags, int millis) {
       const auto& task_runners = UIDartState::Current()->GetTaskRunners();
       task_runners.GetUITaskRunner()->PostBarrier(true);
       task_runners.GetUITaskRunner()->PostDelayedTask(
-            [&task_runners]() {
-              Boost::Current()->Finish(Flags::kDelayFuture, &task_runners);
-            }, TimeDelta::FromMilliseconds(millis));
+          [&task_runners]() {
+            Boost::Current()->Finish(Flags::kDelayFuture, &task_runners);
+          },
+          TimeDelta::FromMilliseconds(millis));
     }
   }
   if (flags & Flags::kDelayPlatformMessage) {
@@ -71,9 +76,14 @@ void Boost::StartUp(uint16_t flags, int millis) {
       task_runners.GetPlatformTaskRunner()->PostBarrier(true);
       task_runners.GetUITaskRunner()->PostDelayedTask(
           [&task_runners]() {
-            Boost::Current()->Finish(Flags::kDelayPlatformMessage, &task_runners);
-          }, TimeDelta::FromMilliseconds(millis));
+            Boost::Current()->Finish(Flags::kDelayPlatformMessage,
+                                     &task_runners);
+          },
+          TimeDelta::FromMilliseconds(millis));
     }
+  }
+  if (flags & Flags::kUiMessageAtHead) {
+    ui_message_athead_deadline_ = current_deadline_;
   }
   boost_flags_ |= flags;
 #if defined(DEBUG)
@@ -104,6 +114,10 @@ void Boost::CheckFinished() {
       delay_platform_message_deadline_ < current_micros) {
     finish_flags |= kDelayPlatformMessage;
   }
+  if (ui_message_athead_deadline_ > 0 &&
+      ui_message_athead_deadline_ < current_micros) {
+    finish_flags |= kUiMessageAtHead;
+  }
   Finish(finish_flags);
 }
 
@@ -115,7 +129,7 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
   FML_LOG(INFO) << "Finish Flags:" << flags << "Origin:" << boost_flags_;
 #endif
   boost_flags_ &= ~flags;
-  
+
   if (flags & kDisableGC) {
     gc_deadline_ = 0;
   }
@@ -142,6 +156,9 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
     }
     task_runners->GetPlatformTaskRunner()->PostBarrier(false);
   }
+  if (flags & Flags::kUiMessageAtHead) {
+    ui_message_athead_deadline_ = 0;
+  }
 }
 
 bool Boost::IsAADisabled() {
@@ -162,6 +179,10 @@ bool Boost::IsDelayFuture() {
 
 bool Boost::IsDelayPlatformMessage() {
   return boost_flags_ & kDelayPlatformMessage;
+}
+
+bool Boost::IsUiMessageAtHead() {
+  return boost_flags_ & kUiMessageAtHead;
 }
 
 bool Boost::IsEnableExtendBuffer() {
@@ -213,18 +234,23 @@ void Boost::WaitSwapBufferIfNeed() {
   swap_buffer_wait.WaitWithTimeout(
       TimeDelta::FromMilliseconds(next_frame_time));
 }
-  
-void Boost::PreloadFontFamilies(const std::vector<std::string>& font_families, const std::string& locale) {
-  FontCollection& collection = UIDartState::Current()->window()->client()->GetFontCollection();
+
+void Boost::PreloadFontFamilies(const std::vector<std::string>& font_families,
+                                const std::string& locale) {
+  FontCollection& collection =
+      UIDartState::Current()->window()->client()->GetFontCollection();
   std::string minikin_locale;
   if (!locale.empty()) {
-    uint32_t language_list_id = minikin::FontStyle::registerLanguageList(locale);
-    const minikin::FontLanguages& langs = minikin::FontLanguageListCache::getById(language_list_id);
+    uint32_t language_list_id =
+        minikin::FontStyle::registerLanguageList(locale);
+    const minikin::FontLanguages& langs =
+        minikin::FontLanguageListCache::getById(language_list_id);
     if (langs.size()) {
       minikin_locale = langs[0].getString();
     }
   }
-  collection.GetFontCollection()->GetMinikinFontCollectionForFamilies(font_families, minikin_locale);
+  collection.GetFontCollection()->GetMinikinFontCollectionForFamilies(
+      font_families, minikin_locale);
 }
 
 }  // namespace flutter

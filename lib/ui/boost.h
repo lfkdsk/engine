@@ -23,13 +23,14 @@ class Boost {
   enum Flags {
     kDisableGC = 1 << 0,
     kDisableAA = 1 << 1,
-    kEnableWaitSwapBuffer = 1 << 2,
-    kDelayFuture = 1 << 3,
-    kDelayPlatformMessage = 1 << 4,
-    kEnableExtendBuffer = 1 << 5,
+    kDelayFuture = 1 << 2,
+    kDelayPlatformMessage = 1 << 3,
+    kUiMessageAtHead = 1 << 4,
+    kEnableWaitSwapBuffer = 1 << 5,
+    kEnableExtendBuffer = 1 << 6,
   };
 
-  static constexpr uint16_t kAllFlags = 0x3F;
+  static constexpr uint16_t kAllFlags = 0x7F;
 
  public:
   static Boost* Current() {
@@ -47,6 +48,7 @@ class Boost {
   bool IsGCDisabled();
   bool IsDelayFuture();
   bool IsDelayPlatformMessage();
+  bool IsUiMessageAtHead();
 
   void WaitSwapBufferIfNeed();
   void UpdateVsync(bool received,
@@ -56,22 +58,25 @@ class Boost {
   bool IsValidExtension();
   bool TryWaitExtension();
   bool SignalExtension();
-  
-  void PreloadFontFamilies(const std::vector<std::string>& font_families, const std::string& locale);
+
+  void PreloadFontFamilies(const std::vector<std::string>& font_families,
+                           const std::string& locale);
 
  private:
   Boost();
   ~Boost();
 
   uint16_t boost_flags_;
-  
+
   int64_t gc_deadline_;
-  
+
   int64_t aa_deadline_;
 
   int64_t delay_future_deadline_;
 
   int64_t delay_platform_message_deadline_;
+
+  int64_t ui_message_athead_deadline_;
 
   int64_t wait_swap_buffer_deadline_;
   atomic_bool vsync_received_;
@@ -80,7 +85,7 @@ class Boost {
   int64_t extend_buffer_deadline_;
   atomic_char extend_count_;
   fml::Semaphore extend_semaphore_;
-  
+
   fml::WeakPtrFactory<Boost> weak_factory_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Boost);

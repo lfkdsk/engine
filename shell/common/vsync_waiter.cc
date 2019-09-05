@@ -55,9 +55,9 @@ void VsyncWaiter::AsyncWaitForVsync(Callback callback) {
 void VsyncWaiter::FireCallback(fml::TimePoint frame_start_time,
                                fml::TimePoint frame_target_time) {
   Callback callback;
-
   // BD ADD:
   Boost::Current()->UpdateVsync(true, frame_target_time);
+
   {
     std::lock_guard<std::mutex> lock(callback_mutex_);
     callback = std::move(callback_);
@@ -82,27 +82,36 @@ void VsyncWaiter::FireCallback(fml::TimePoint frame_start_time,
   TRACE_FLOW_BEGIN("flutter", kVsyncFlowName, flow_identifier);
 
   // BD MOD: START
-  // task_runners_.GetUITaskRunner()->PostTaskForTime(
-  //    [callback, flow_identifier, frame_start_time, frame_target_time]() {
-  //      FML_TRACE_EVENT("flutter", kVsyncTraceName, "StartTime",
-  //                      frame_start_time, "TargetTime", frame_target_time);
-  //      fml::tracing::TraceEventAsyncComplete(
-  //          "flutter", "VsyncSchedulingOverhead", fml::TimePoint::Now(),
-  //          frame_start_time);
-  //      callback(frame_start_time, frame_target_time);
-  //      TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
-  //    },
-  //    frame_start_time);
-  task_runners_.GetUITaskRunner()->PostTaskAtHead(
-       [callback, flow_identifier, frame_start_time, frame_target_time]() {
-         FML_TRACE_EVENT("flutter", kVsyncTraceName, "StartTime",
-                         frame_start_time, "TargetTime", frame_target_time);
-         fml::tracing::TraceEventAsyncComplete(
-                                               "flutter", "VsyncSchedulingOverhead", fml::TimePoint::Now(),
-                                               frame_start_time);
-         callback(frame_start_time, frame_target_time);
-         TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
-       });
+  //  task_runners_.GetUITaskRunner()->PostTaskForTime(
+  //     [callback, flow_identifier, frame_start_time, frame_target_time]() {
+  //       FML_TRACE_EVENT("flutter", kVsyncTraceName, "StartTime",
+  //                       frame_start_time, "TargetTime", frame_target_time);
+  //       fml::tracing::TraceEventAsyncComplete(
+  //                                             "flutter",
+  //                                             "VsyncSchedulingOverhead",
+  //                                             fml::TimePoint::Now(),
+  //                                             frame_start_time);
+  //       callback(frame_start_time, frame_target_time);
+  //       TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
+  //     },
+  //     frame_start_time);
+  auto frame_task = [callback, flow_identifier, frame_start_time,
+                     frame_target_time]() {
+    FML_TRACE_EVENT("flutter", kVsyncTraceName, "StartTime", frame_start_time,
+                    "TargetTime", frame_target_time);
+    fml::tracing::TraceEventAsyncComplete("flutter", "VsyncSchedulingOverhead",
+                                          fml::TimePoint::Now(),
+                                          frame_start_time);
+    callback(frame_start_time, frame_target_time);
+    TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
+  };
+  if (Boost::Current()->IsUiMessageAtHead()) {
+    auto ui_task_runner = task_runners_.GetUITaskRunner();
+    fml::TaskRunner::RunNowOrPostTaskAtHead(ui_task_runner, frame_task);
+  } else {
+    task_runners_.GetUITaskRunner()->PostTaskForTime(frame_task,
+                                                     frame_start_time);
+  }
   // END
 }
 

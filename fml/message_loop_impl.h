@@ -20,8 +20,6 @@
 #include "flutter/fml/time/time_point.h"
 
 namespace fml {
-// BD ADD:
-static const fml::TimePoint kZeroTimePoint;
 
 class MessageLoopImpl : public fml::RefCountedThreadSafe<MessageLoopImpl> {
  public:
@@ -47,7 +45,9 @@ class MessageLoopImpl : public fml::RefCountedThreadSafe<MessageLoopImpl> {
 
   // BD ADD: START
   void PostBarrier(bool barrier_enabled);
-  void PostTask(fml::closure task, fml::TimePoint target_time, bool is_low_priority);
+  void PostTask(fml::closure task,
+                fml::TimePoint target_time,
+                bool is_low_priority);
   // END
 
  protected:
@@ -79,14 +79,8 @@ class MessageLoopImpl : public fml::RefCountedThreadSafe<MessageLoopImpl> {
 
   struct DelayedTaskCompare {
     bool operator()(const DelayedTask& a, const DelayedTask& b) {
-      /**
-       * BD MOD: START
-       * when the target_time is zero, always push the message at front of queue
-       */
-      // return a.target_time == b.target_time ? a.order > b.order
-      //                                       : a.target_time > b.target_time;
-      return a.target_time == b.target_time ? (a.target_time == kZeroTimePoint ? a.order < b.order : a.order > b.order) : a.target_time > b.target_time;
-      // END
+      return a.target_time == b.target_time ? a.order > b.order
+                                            : a.target_time > b.target_time;
     }
   };
 
@@ -110,7 +104,9 @@ class MessageLoopImpl : public fml::RefCountedThreadSafe<MessageLoopImpl> {
   // BD ADD: START
   std::atomic_bool barrier_enabled_;
   DelayedTaskQueue low_priority_tasks_ FML_GUARDED_BY(delayed_tasks_mutex_);
-  void RegisterTask(fml::closure task, fml::TimePoint target_time, bool is_low_priority);
+  void RegisterTask(fml::closure task,
+                    fml::TimePoint target_time,
+                    bool is_low_priority);
   void FlushLowPriorityTasks(FlushType type);
   // END
 

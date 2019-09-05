@@ -40,9 +40,9 @@ fml::RefPtr<MessageLoopImpl> MessageLoopImpl::Create() {
 }
 
 // BD MOD:
-//MessageLoopImpl::MessageLoopImpl() : order_(0), terminated_(false) {}
-MessageLoopImpl::MessageLoopImpl() : order_(0), terminated_(false), barrier_enabled_(false) {}
-
+// MessageLoopImpl::MessageLoopImpl() : order_(0), terminated_(false) {}
+MessageLoopImpl::MessageLoopImpl()
+    : order_(0), terminated_(false), barrier_enabled_(false) {}
 
 MessageLoopImpl::~MessageLoopImpl() = default;
 
@@ -110,7 +110,15 @@ void MessageLoopImpl::RegisterTask(fml::closure task,
   }
   std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
   delayed_tasks_.push({++order_, std::move(task), target_time});
-  WakeUp(delayed_tasks_.top().target_time);
+  // BD MOD:START
+  // WakeUp(delayed_tasks_.top().target_time);
+  auto now = fml::TimePoint::Now();
+  if (delayed_tasks_.top().target_time < now) {
+    WakeUp(now);
+  } else {
+    WakeUp(delayed_tasks_.top().target_time);
+  }
+  // END
 }
 
 void MessageLoopImpl::FlushTasks(FlushType type) {
@@ -121,7 +129,7 @@ void MessageLoopImpl::FlushTasks(FlushType type) {
     std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
 
     // BD MOD:
-    //if (delayed_tasks_.empty()) {
+    // if (delayed_tasks_.empty()) {
     if (delayed_tasks_.empty() && low_priority_tasks_.empty()) {
       return;
     }
@@ -149,78 +157,80 @@ void MessageLoopImpl::FlushTasks(FlushType type) {
       observer.second();
     }
   }
-    // BD ADD: START
-    if (!barrier_enabled_) {
-        FlushLowPriorityTasks(type);
-    }
-    // END
+  // BD ADD: START
+  if (!barrier_enabled_) {
+    FlushLowPriorityTasks(type);
+  }
+  // END
 }
 
 // BD ADD: START
 void MessageLoopImpl::PostBarrier(bool barrier_enabled) {
-    barrier_enabled_ = barrier_enabled;
-    if (!barrier_enabled_) {
-      std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
-      WakeUp(low_priority_tasks_.top().target_time);
-    }
+  barrier_enabled_ = barrier_enabled;
+  if (!barrier_enabled_) {
+    std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
+    WakeUp(low_priority_tasks_.top().target_time);
+  }
 }
 
-void MessageLoopImpl::PostTask(fml::closure task, fml::TimePoint target_time, bool is_low_priority) {
-    FML_DCHECK(task != nullptr);
-    RegisterTask(task, target_time, is_low_priority);
+void MessageLoopImpl::PostTask(fml::closure task,
+                               fml::TimePoint target_time,
+                               bool is_low_priority) {
+  FML_DCHECK(task != nullptr);
+  RegisterTask(task, target_time, is_low_priority);
 }
 
 void MessageLoopImpl::RegisterTask(fml::closure task,
                                    fml::TimePoint target_time,
                                    bool is_low_priority) {
-    FML_DCHECK(task != nullptr);
-    if (terminated_) {
-        // If the message loop has already been terminated, PostTask should destruct
-        // |task| synchronously within this function.
-        return;
-    }
-    std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
-    if (is_low_priority) {
-        low_priority_tasks_.push({++order_, std::move(task), target_time});
-        WakeUp(low_priority_tasks_.top().target_time);
-    } else {
-        delayed_tasks_.push({++order_, std::move(task), target_time});
-        WakeUp(delayed_tasks_.top().target_time);
-    }
+  FML_DCHECK(task != nullptr);
+  if (terminated_) {
+    // If the message loop has already been terminated, PostTask should destruct
+    // |task| synchronously within this function.
+    return;
+  }
+  std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
+  if (is_low_priority) {
+    low_priority_tasks_.push({++order_, std::move(task), target_time});
+    WakeUp(low_priority_tasks_.top().target_time);
+  } else {
+    delayed_tasks_.push({++order_, std::move(task), target_time});
+    WakeUp(delayed_tasks_.top().target_time);
+  }
 }
 
 void MessageLoopImpl::FlushLowPriorityTasks(FlushType type) {
-    TRACE_EVENT0("fml", "MessageLoop::FlushLowPriorityTasks");
-    std::vector<fml::closure> invocations;
+  TRACE_EVENT0("fml", "MessageLoop::FlushLowPriorityTasks");
+  std::vector<fml::closure> invocations;
 
-    {
-        std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
+  {
+    std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
 
-        if (low_priority_tasks_.empty()) {
-            return;
-        }
-
-        auto now = fml::TimePoint::Now();
-        while (!low_priority_tasks_.empty()) {
-            const auto& top = low_priority_tasks_.top();
-            if (top.target_time > now) {
-                break;
-            }
-            invocations.emplace_back(std::move(top.task));
-            low_priority_tasks_.pop();
-            if (type == FlushType::kSingle) {
-                break;
-            }
-        }
-        WakeUp(low_priority_tasks_.empty() ? fml::TimePoint::Max()
-                                      : low_priority_tasks_.top().target_time);
+    if (low_priority_tasks_.empty()) {
+      return;
     }
-    for (const auto& invocation : invocations) {
-        invocation();
-        for (const auto& observer : task_observers_) {
-            observer.second();
-        }
+
+    auto now = fml::TimePoint::Now();
+    while (!low_priority_tasks_.empty()) {
+      const auto& top = low_priority_tasks_.top();
+      if (top.target_time > now) {
+        break;
+      }
+      invocations.emplace_back(std::move(top.task));
+      low_priority_tasks_.pop();
+      if (type == FlushType::kSingle) {
+        break;
+      }
     }
+    WakeUp(low_priority_tasks_.empty() ? fml::TimePoint::Max()
+                                       : low_priority_tasks_.top().target_time);
+  }
+  for (const auto& invocation : invocations) {
+    invocation();
+    for (const auto& observer : task_observers_) {
+      observer.second();
+    }
+  }
 }
 // END
 
