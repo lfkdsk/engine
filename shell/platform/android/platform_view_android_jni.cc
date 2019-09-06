@@ -227,11 +227,15 @@ void ReleaseLoadContext(const void* pixels, SkImage::ReleaseContext releaseConte
 // BD ADD: START
 class ImageLoadContext {
 public:
+
+    void* contextPtr;
+
     ImageLoadContext(std::function<void(sk_sp<SkImage> image)> _callback, void* _contextPtr, jobject _imageLoader):
+    contextPtr(_contextPtr),
     androidImageLoader(_imageLoader),
-    callback(std::move(_callback)),
-    contextPtr(_contextPtr){}
-    ~ImageLoadContext(){}
+    callback(std::move(_callback)){}
+    ~ImageLoadContext(){
+    }
 
     void onLoadSuccess(JNIEnv *env, std::string cKey, jobject jbitmap) {
         auto dartState = static_cast<UIDartState *>(contextPtr);
@@ -297,7 +301,6 @@ public:
 private:
     jobject androidImageLoader;
     std::function<void(sk_sp<SkImage> image)> callback;
-    void* contextPtr;
 };
 // END
 
@@ -308,13 +311,15 @@ static std::map<std::string, std::shared_ptr<ImageLoadContext>> g_image_load_con
 /**
  * BD ADD: call android to load image
  */
-void CallJavaImageLoader(jobject android_image_loader, std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
+void CallJavaImageLoader(jobject android_image_loader, const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
   JNIEnv* env = fml::jni::AttachCurrentThread();
   auto loadContext = std::make_shared<ImageLoadContext>(callback, contextPtr, env->NewGlobalRef(android_image_loader));
   auto key = url + std::to_string(reinterpret_cast<jlong>(loadContext.get()));
   g_image_load_contexts[key] = loadContext;
   auto nativeCallback = new fml::jni::ScopedJavaLocalRef<jobject>(env, env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor));
-  env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(), nativeCallback->obj(), fml::jni::StringToJavaString(env, key).obj());
+  FML_LOG(ERROR)<<"call java image loader"<<std::endl;
+  env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(),
+                      reinterpret_cast<jint>(width), reinterpret_cast<jint>(height), scale, nativeCallback->obj(), fml::jni::StringToJavaString(env, key).obj());
 }
 /**
  * BD ADD: called by skia to release pixel resource
@@ -702,7 +707,10 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
         return;
     }
     loadContext->onLoadSuccess(env, cKey, env->NewGlobalRef(jBitmap));
-    g_image_load_contexts.erase(cKey);
+    auto dartState = static_cast<UIDartState *>(loadContext->contextPtr);
+    dartState->GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable([cKey = std::move(cKey)](){
+      g_image_load_contexts.erase(cKey);
+    }));
 }
 /**
  * BD ADD: jni call to notify android image load fail
@@ -716,7 +724,10 @@ static void ExternalImageLoadFail(JNIEnv *env,
         return;
     }
     loadContext->onLoadFail(env, cKey);
-    g_image_load_contexts.erase(cKey);
+    auto dartState = static_cast<UIDartState *>(loadContext->contextPtr);
+    dartState->GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable([cKey = std::move(cKey)](){
+      g_image_load_contexts.erase(cKey);
+    }));
 }
 /**
  * BD ADD: register android image loader
@@ -1004,7 +1015,7 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
       return false;
   }
 
-  g_image_loader_class_load = env->GetMethodID(g_image_loader_class->obj(), "load", "(Ljava/lang/String;Lio/flutter/view/NativeLoadCallback;Ljava/lang/String;)V");
+  g_image_loader_class_load = env->GetMethodID(g_image_loader_class->obj(), "load", "(Ljava/lang/String;IIFLio/flutter/view/NativeLoadCallback;Ljava/lang/String;)V");
   if (g_image_loader_class_load == nullptr) {
     FML_LOG(ERROR) << "Could not locate AndroidImageLoader load method";
     return false;

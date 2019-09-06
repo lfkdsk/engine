@@ -17,7 +17,7 @@ namespace flutter {
         AndroidExternalImageLoader(const fml::jni::JavaObjectWeakGlobalRef& android_image_loader);
         ~AndroidExternalImageLoader() override;
 
-        void Load(const std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) override;
+        void Load(const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) override;
 
     private:
         fml::jni::JavaObjectWeakGlobalRef android_image_loader_;
