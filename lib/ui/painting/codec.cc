@@ -596,13 +596,17 @@ void GetNativeImage(Dart_NativeArguments args) {
     Dart_SetReturnValue(args, exception);
     return;
   }
+  
+  const int width = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 2));
+  const int height = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 3));
+  const float scale = tonic::DartConverter<float>::FromDart(Dart_GetNativeArgument(args, 4));
     
   auto* dart_state = UIDartState::Current();
 
   const auto& task_runners = dart_state->GetTaskRunners();
   fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
   std::shared_ptr<flutter::ImageLoader> imageLoader = io_manager.get()->GetImageLoader();
-  imageLoader->Load(url, dart_state, fml::MakeCopyable(
+  imageLoader->Load(url, width, height, scale, dart_state, fml::MakeCopyable(
       [context = dart_state->GetResourceContext(),
        ui_task_runner = task_runners.GetUITaskRunner(),
        io_task_runner = task_runners.GetIOTaskRunner(),
@@ -624,7 +628,7 @@ void GetNativeImage(Dart_NativeArguments args) {
 void Codec::RegisterNatives(tonic::DartLibraryNatives* natives) {
   // BD ADD: START
   natives->Register({
-      {"getNativeImage", GetNativeImage, 2, true},
+      {"getNativeImage", GetNativeImage, 5, true},
   });
   // END
   natives->Register({

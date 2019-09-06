@@ -30,7 +30,7 @@ namespace flutter {
         }
     }
     
-    void IOSExternalImageLoader::Load(const std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
+    void IOSExternalImageLoader::Load(const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
         NSString* URL = [NSString stringWithCString:url.c_str() encoding:[NSString defaultCStringEncoding]];
         [imageLoader_ loadImage:URL complete: ^(IOSImageInfo imageInfo) {
             if (!cache_ref_) {

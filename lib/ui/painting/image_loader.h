@@ -15,7 +15,7 @@ namespace flutter {
     public:
         ImageLoader();
         virtual ~ImageLoader();
-        virtual void Load(const std::string url, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) = 0;
+        virtual void Load(const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) = 0;
         
         FML_DISALLOW_COPY_AND_ASSIGN(ImageLoader);
     };
