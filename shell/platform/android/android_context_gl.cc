@@ -187,6 +187,11 @@ AndroidContextGL::AndroidContextGL(fml::RefPtr<AndroidEnvironmentGL> env,
 
   // All done!
   valid_ = true;
+
+  // BD ADD: START
+  MakeCurrent();
+  ClearCurrent();
+  // END
 }
 
 AndroidContextGL::~AndroidContextGL() {

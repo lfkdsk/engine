@@ -46,15 +46,38 @@ void PlatformViewAndroid::NotifyCreated(
   if (android_surface_) {
     InstallFirstFrameCallback();
 
+    // BD MOD: START
+    //    fml::AutoResetWaitableEvent latch;
+    //    fml::TaskRunner::RunNowOrPostTask(
+    //        task_runners_.GetGPUTaskRunner(),
+    //        [&latch, surface = android_surface_.get(),
+    //         native_window = std::move(native_window)]() {
+    //          surface->SetNativeWindow(native_window);
+    //          latch.Signal();
+    //        });
+    //    latch.Wait();
+
     fml::AutoResetWaitableEvent latch;
+    fml::RefPtr<fml::TaskRunner> gpu_runner = task_runners_.GetGPUTaskRunner();
     fml::TaskRunner::RunNowOrPostTask(
-        task_runners_.GetGPUTaskRunner(),
-        [&latch, surface = android_surface_.get(),
+        task_runners_.GetIOTaskRunner(),
+        [&latch, gpu_runner, surface = android_surface_.get(),
          native_window = std::move(native_window)]() {
-          surface->SetNativeWindow(native_window);
+          surface->ResourceContextClearCurrent();
+
+          fml::AutoResetWaitableEvent latch_ui;
+          fml::TaskRunner::RunNowOrPostTask(
+              gpu_runner, [&surface, native_window, &latch_ui]() {
+                surface->SetNativeWindow(native_window);
+                latch_ui.Signal();
+              });
+          latch_ui.Wait();
+
+          surface->ResourceContextMakeCurrent();
           latch.Signal();
         });
     latch.Wait();
+    // END
   }
 
   PlatformView::NotifyCreated();
