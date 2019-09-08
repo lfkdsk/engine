@@ -56,7 +56,6 @@ namespace flutter {
   V(GetCallbackHandle, 1)      \
   V(GetCallbackFromHandle, 1)  \
   /** BD ADD: START **/        \
-  V(SkipGCFromNow, 1)          \
   V(ForceGC, 0)                \
   V(StartBoost, 2)             \
   V(FinishBoost, 1)            \
@@ -354,20 +353,6 @@ void GetCallbackFromHandle(Dart_NativeArguments args) {
 }
 
 // BD ADD: START
-void SkipGCFromNow(Dart_NativeArguments args) {
-#if defined(DART_PERFORMANCE_EXTENSION)
-  Dart_Handle h = Dart_GetNativeArgument(args, 0);
-  int millis = DartConverter<int>::FromDart(h);
-  Dart_SkipGCFromNow(millis);
-#endif
-}
-
-void ForceGC(Dart_NativeArguments args) {
-#if defined(DART_PERFORMANCE_EXTENSION)
-  Dart_ForceGC();
-#endif
-}
-
 void StartBoost(Dart_NativeArguments args) {
   uint16_t flags = (uint16_t)DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
   int millis = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 1));
@@ -383,6 +368,10 @@ void PreloadFontFamilies(Dart_NativeArguments args) {
   std::vector<std::string> font_families = DartConverter<std::vector<std::string>>::FromDart(Dart_GetNativeArgument(args, 0));
   std::string locale = DartConverter<std::string>::FromDart(Dart_GetNativeArgument(args, 1));
   Boost::Current()->PreloadFontFamilies(font_families, locale);
+}
+  
+void ForceGC(Dart_NativeArguments args) {
+  Boost::Current()->ForceGC();
 }
 // END
 }  // namespace flutter

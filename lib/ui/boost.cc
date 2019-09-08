@@ -12,7 +12,9 @@
 
 namespace flutter {
 
-static const int64_t kMaxSkipGCTime = 5000 * 1000;
+static const int64_t kDefaultMaxTime = 60000;
+
+static const int64_t kMaxSkipGCTime = 5000;
 
 Boost::Boost()
     : boost_flags_(0),
@@ -31,34 +33,21 @@ Boost::Boost()
 
 Boost::~Boost() = default;
 
-void Boost::Init(bool disable_anti_alias) {
-#if defined(SKIA_PERFORMANCE_EXTENSION)
-  gSkDisableAntiAlias = disable_anti_alias;
-#endif
-}
-
 void Boost::StartUp(uint16_t flags, int millis) {
-#if defined(DEBUG)
-  FML_LOG(INFO) << "StartUp Flags:" << flags << " millis:" millis;
-#endif
-
-  int64_t current_deadline_ = millis * 1000 + Dart_TimelineGetMicros();
+  int64_t now = Dart_TimelineGetMicros();
+  int64_t current_deadline = millis * 1000 + now;
 
   if (flags & Flags::kDisableGC) {
-    gc_deadline_ =
-        current_deadline_ < kMaxSkipGCTime ? current_deadline_ : kMaxSkipGCTime;
+    gc_deadline_ = millis < kMaxSkipGCTime ? current_deadline
+                                           : (now + kMaxSkipGCTime * 1000);
   }
   if (flags & Flags::kDisableAA) {
-    aa_deadline_ = current_deadline_;
-  }
-  if (flags & Flags::kEnableWaitSwapBuffer) {
-    wait_swap_buffer_deadline_ = current_deadline_;
-  }
-  if (flags & Flags::kEnableExtendBuffer) {
-    extend_buffer_deadline_ = current_deadline_;
+    aa_deadline_ = current_deadline;
   }
   if (flags & Flags::kDelayFuture) {
-    delay_future_deadline_ = current_deadline_;
+    delay_future_deadline_ = millis < kDefaultMaxTime
+                                 ? current_deadline
+                                 : (now + kDefaultMaxTime * 1000);
     if (!(boost_flags_ & Flags::kDelayFuture)) {
       const auto& task_runners = UIDartState::Current()->GetTaskRunners();
       task_runners.GetUITaskRunner()->PostBarrier(true);
@@ -70,7 +59,9 @@ void Boost::StartUp(uint16_t flags, int millis) {
     }
   }
   if (flags & Flags::kDelayPlatformMessage) {
-    delay_platform_message_deadline_ = current_deadline_;
+    delay_platform_message_deadline_ = millis < kDefaultMaxTime
+                                           ? current_deadline
+                                           : (now + kDefaultMaxTime * 1000);
     if (!(boost_flags_ & Flags::kDelayFuture)) {
       const auto& task_runners = UIDartState::Current()->GetTaskRunners();
       task_runners.GetPlatformTaskRunner()->PostBarrier(true);
@@ -83,12 +74,17 @@ void Boost::StartUp(uint16_t flags, int millis) {
     }
   }
   if (flags & Flags::kUiMessageAtHead) {
-    ui_message_athead_deadline_ = current_deadline_;
+    ui_message_athead_deadline_ = current_deadline;
+  }
+  if (flags & Flags::kEnableWaitSwapBuffer) {
+    wait_swap_buffer_deadline_ = millis < kDefaultMaxTime
+                                     ? current_deadline
+                                     : (now + kDefaultMaxTime * 1000);
+  }
+  if (flags & Flags::kEnableExtendBuffer) {
+    extend_buffer_deadline_ = current_deadline;
   }
   boost_flags_ |= flags;
-#if defined(DEBUG)
-  FML_LOG(INFO) << "StartUp Boost Flags:" << boost_flags_;
-#endif
 }
 
 void Boost::CheckFinished() {
@@ -125,9 +121,6 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
   if (flags <= 0) {
     return;
   }
-#if defined(DEBUG)
-  FML_LOG(INFO) << "Finish Flags:" << flags << "Origin:" << boost_flags_;
-#endif
   boost_flags_ &= ~flags;
 
   if (flags & kDisableGC) {
@@ -251,6 +244,12 @@ void Boost::PreloadFontFamilies(const std::vector<std::string>& font_families,
   }
   collection.GetFontCollection()->GetMinikinFontCollectionForFamilies(
       font_families, minikin_locale);
+}
+
+void Boost::ForceGC() {
+#if defined(DART_PERFORMANCE_EXTENSION)
+  Dart_ForceGC();
+#endif
 }
 
 }  // namespace flutter

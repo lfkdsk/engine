@@ -71,17 +71,6 @@ void _scheduleMicrotask(void callback()) native 'ScheduleMicrotask';
 int _getCallbackHandle(Function closure) native 'GetCallbackHandle';
 Function _getCallbackFromHandle(int handle) native 'GetCallbackFromHandle';
 
-/**
- * BD ADD:
- * Set a time to notify current isolate skiping gc from now, unit is millisecond, and set 0 to cancle.
- * The max value is 10000 ms.
- */
-void skipGCFromNow(int millis) native 'SkipGCFromNow';
-/**
- * BD ADD:
- * Notify current isolate force execute gc right now.
- */
-void forceGC() native 'ForceGC';
 // Required for gen_snapshot to work correctly.
 int _isolateId; // ignore: unused_element
 
@@ -96,4 +85,6 @@ void startBoost(int flags, int millis) native 'StartBoost';
 void finishBoost(int flags) native 'FinishBoost';
 
 void preloadFontFamilies(List<String> font_families, String locale) native 'PreloadFontFamilies';
+
+void forceGC() native 'ForceGC';
 /// END

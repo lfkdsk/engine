@@ -38,8 +38,6 @@ class Boost {
     return &instance;
   }
 
-  void Init(bool disable_anti_alias);
-
   void StartUp(uint16_t flags, int millis);
   void CheckFinished();
   void Finish(uint16_t flags, const TaskRunners* task_runners = nullptr);
@@ -61,6 +59,8 @@ class Boost {
 
   void PreloadFontFamilies(const std::vector<std::string>& font_families,
                            const std::string& locale);
+
+  void ForceGC();
 
  private:
   Boost();
