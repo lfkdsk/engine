@@ -55,7 +55,7 @@ source_set("flow") {
     "skia_gpu_object.cc",
     "skia_gpu_object.h",
     "texture.cc",
-    "texture.h"
+    "texture.h",
   ]
 
   public_configs = [ "$flutter_root:config" ]
@@ -84,7 +84,7 @@ source_set("flow") {
       "//sdk/fidl/fuchsia.ui.scenic",
       "//sdk/fidl/fuchsia.ui.views",
       "//sdk/lib/ui/scenic/cpp",
-       "//topaz/public/dart-pkg/zircon",
+      "//topaz/public/dart-pkg/zircon",
       "//zircon/public/lib/zx",
     ]
   }
