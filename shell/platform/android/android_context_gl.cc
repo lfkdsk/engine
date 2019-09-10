@@ -9,10 +9,12 @@
 #include <utility>
 
 #include "flutter/fml/trace_event.h"
+// BD ADD:
 #include <sys/system_properties.h>
 
 namespace flutter {
 
+// BD ADD:
 static int android_sdk_version = INT_MIN;
 template <class T>
 using EGLResult = std::pair<bool, T>;
