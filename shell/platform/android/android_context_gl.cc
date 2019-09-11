@@ -135,7 +135,6 @@ bool AndroidContextGL::NeedBindAndUnbindContext() {
     }
   }
   android_sdk_version = valid ? std::stoi(osVersion) : INT_MAX;
-  FML_LOG(ERROR) << android_sdk_version;
   // API less more than 21 (Android 5.0)
   return android_sdk_version < 21;
 }
