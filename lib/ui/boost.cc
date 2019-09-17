@@ -92,7 +92,7 @@ void Boost::StartUp(uint16_t flags, int millis) {
 }
 
 void Boost::CheckFinished() {
-  if (boost_flags_ <= 0) {
+  if (boost_flags_ == 0) {
     return;
   }
   int64_t current_micros = Dart_TimelineGetMicros();
@@ -125,7 +125,7 @@ void Boost::CheckFinished() {
 }
 
 void Boost::Finish(uint16_t flags) {
-  if (flags <= 0) {
+  if (flags == 0) {
     return;
   }
   boost_flags_ &= ~flags;
