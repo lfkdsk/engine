@@ -110,15 +110,7 @@ void MessageLoopImpl::RegisterTask(fml::closure task,
   }
   std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
   delayed_tasks_.push({++order_, std::move(task), target_time});
-  // BD MOD:START
-  // WakeUp(delayed_tasks_.top().target_time);
-  auto now = fml::TimePoint::Now();
-  if (delayed_tasks_.top().target_time < now) {
-    WakeUp(now);
-  } else {
-    WakeUp(delayed_tasks_.top().target_time);
-  }
-  // END
+  WakeUp(delayed_tasks_.top().target_time);
 }
 
 void MessageLoopImpl::FlushTasks(FlushType type) {
@@ -169,6 +161,9 @@ void MessageLoopImpl::PostBarrier(bool barrier_enabled) {
   barrier_enabled_ = barrier_enabled;
   if (!barrier_enabled_) {
     std::lock_guard<std::mutex> lock(delayed_tasks_mutex_);
+    if (low_priority_tasks_.empty()) {
+      return;
+    }
     WakeUp(low_priority_tasks_.top().target_time);
   }
 }

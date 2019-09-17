@@ -34,7 +34,7 @@ void TaskRunner::PostDelayedTask(fml::closure task, fml::TimeDelta delay) {
 
 // BD START:
 void TaskRunner::PostTaskAtHead(fml::closure task) {
-  loop_->PostTask(std::move(task), fml::TimePoint());
+  loop_->PostTask(std::move(task), fml::TimePoint::FromEpochDelta(TimeDelta::FromNanoseconds(1)));
 }
 // END
 bool TaskRunner::RunsTasksOnCurrentThread() {

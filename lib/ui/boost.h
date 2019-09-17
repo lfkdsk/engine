@@ -40,7 +40,7 @@ class Boost {
 
   void StartUp(uint16_t flags, int millis);
   void CheckFinished();
-  void Finish(uint16_t flags, const TaskRunners* task_runners = nullptr);
+  void Finish(uint16_t flags);
 
   bool IsAADisabled();
   bool IsGCDisabled();
@@ -85,8 +85,6 @@ class Boost {
   int64_t extend_buffer_deadline_;
   atomic_char extend_count_;
   fml::Semaphore extend_semaphore_;
-
-  fml::WeakPtrFactory<Boost> weak_factory_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Boost);
 };

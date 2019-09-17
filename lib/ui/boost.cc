@@ -28,66 +28,73 @@ Boost::Boost()
       dart_frame_deadline_(TimePoint::Now()),
       extend_buffer_deadline_(0),
       extend_count_(0),
-      extend_semaphore_(4),
-      weak_factory_(this) {}
+      extend_semaphore_(4) {}
 
 Boost::~Boost() = default;
 
 void Boost::StartUp(uint16_t flags, int millis) {
   int64_t now = Dart_TimelineGetMicros();
-  int64_t current_deadline = millis * 1000 + now;
+  int64_t deadline = now + millis * 1000;
+  int64_t limited_deadline =
+      millis < kDefaultMaxTime ? deadline : (now + kDefaultMaxTime * 1000);
 
   if (flags & Flags::kDisableGC) {
-    gc_deadline_ = millis < kMaxSkipGCTime ? current_deadline
-                                           : (now + kMaxSkipGCTime * 1000);
+    gc_deadline_ =
+        millis < kMaxSkipGCTime ? deadline : (now + kMaxSkipGCTime * 1000);
   }
   if (flags & Flags::kDisableAA) {
-    aa_deadline_ = current_deadline;
+    aa_deadline_ = deadline;
   }
   if (flags & Flags::kDelayFuture) {
-    delay_future_deadline_ = millis < kDefaultMaxTime
-                                 ? current_deadline
-                                 : (now + kDefaultMaxTime * 1000);
-    if (!(boost_flags_ & Flags::kDelayFuture)) {
-      const auto& task_runners = UIDartState::Current()->GetTaskRunners();
-      task_runners.GetUITaskRunner()->PostBarrier(true);
-      task_runners.GetUITaskRunner()->PostDelayedTask(
-          [&task_runners]() {
-            Boost::Current()->Finish(Flags::kDelayFuture, &task_runners);
-          },
-          TimeDelta::FromMilliseconds(millis));
-    }
+    delay_future_deadline_ = limited_deadline;
+    TimeDelta delay = TimeDelta::FromMilliseconds(
+        (millis < kDefaultMaxTime ? millis : kDefaultMaxTime) + 1);
+    UIDartState* dart_state = UIDartState::Current();
+    auto task_runner = dart_state->GetTaskRunners().GetUITaskRunner();
+    task_runner->PostBarrier(true);
+    task_runner->PostDelayedTask(
+        [dart_state]() {
+          if (!dart_state) {
+            return;
+          }
+          tonic::DartState::Scope scope(dart_state);
+          Boost::Current()->CheckFinished();
+        },
+        delay);
   }
   if (flags & Flags::kDelayPlatformMessage) {
-    delay_platform_message_deadline_ = millis < kDefaultMaxTime
-                                           ? current_deadline
-                                           : (now + kDefaultMaxTime * 1000);
-    if (!(boost_flags_ & Flags::kDelayFuture)) {
-      const auto& task_runners = UIDartState::Current()->GetTaskRunners();
-      task_runners.GetPlatformTaskRunner()->PostBarrier(true);
-      task_runners.GetUITaskRunner()->PostDelayedTask(
-          [&task_runners]() {
-            Boost::Current()->Finish(Flags::kDelayPlatformMessage,
-                                     &task_runners);
-          },
-          TimeDelta::FromMilliseconds(millis));
-    }
+    delay_platform_message_deadline_ = limited_deadline;
+    TimeDelta delay = TimeDelta::FromMilliseconds(
+        (millis < kDefaultMaxTime ? millis : kDefaultMaxTime) + 1);
+    UIDartState* dart_state = UIDartState::Current();
+    auto task_runner = dart_state->GetTaskRunners().GetPlatformTaskRunner();
+    task_runner->PostBarrier(true);
+    task_runner->PostDelayedTask(
+        [dart_state]() {
+          if (!dart_state) {
+            return;
+          }
+          tonic::DartState::Scope scope(dart_state);
+          Boost::Current()->CheckFinished();
+        },
+        delay);
   }
   if (flags & Flags::kUiMessageAtHead) {
-    ui_message_athead_deadline_ = current_deadline;
+    ui_message_athead_deadline_ = deadline;
   }
   if (flags & Flags::kEnableWaitSwapBuffer) {
-    wait_swap_buffer_deadline_ = millis < kDefaultMaxTime
-                                     ? current_deadline
-                                     : (now + kDefaultMaxTime * 1000);
+    wait_swap_buffer_deadline_ = limited_deadline;
   }
   if (flags & Flags::kEnableExtendBuffer) {
-    extend_buffer_deadline_ = current_deadline;
+    extend_buffer_deadline_ = deadline;
   }
   boost_flags_ |= flags;
 }
 
 void Boost::CheckFinished() {
+  if (boost_flags_ <= 0) {
+    return;
+  }
   int64_t current_micros = Dart_TimelineGetMicros();
   uint16_t finish_flags = 0;
   if (gc_deadline_ > 0 && gc_deadline_ < current_micros) {
@@ -117,7 +124,7 @@ void Boost::CheckFinished() {
   Finish(finish_flags);
 }
 
-void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
+void Boost::Finish(uint16_t flags) {
   if (flags <= 0) {
     return;
   }
@@ -137,17 +144,15 @@ void Boost::Finish(uint16_t flags, const TaskRunners* task_runners) {
   }
   if (flags & Flags::kDelayFuture) {
     delay_future_deadline_ = 0;
-    if (task_runners == nullptr) {
-      task_runners = &UIDartState::Current()->GetTaskRunners();
-    }
-    task_runners->GetUITaskRunner()->PostBarrier(false);
+    auto task_runner =
+        UIDartState::Current()->GetTaskRunners().GetUITaskRunner();
+    task_runner->PostBarrier(false);
   }
   if (flags & Flags::kDelayPlatformMessage) {
     delay_platform_message_deadline_ = 0;
-    if (task_runners == nullptr) {
-      task_runners = &UIDartState::Current()->GetTaskRunners();
-    }
-    task_runners->GetPlatformTaskRunner()->PostBarrier(false);
+    auto task_runner =
+        UIDartState::Current()->GetTaskRunners().GetPlatformTaskRunner();
+    task_runner->PostBarrier(false);
   }
   if (flags & Flags::kUiMessageAtHead) {
     ui_message_athead_deadline_ = 0;
