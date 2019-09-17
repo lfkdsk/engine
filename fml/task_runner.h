@@ -25,10 +25,22 @@ class TaskRunner : public fml::RefCountedThreadSafe<TaskRunner> {
 
   virtual void PostDelayedTask(fml::closure task, fml::TimeDelta delay);
 
+  // BD ADD:
+  virtual void PostTaskAtHead(fml::closure task);
+  
   virtual bool RunsTasksOnCurrentThread();
 
   static void RunNowOrPostTask(fml::RefPtr<fml::TaskRunner> runner,
                                fml::closure task);
+  
+  // BD ADD: START
+  static void RunNowOrPostTaskAtHead(fml::RefPtr<fml::TaskRunner> runner,
+                                     fml::closure task);
+  virtual void PostBarrier(bool barrier_enabled);
+  virtual void PostTask(fml::closure task, bool is_low_priority);
+  virtual void PostTaskForTime(fml::closure task, fml::TimePoint target_time, bool is_low_priority);
+  virtual void PostDelayedTask(fml::closure task, fml::TimeDelta delay, bool is_low_priority);
+  // END
 
  protected:
   TaskRunner(fml::RefPtr<MessageLoopImpl> loop);

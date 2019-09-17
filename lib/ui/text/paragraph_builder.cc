@@ -401,8 +401,24 @@ void ParagraphBuilder::pushStyle(tonic::Int32List& encoded,
   }
 
   if (mask & tsFontFamilyMask) {
-    style.font_families.insert(style.font_families.end(), fontFamilies.begin(),
-                               fontFamilies.end());
+    // BD MOD: START
+    // style.font_families.insert(style.font_families.end(),
+    //                            fontFamilies.begin(), fontFamilies.end());
+    bool is_same_font_families =
+        style.font_families.size() == fontFamilies.size();
+    if (is_same_font_families) {
+      for (size_t i = 0; i < fontFamilies.size(); i++) {
+        if (style.font_families[i] != fontFamilies[i]) {
+          is_same_font_families = false;
+          break;
+        }
+      }
+    }
+    if (!is_same_font_families) {
+      style.font_families.insert(style.font_families.end(),
+                                 fontFamilies.begin(), fontFamilies.end());
+    }
+    // END
   }
 
   m_paragraphBuilder->PushStyle(style);

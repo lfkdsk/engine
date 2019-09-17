@@ -35,6 +35,9 @@
 #include "flutter/flow/layers/child_scene_layer.h"
 #endif
 
+//BD ADD:
+#include "flutter/lib/ui/boost.h"
+
 namespace flutter {
 
 static void SceneBuilder_constructor(Dart_NativeArguments args) {
@@ -108,7 +111,15 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushClipRect(double left,
                                                     double bottom,
                                                     int clipBehavior) {
   SkRect clipRect = SkRect::MakeLTRB(left, top, right, bottom);
-  flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  // BD MOD: START
+  // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  flutter::Clip clip_behavior;
+  if (Boost::Current()->IsAADisabled()) {
+    clip_behavior = flutter::Clip::hardEdge;
+  } else {
+    clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  }
+  // END
   auto layer = std::make_shared<flutter::ClipRectLayer>(clip_behavior);
   layer->set_clip_rect(clipRect);
   PushLayer(layer);
@@ -117,7 +128,15 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushClipRect(double left,
 
 fml::RefPtr<EngineLayer> SceneBuilder::pushClipRRect(const RRect& rrect,
                                                      int clipBehavior) {
-  flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  // BD MOD: START
+  // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  flutter::Clip clip_behavior;
+  if (Boost::Current()->IsAADisabled()) {
+    clip_behavior = flutter::Clip::hardEdge;
+  } else {
+    clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  }
+  // END
   auto layer = std::make_shared<flutter::ClipRRectLayer>(clip_behavior);
   layer->set_clip_rrect(rrect.sk_rrect);
   PushLayer(layer);
@@ -126,7 +145,15 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushClipRRect(const RRect& rrect,
 
 fml::RefPtr<EngineLayer> SceneBuilder::pushClipPath(const CanvasPath* path,
                                                     int clipBehavior) {
-  flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  // BD MOD: START
+  // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  flutter::Clip clip_behavior;
+  if (Boost::Current()->IsAADisabled()) {
+    clip_behavior = flutter::Clip::hardEdge;
+  } else {
+    clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  }
+  // END
   FML_DCHECK(clip_behavior != flutter::Clip::none);
   auto layer = std::make_shared<flutter::ClipPathLayer>(clip_behavior);
   layer->set_clip_path(path->path());
@@ -182,7 +209,15 @@ fml::RefPtr<EngineLayer> SceneBuilder::pushPhysicalShape(const CanvasPath* path,
                                                          int shadow_color,
                                                          int clipBehavior) {
   const SkPath& sk_path = path->path();
-  flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  // BD MOD: START
+  // flutter::Clip clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  flutter::Clip clip_behavior;
+  if (Boost::Current()->IsAADisabled()) {
+    clip_behavior = flutter::Clip::hardEdge;
+  } else {
+    clip_behavior = static_cast<flutter::Clip>(clipBehavior);
+  }
+  // END
   auto layer = std::make_shared<flutter::PhysicalShapeLayer>(clip_behavior);
   layer->set_path(sk_path);
   layer->set_elevation(elevation);

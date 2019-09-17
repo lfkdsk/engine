@@ -27,6 +27,8 @@
 #include "flutter/shell/common/skia_event_tracer_impl.h"
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/common/vsync_waiter.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
 #include "third_party/skia/include/core/SkGraphics.h"
 #include "third_party/tonic/common/log.h"
@@ -800,7 +802,9 @@ void Shell::OnEngineHandlePlatformMessage(
         if (view) {
           view->HandlePlatformMessage(std::move(message));
         }
-      });
+      // BD MOD:
+      // });
+      }, Boost::Current()->IsDelayPlatformMessage());
 }
 
 void Shell::HandleEngineSkiaMessage(fml::RefPtr<PlatformMessage> message) {

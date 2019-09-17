@@ -170,6 +170,8 @@ class Canvas : public RefCountedDartWrappable<Canvas> {
   void Clear();
   bool IsRecording() const;
 
+  // BD ADD:
+  void ensureAntiAlias(const Paint* paint) const;
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
 
  private:
