@@ -146,7 +146,7 @@ class Pipeline : public fml::RefCountedThreadSafe<Pipeline<R>> {
       empty_.Signal();
     }
     // END
-  
+
     TRACE_FLOW_END("flutter", "PipelineItem", trace_id);
     TRACE_EVENT_ASYNC_END0("flutter", "PipelineItem", trace_id);
 
