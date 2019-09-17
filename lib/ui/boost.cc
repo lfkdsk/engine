@@ -47,37 +47,11 @@ void Boost::StartUp(uint16_t flags, int millis) {
   }
   if (flags & Flags::kDelayFuture) {
     delay_future_deadline_ = limited_deadline;
-    TimeDelta delay = TimeDelta::FromMilliseconds(
-        (millis < kDefaultMaxTime ? millis : kDefaultMaxTime) + 1);
-    UIDartState* dart_state = UIDartState::Current();
-    auto task_runner = dart_state->GetTaskRunners().GetUITaskRunner();
-    task_runner->PostBarrier(true);
-    task_runner->PostDelayedTask(
-        [dart_state]() {
-          if (!dart_state) {
-            return;
-          }
-          tonic::DartState::Scope scope(dart_state);
-          Boost::Current()->CheckFinished();
-        },
-        delay);
+    PostBarrierDelayedTask(millis, Flags::kDelayFuture);
   }
   if (flags & Flags::kDelayPlatformMessage) {
     delay_platform_message_deadline_ = limited_deadline;
-    TimeDelta delay = TimeDelta::FromMilliseconds(
-        (millis < kDefaultMaxTime ? millis : kDefaultMaxTime) + 1);
-    UIDartState* dart_state = UIDartState::Current();
-    auto task_runner = dart_state->GetTaskRunners().GetPlatformTaskRunner();
-    task_runner->PostBarrier(true);
-    task_runner->PostDelayedTask(
-        [dart_state]() {
-          if (!dart_state) {
-            return;
-          }
-          tonic::DartState::Scope scope(dart_state);
-          Boost::Current()->CheckFinished();
-        },
-        delay);
+    PostBarrierDelayedTask(millis, Flags::kDelayPlatformMessage);
   }
   if (flags & Flags::kUiMessageAtHead) {
     ui_message_athead_deadline_ = deadline;
@@ -88,7 +62,29 @@ void Boost::StartUp(uint16_t flags, int millis) {
   if (flags & Flags::kEnableExtendBuffer) {
     extend_buffer_deadline_ = deadline;
   }
+
   boost_flags_ |= flags;
+}
+
+void Boost::PostBarrierDelayedTask(int millis, uint16_t flag) {
+  UIDartState* dart_state = UIDartState::Current();
+  auto& task_runners = dart_state->GetTaskRunners();
+  auto task_runner = flag == Flags::kDelayFuture
+                         ? task_runners.GetUITaskRunner()
+                         : task_runners.GetPlatformTaskRunner();
+  task_runner->PostBarrier(true);
+
+  TimeDelta delay = TimeDelta::FromMilliseconds(
+      (millis < kDefaultMaxTime ? millis : kDefaultMaxTime) + 1);
+  task_runners.GetUITaskRunner()->PostDelayedTask(
+      [dart_state]() {
+        if (!dart_state) {
+          return;
+        }
+        tonic::DartState::Scope scope(dart_state);
+        Boost::Current()->CheckFinished();
+      },
+      delay);
 }
 
 void Boost::CheckFinished() {

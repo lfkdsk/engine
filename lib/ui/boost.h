@@ -66,6 +66,8 @@ class Boost {
   Boost();
   ~Boost();
 
+  void PostBarrierDelayedTask(int millis, uint16_t flag);
+
   uint16_t boost_flags_;
 
   int64_t gc_deadline_;
