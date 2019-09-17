@@ -174,7 +174,7 @@ deps = {
   'src/third_party/dart':
    # BD MOD:
    #Var('dart_git') + '/sdk.git' + '@' + Var('dart_revision'),
-   Var('tt_dart_git') + '@' + Var('dart_revision'),
+   Var('tt_dart_git') + '@' + 'daffa7fa515b4586b0724fbd0ddf5b57a770d5cb',
 
   'src/third_party/boringssl':
    Var('github_git') + '/dart-lang/boringssl_gen.git' + '@' + Var('dart_boringssl_gen_rev'),

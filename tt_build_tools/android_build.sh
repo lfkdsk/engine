@@ -52,6 +52,13 @@ echo uploaded flutter/framework/$tosDir/flutter_patched_sdk.zip
 hostDir=out/host_release
 #./flutter/tools/gn --runtime-mode=release
 #ninja -C $hostDir -j $jcount
+rm -f $cacheDir/dart-sdk-darwin-x64.zip
+cd $hostDir
+zip -rq ../../$cacheDir/dart-sdk-darwin-x64.zip dart-sdk
+cd ..
+cd ..
+node ./flutter/tt_build_tools/tosUpload.js $cacheDir/dart-sdk-darwin-x64.zip flutter_infra/flutter/$tosDir/dart-sdk-darwin-x64.zip
+echo uploaded flutter_infra/flutter/$tosDir/dart-sdk-darwin-x64.zip
 
 # flutter_patched_sdk.zip
 rm -f $cacheDir/flutter_patched_sdk_product.zip
@@ -140,7 +147,7 @@ rm -rf $cacheDir/$modeDir
 mkdir $cacheDir/$modeDir
 cp out/android_release/gen/flutter/lib/snapshot/isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin
 cp out/android_release/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
-zip -rjq $cacheDir/$modeDir/artifacts.zip out/host_debug/flutter_tester out/host_debug/gen/frontend_server.dart.snapshot \
+zip -rjq $cacheDir/$modeDir/artifacts.zip $hostDir/flutter_tester $hostDir/gen/frontend_server.dart.snapshot \
 out/android_release/flutter_shell_assets/icudtl.dat out/android_debug/gen/flutter/lib/snapshot/isolate_snapshot.bin \
 out/android_debug/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin \
 $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
@@ -149,7 +156,7 @@ echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDi
 
 rm -rf $cacheDir/pkg
 mkdir $cacheDir/pkg
-cp -rf out/host_release/gen/dart-pkg/sky_engine $cacheDir/pkg/sky_engine
+cp -rf $hostDir/gen/dart-pkg/sky_engine $cacheDir/pkg/sky_engine
 rm -rf $cacheDir/pkg/sky_engine/packages
 cd $cacheDir/pkg
 zip -rq ../../../$cacheDir/pkg/sky_engine.zip sky_engine
