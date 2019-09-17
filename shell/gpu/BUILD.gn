@@ -11,6 +11,7 @@ gpu_common_deps = [
   "$flutter_root/flow",
   "$flutter_root/fml",
   "$flutter_root/shell/common",
+  // BD ADD:
   "$flutter_root/lib/ui",
   "//third_party/skia",
 ]

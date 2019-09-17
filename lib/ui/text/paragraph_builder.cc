@@ -403,7 +403,7 @@ void ParagraphBuilder::pushStyle(tonic::Int32List& encoded,
   if (mask & tsFontFamilyMask) {
     // BD MOD: START
     // style.font_families.insert(style.font_families.end(),
-    // fontFamilies.begin(), fontFamilies.end());
+    //                            fontFamilies.begin(), fontFamilies.end());
     bool is_same_font_families =
         style.font_families.size() == fontFamilies.size();
     if (is_same_font_families) {

@@ -216,13 +216,13 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   tonic::DartState::Scope scope(root_isolate);
 
-
   // BD MOD: START
   // Dart_NotifyIdle(deadline);
   if (!Boost::Current()->IsGCDisabled()) {
     Dart_NotifyIdle(deadline);
   }
   // END
+
   // Idle notifications being in isolate scope are part of the contract.
   if (idle_notification_callback_) {
     TRACE_EVENT0("flutter", "EmbedderIdleNotification");

@@ -192,7 +192,7 @@ void DartIsolate::SetMessageHandlingTaskRunner(
   }
 
   message_handling_task_runner_ = runner;
-  
+
   message_handler().Initialize(
       // BD MOD:
       // [runner](std::function<void()> task) { runner->PostTask(task); });
