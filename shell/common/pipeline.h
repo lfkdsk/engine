@@ -92,12 +92,13 @@ class Pipeline : public fml::RefCountedThreadSafe<Pipeline<R>> {
 
   ~Pipeline() = default;
 
-  // BD MOD:
+  // BD MOD: START
   // bool IsValid() const { return (empty_.IsValid() && available_.IsValid(); }
   bool IsValid() const {
     return (empty_.IsValid() || Boost::Current()->IsValidExtension()) &&
            available_.IsValid();
   }
+  // END
 
   ProducerContinuation Produce() {
     // BD MOD:

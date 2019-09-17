@@ -214,7 +214,7 @@ void Animator::RequestFrame(bool regenerate_layer_tree) {
   // To support that, we need edge triggered wakes on VSync.
 
   // BD MOD: START
-  //  task_runners_.GetUITaskRunner()->PostTaskAtHead([self =
+  //  task_runners_.GetUITaskRunner()->PostTask([self =
   //  weak_factory_.GetWeakPtr(),
   //                                                   frame_number =
   //                                                   frame_number_]() {
@@ -267,7 +267,6 @@ void Animator::RequestBackgroundFrame() {
   }
   regenerate_layer_tree_ = true;
   frame_scheduled_ = true;
-
   task_runners_.GetUITaskRunner()->PostTask([self = weak_factory_.GetWeakPtr(),
                                              frame_number = frame_number_]() {
     if (!self.get()) {
