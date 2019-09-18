@@ -16,6 +16,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterViewController_Internal.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
 #include "flutter/shell/platform/darwin/ios/ios_external_texture_gl.h"
+// BD ADD:
 #include "flutter/shell/platform/darwin/ios/ios_external_image_loader.h"
 
 namespace flutter {
@@ -81,10 +82,6 @@ void PlatformViewIOS::RegisterExternalImageLoader(NSObject<FlutterImageLoader>* 
   RegisterImageLoader(std::make_shared<IOSExternalImageLoader>(imageLoader));
 }
 
-/**
- * BD ADD:
- *
- */
 // |PlatformView|
 std::unique_ptr<Surface> PlatformViewIOS::CreateRenderingSurface() {
   if (!ios_surface_) {

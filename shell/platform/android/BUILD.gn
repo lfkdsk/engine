@@ -27,8 +27,10 @@ shared_library("flutter_shell_native") {
     "android_environment_gl.h",
     "android_external_texture_gl.cc",
     "android_external_texture_gl.h",
+    # BD ADD: START
     "android_external_image_loader.cc",
     "android_external_image_loader.h",
+    # END
     "android_native_window.cc",
     "android_native_window.h",
     "android_shell_holder.cc",
@@ -84,6 +86,7 @@ shared_library("flutter_shell_native") {
   }
 
   libs = [
+    # BD ADD:
     "jnigraphics",
     "android",
     "EGL",
@@ -176,9 +179,11 @@ java_library("flutter_shell_java") {
     "io/flutter/view/ResourceUpdater.java",
     "io/flutter/view/TextureRegistry.java",
     "io/flutter/view/VsyncWaiter.java",
+    # BD ADD: START
     "io/flutter/view/AndroidImageLoader.java",
     "io/flutter/view/NativeLoadCallback.java",
     "io/flutter/view/ImageLoaderRegistry.java",
+    # END
   ]
 
   java_files +=

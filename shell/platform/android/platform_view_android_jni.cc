@@ -5,8 +5,10 @@
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
 
 #include <android/native_window_jni.h>
+// BD ADD: START
 #include <android/bitmap.h>
 #include "flutter/lib/ui/painting/image.h"
+// END
 
 #include <utility>
 
@@ -25,6 +27,7 @@
 #include "flutter/shell/platform/android/android_shell_holder.h"
 #include "flutter/shell/platform/android/apk_asset_provider.h"
 #include "flutter/shell/platform/android/flutter_main.h"
+// BD ADD:
 #include "flutter/fml/make_copyable.h"
 
 #define ANDROID_SHELL_HOLDER \

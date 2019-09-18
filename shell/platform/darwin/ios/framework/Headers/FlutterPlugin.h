@@ -13,6 +13,7 @@
 #include "FlutterCodecs.h"
 #include "FlutterPlatformViews.h"
 #include "FlutterTexture.h"
+// BD ADD:
 #include "FlutterImageLoader.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -246,6 +247,7 @@ typedef void (*FlutterPluginRegistrantCallback)(NSObject<FlutterPluginRegistry>*
  */
 - (NSObject<FlutterTextureRegistry>*)textures;
 
+// BD ADD:
 - (NSObject<FlutterImageLoaderRegistry>*)imageLoaders;
 
 /**

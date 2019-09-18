@@ -13,6 +13,7 @@
 #include "FlutterMacros.h"
 #include "FlutterPlugin.h"
 #include "FlutterTexture.h"
+// BD ADD:
 #include "FlutterImageLoader.h"
 
 @class FlutterViewController;
@@ -40,6 +41,7 @@
  */
 FLUTTER_EXPORT
 @interface FlutterEngine
+// BD MOD: add FlutterImageLoaderRegistry
     : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterImageLoaderRegistry, FlutterPluginRegistry>
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
