@@ -69,4 +69,9 @@ bool EmbedderTaskRunner::PostTask(uint64_t baton) {
   return true;
 }
 
+// BD ADD: START
+void EmbedderTaskRunner::PostTask(fml::closure task, bool is_low_priority) {
+  PostTask(task);
+}
+// END
 }  // namespace flutter

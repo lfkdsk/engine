@@ -13,6 +13,7 @@
 #include "flutter/fml/message_loop.h"
 #include "flutter/fml/platform/darwin/platform_version.h"
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
+#include "flutter/shell/common/engine.h"
 #include "flutter/shell/common/thread_host.h"
 #import "flutter/shell/platform/darwin/ios/framework/Source/FlutterBinaryMessengerRelay.h"
 #import "flutter/shell/platform/darwin/ios/framework/Source/FlutterEngine_Internal.h"
@@ -55,6 +56,7 @@ typedef enum UIAccessibilityContrast : NSInteger {
   fml::scoped_nsobject<FlutterView> _flutterView;
   fml::scoped_nsobject<UIView> _splashScreenView;
   fml::ScopedBlock<void (^)(void)> _flutterViewRenderedCallback;
+  fml::ScopedBlock<void (^)(void)> _flutterViewFirstFrameCallback;
   UIInterfaceOrientationMask _orientationPreferences;
   UIStatusBarStyle _statusBarStyle;
   flutter::ViewportMetrics _viewportMetrics;
@@ -62,6 +64,8 @@ typedef enum UIAccessibilityContrast : NSInteger {
   BOOL _viewOpaque;
   BOOL _engineNeedsLaunch;
   NSMutableSet<NSNumber*>* _ongoingTouches;
+  // BD ADD:
+  BOOL _surfaceCreated;
 }
 
 @synthesize displayingFlutterUI = _displayingFlutterUI;
@@ -80,7 +84,8 @@ typedef enum UIAccessibilityContrast : NSInteger {
     _flutterView.reset([[FlutterView alloc] initWithDelegate:_engine opaque:self.isViewOpaque]);
     _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterViewController>>(self);
     _ongoingTouches = [[NSMutableSet alloc] init];
-
+    // BD ADD:
+    _surfaceCreated = NO;
     [self performCommonViewControllerInitialization];
     [engine setViewController:self];
   }
@@ -102,6 +107,8 @@ typedef enum UIAccessibilityContrast : NSInteger {
     [_engine.get() createShell:nil libraryURI:nil];
     _engineNeedsLaunch = YES;
     _ongoingTouches = [[NSMutableSet alloc] init];
+    // BD ADD:
+    _surfaceCreated = NO;
     [self loadDefaultSplashScreenView];
     [self performCommonViewControllerInitialization];
   }
@@ -420,21 +427,62 @@ typedef enum UIAccessibilityContrast : NSInteger {
   _flutterViewRenderedCallback.reset(callback, fml::OwnershipPolicy::Retain);
 }
 
+- (void)setFlutterViewFirstFrameCallback:(void (^)())callback {
+  _flutterViewFirstFrameCallback.reset(callback, fml::OwnershipPolicy::Retain);
+
+  auto weak_platform_view = [_engine.get() platformView];
+  if (!weak_platform_view) {
+    return;
+  }
+  __unsafe_unretained auto weak_flutter_view_controller = self;
+  // This is on the platform thread.
+  weak_platform_view->SetNextFrameCallback([weak_platform_view, weak_flutter_view_controller,
+                                            task_runner = [_engine.get() platformTaskRunner]]() {
+    // This is on the GPU thread.
+    task_runner->PostTask([weak_platform_view, weak_flutter_view_controller]() {
+      // We check if the weak platform view is alive. If it is alive, then the view controller
+      // also has to be alive since the view controller owns the platform view via the shell
+      // association. Thus, we are not convinced that the unsafe unretained weak object is in
+      // fact alive.
+      if (weak_platform_view) {
+        [weak_flutter_view_controller responseTheFirstFrameCallIfNeeded];
+      }
+    });
+  });
+}
+
+#pragma mark - First Frame CallBack
+
+- (void)responseTheFirstFrameCallIfNeeded {
+  if (_flutterViewFirstFrameCallback != nil) {
+    _flutterViewFirstFrameCallback.get()();
+    _flutterViewFirstFrameCallback.reset();
+  }
+}
+
 #pragma mark - Surface creation and teardown updates
 
 - (void)surfaceUpdated:(BOOL)appeared {
   // NotifyCreated/NotifyDestroyed are synchronous and require hops between the UI and GPU thread.
-  if (appeared) {
+
+    // BD MOD: BaiKunlun
+    // if (appeared) {
+    if (appeared && !_surfaceCreated) {
     [self installFirstFrameCallback];
     [_engine.get() platformViewsController] -> SetFlutterView(_flutterView.get());
     [_engine.get() platformViewsController] -> SetFlutterViewController(self);
     [_engine.get() platformView] -> NotifyCreated();
-  } else {
+    // BD ADD: BaiKunlun
+    _surfaceCreated = YES;
+  } else if (!appeared && _surfaceCreated) {
     self.displayingFlutterUI = NO;
     [_engine.get() platformView] -> NotifyDestroyed();
     [_engine.get() platformViewsController] -> SetFlutterView(nullptr);
     [_engine.get() platformViewsController] -> SetFlutterViewController(nullptr);
+    // BD ADD: BaiKunlun
+    _surfaceCreated = NO;
   }
+  // END
 }
 
 #pragma mark - UIViewController lifecycle notifications
@@ -457,14 +505,13 @@ typedef enum UIAccessibilityContrast : NSInteger {
     [self surfaceUpdated:YES];
   }
   [[_engine.get() lifecycleChannel] sendMessage:@"AppLifecycleState.inactive"];
-
+  [self onUserSettingsChanged:nil];
   [super viewWillAppear:animated];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
   TRACE_EVENT0("flutter", "viewDidAppear");
   [self onLocaleUpdated:nil];
-  [self onUserSettingsChanged:nil];
   [self onAccessibilityStatusChanged:nil];
   [[_engine.get() lifecycleChannel] sendMessage:@"AppLifecycleState.resumed"];
 
@@ -523,15 +570,33 @@ typedef enum UIAccessibilityContrast : NSInteger {
 - (void)dealloc {
   [_engine.get() notifyViewControllerDeallocated];
   [[NSNotificationCenter defaultCenter] removeObserver:self];
+  // BD ADD:
+  [_ongoingTouches release];
   [super dealloc];
 }
+
+#pragma mark - Frame
+
+// BD ADD: START
+//
+//
+- (void)scheduleBackgroundFrame {
+  [_engine.get() shell].GetEngine()->ScheduleBackgroundFrame();
+}
+// END
 
 #pragma mark - Application lifecycle notifications
 
 - (void)applicationBecameActive:(NSNotification*)notification {
   TRACE_EVENT0("flutter", "applicationBecameActive");
-  if (_viewportMetrics.physical_width)
+  bool optimiseEnabled = [[NSUserDefaults standardUserDefaults]
+      boolForKey:@"flutter_optimise_enter_foreground_surface_enabled"];
+
+  if (_viewportMetrics.physical_width &&
+      ((optimiseEnabled && self.view.window) || !optimiseEnabled)) {
     [self surfaceUpdated:YES];
+  }
+
   [[_engine.get() lifecycleChannel] sendMessage:@"AppLifecycleState.resumed"];
 }
 
@@ -732,6 +797,9 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 - (void)viewDidLayoutSubviews {
   CGSize viewSize = self.view.bounds.size;
   CGFloat scale = [UIScreen mainScreen].scale;
+  // BD ADD:
+  CGSize originViewportSize =
+      CGSizeMake(_viewportMetrics.physical_width, _viewportMetrics.physical_height);
 
   // First time since creation that the dimensions of its view is known.
   bool firstViewBoundsUpdate = !_viewportMetrics.physical_width;
@@ -760,6 +828,17 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
                     << "complex frame to avoid the timeout.";
     }
   }
+
+  // BD ADD: BaiKunlun
+  // 当App处于inactive状态，且期间尺寸改变(iPad上调整多窗口App尺寸)
+  // 当恢复active时在此处提前创建Surface，可避免视图拉伸跳变
+  else if (ABS(originViewportSize.width - _viewportMetrics.physical_width) > 0.01 ||
+           ABS(originViewportSize.height - _viewportMetrics.physical_height) > 0.01) {
+      if ([UIApplication sharedApplication].applicationState == UIApplicationStateInactive) {
+          [self surfaceUpdated:YES];
+      }
+  }
+    // END
 }
 
 - (void)viewSafeAreaInsetsDidChange {
@@ -1135,6 +1214,16 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
 
 - (id<FlutterPluginRegistry>)pluginRegistry {
   return _engine;
+}
+
+/**
+ * BD ADD:
+ *
+ */
+#pragma mark - FlutterImageLoaderRegistry
+
+- (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
+    [_engine.get() registerImageLoader:imageLoader];
 }
 
 #pragma mark - FlutterPluginRegistry

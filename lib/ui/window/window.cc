@@ -4,6 +4,7 @@
 
 #include "flutter/lib/ui/window/window.h"
 
+#include "flutter/fml/make_copyable.h"
 #include "flutter/lib/ui/compositing/scene.h"
 #include "flutter/lib/ui/ui_dart_state.h"
 #include "flutter/lib/ui/window/platform_message_response_dart.h"
@@ -13,6 +14,8 @@
 #include "third_party/tonic/dart_microtask_queue.h"
 #include "third_party/tonic/logging/dart_invoke.h"
 #include "third_party/tonic/typed_data/dart_byte_data.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 namespace flutter {
 namespace {
@@ -87,6 +90,34 @@ void ReportUnhandledException(Dart_NativeArguments args) {
                                                    std::move(stack_trace));
 }
 
+void AddNextFrameCallback(Dart_Handle callback) {
+  UIDartState* dart_state = UIDartState::Current();
+  if (!dart_state->window()) {
+    return;
+  }
+
+  tonic::DartPersistentValue* next_frame_callback =
+      new tonic::DartPersistentValue(dart_state, callback);
+  dart_state->window()->client()->AddNextFrameCallback(
+      [next_frame_callback]() mutable {
+        std::shared_ptr<tonic::DartState> dart_state_ =
+            next_frame_callback->dart_state().lock();
+        if (!dart_state_) {
+          return;
+        }
+        tonic::DartState::Scope scope(dart_state_);
+        tonic::DartInvokeVoid(next_frame_callback->value());
+
+        // next_frame_callback is associated with the Dart isolate and must be
+        // deleted on the UI thread
+        delete next_frame_callback;
+      });
+}
+
+void _AddNextFrameCallback(Dart_NativeArguments args) {
+  tonic::DartCall(&AddNextFrameCallback, args);
+}
+
 Dart_Handle SendPlatformMessage(Dart_Handle window,
                                 const std::string& name,
                                 Dart_Handle callback,
@@ -142,6 +173,29 @@ void _RespondToPlatformMessage(Dart_NativeArguments args) {
   tonic::DartCallStatic(&RespondToPlatformMessage, args);
 }
 
+// BD ADD: START
+void GetMaxSamples(Dart_NativeArguments args) {
+  int max_samples = Stopwatch::GetMaxSamples();
+  Dart_SetIntegerReturnValue(args, max_samples);
+}
+
+void GetFps(Dart_NativeArguments args) {
+  Dart_Handle exception = nullptr;
+  int thread_type =
+      tonic::DartConverter<int>::FromArguments(args, 1, exception);
+  int fps_type = tonic::DartConverter<int>::FromArguments(args, 2, exception);
+  bool do_clear = tonic::DartConverter<bool>::FromArguments(args, 3, exception);
+  std::vector<double> fpsInfo =
+      UIDartState::Current()->window()->client()->GetFps(thread_type, fps_type,
+                                                         do_clear);
+  Dart_Handle data_handle = Dart_NewList(fpsInfo.size());
+  for (std::vector<int>::size_type i = 0; i != fpsInfo.size(); i++) {
+    Dart_Handle value = Dart_NewDouble(fpsInfo[i]);
+    Dart_ListSetAt(data_handle, i, value);
+  }
+  Dart_SetReturnValue(args, data_handle);
+}
+// END
 }  // namespace
 
 Dart_Handle ToByteData(const std::vector<uint8_t>& buffer) {
@@ -319,6 +373,9 @@ void Window::BeginFrame(fml::TimePoint frameTime) {
     return;
   tonic::DartState::Scope scope(dart_state);
 
+  // BD ADD:
+  Boost::Current()->CheckFinished();
+
   int64_t microseconds = (frameTime - fml::TimePoint()).ToMicroseconds();
 
   tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_beginFrame",
@@ -379,6 +436,17 @@ void Window::CompletePlatformMessageResponse(int response_id,
   response->Complete(std::make_unique<fml::DataMapping>(std::move(data)));
 }
 
+// BD ADD: START
+void Window::ExitApp() {
+  std::shared_ptr<tonic::DartState> dart_state = library_.dart_state().lock();
+  if (!dart_state)
+    return;
+  tonic::DartState::Scope scope(dart_state);
+
+  tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_exitApp", {}));
+}
+// END
+
 void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
   natives->Register({
       {"Window_defaultRouteName", DefaultRouteName, 1, true},
@@ -390,6 +458,13 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_setIsolateDebugName", SetIsolateDebugName, 2, true},
       {"Window_reportUnhandledException", ReportUnhandledException, 2, true},
       {"Window_setNeedsReportTimings", SetNeedsReportTimings, 2, true},
+      // BD ADD: XieRan
+      {"Window_addNextFrameCallback", _AddNextFrameCallback, 2, true},
+      // END
+      // BD ADD: LinXuebin
+      {"Window_getFps", GetFps, 4, true},
+      {"Window_getFpsMaxSamples", GetMaxSamples, 1, true},
+      // END
   });
 }
 

@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "flutter/fml/closure.h"
 #include "flutter/fml/time/time_point.h"
 #include "flutter/lib/ui/semantics/semantics_update.h"
 #include "flutter/lib/ui/window/platform_message.h"
@@ -51,12 +52,18 @@ class WindowClient {
   virtual std::string DefaultRouteName() = 0;
   virtual void ScheduleFrame() = 0;
   virtual void Render(Scene* scene) = 0;
+  virtual void AddNextFrameCallback(fml::closure callback) = 0;
   virtual void UpdateSemantics(SemanticsUpdate* update) = 0;
   virtual void HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) = 0;
   virtual FontCollection& GetFontCollection() = 0;
   virtual void UpdateIsolateDescription(const std::string isolate_name,
                                         int64_t isolate_port) = 0;
   virtual void SetNeedsReportTimings(bool value) = 0;
+  // BD ADD: QiuXinyue
+  virtual std::vector<double> GetFps(int thread_type,
+                                     int fps_type,
+                                     bool do_clear) = 0;
+  // END
 
  protected:
   virtual ~WindowClient();
@@ -92,6 +99,9 @@ class Window final {
   void CompletePlatformMessageEmptyResponse(int response_id);
 
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
+
+  // BD ADD:
+  void ExitApp();
 
  private:
   WindowClient* client_;

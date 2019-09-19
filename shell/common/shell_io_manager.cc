@@ -44,7 +44,8 @@ sk_sp<GrContext> ShellIOManager::CreateCompatibleResourceLoadingContext(
 
 ShellIOManager::ShellIOManager(
     sk_sp<GrContext> resource_context,
-    fml::RefPtr<fml::TaskRunner> unref_queue_task_runner)
+    fml::RefPtr<fml::TaskRunner> unref_queue_task_runner,
+    bool should_defer_decode_image_when_platform_view_invalid)
     : resource_context_(std::move(resource_context)),
       resource_context_weak_factory_(
           resource_context_ ? std::make_unique<fml::WeakPtrFactory<GrContext>>(
@@ -53,7 +54,12 @@ ShellIOManager::ShellIOManager(
       unref_queue_(fml::MakeRefCounted<flutter::SkiaUnrefQueue>(
           std::move(unref_queue_task_runner),
           fml::TimeDelta::FromMilliseconds(8))),
-      weak_factory_(this) {
+      weak_factory_(this),
+      // BD ADD: QiuXinyue
+      is_platform_view_valid_(false),
+      should_defer_decode_image_when_platform_view_invalid_(
+          should_defer_decode_image_when_platform_view_invalid) {
+      // END
   if (!resource_context_) {
 #ifndef OS_FUCHSIA
     FML_DLOG(WARNING) << "The IO manager was initialized without a resource "
@@ -107,5 +113,37 @@ fml::RefPtr<flutter::SkiaUnrefQueue> ShellIOManager::GetSkiaUnrefQueue() const {
 fml::WeakPtr<IOManager> ShellIOManager::GetWeakIOManager() const {
   return weak_factory_.GetWeakPtr();
 }
+
+// BD ADD: QiuXinyue
+void ShellIOManager::UpdatePlatformViewValid(bool valid) {
+  is_platform_view_valid_ = valid;
+}
+// END
+
+// BD ADD: QiuXinyue
+bool ShellIOManager::IsResourceContextValidForDecodeImage() const {
+  return !should_defer_decode_image_when_platform_view_invalid_ ||
+         (should_defer_decode_image_when_platform_view_invalid_ &&
+          is_platform_view_valid_);
+}
+// END
+
+/**
+ * BD ADD: Linyiyi
+ *
+ */
+void ShellIOManager::RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) {
+  imageLoader_ = imageLoader;
+}
+// END
+
+/**
+ * BD ADD: Linyiyi
+ *
+ */
+std::shared_ptr<flutter::ImageLoader> ShellIOManager::GetImageLoader() const {
+  return imageLoader_;
+}
+// END
 
 }  // namespace flutter

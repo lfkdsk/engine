@@ -12,6 +12,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.*;
 import android.view.accessibility.AccessibilityEvent;
@@ -172,12 +173,28 @@ class SingleViewPresentation extends Presentation {
             rootView.requestFocus();
         }
         setContentView(rootView);
+
+        // BD ADD: XieRan
+        // 防止参数不一致导致PlatformView展示不出来
+        DisplayMetrics metrics = new DisplayMetrics();
+        getDisplay().getMetrics(metrics);
+        getResources().getDisplayMetrics().setTo(metrics);
+        // END
     }
 
     public PresentationState detachState() {
-        container.removeAllViews();
-        rootView.removeAllViews();
-        return state;
+        // BD MOD: XieRan
+        if (mContainer != null) {
+            mContainer.removeAllViews();
+        }
+        // END
+        // BD MOD: XieRan
+        if (mRootView != null) {
+            mRootView.removeAllViews();
+        }
+        // END
+
+        return mState;
     }
 
     public PlatformView getView() {

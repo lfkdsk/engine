@@ -28,6 +28,10 @@ shared_library("flutter_shell_native") {
     "android_environment_gl.h",
     "android_external_texture_gl.cc",
     "android_external_texture_gl.h",
+    # BD ADD: START
+    "android_external_image_loader.cc",
+    "android_external_image_loader.h",
+    # END
     "android_native_window.cc",
     "android_native_window.h",
     "android_shell_holder.cc",
@@ -83,6 +87,8 @@ shared_library("flutter_shell_native") {
   }
 
   libs = [
+    # BD ADD:
+    "jnigraphics",
     "android",
     "EGL",
     "GLESv2",
@@ -217,16 +223,24 @@ action("flutter_shell_java") {
     "io/flutter/util/Predicate.java",
     "io/flutter/view/AccessibilityBridge.java",
     "io/flutter/view/AccessibilityViewEmbedder.java",
+    "io/flutter/view/CachedTextureView.java",
     "io/flutter/view/FlutterCallbackInformation.java",
     "io/flutter/view/FlutterMain.java",
     "io/flutter/view/FlutterNativeView.java",
     "io/flutter/view/FlutterRunArguments.java",
+    "io/flutter/view/FlutterTextureView.java",
     "io/flutter/view/FlutterView.java",
+    "io/flutter/view/IFlutterView.java",
     "io/flutter/view/ResourceCleaner.java",
     "io/flutter/view/ResourceExtractor.java",
     "io/flutter/view/ResourcePaths.java",
     "io/flutter/view/TextureRegistry.java",
     "io/flutter/view/VsyncWaiter.java",
+    # BD ADD: START
+    "io/flutter/view/AndroidImageLoader.java",
+    "io/flutter/view/NativeLoadCallback.java",
+    "io/flutter/view/ImageLoaderRegistry.java",
+    # END
   ]
 
   sources += get_target_outputs(":gen_android_build_config_java")

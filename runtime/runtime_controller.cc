@@ -12,6 +12,8 @@
 #include "flutter/runtime/runtime_delegate.h"
 #include "third_party/tonic/dart_message_handler.h"
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 namespace flutter {
 
 RuntimeController::RuntimeController(
@@ -247,7 +249,12 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   tonic::DartState::Scope scope(root_isolate);
 
-  Dart_NotifyIdle(deadline);
+  // BD MOD: START
+  // Dart_NotifyIdle(deadline);
+  if (!Boost::Current()->IsGCDisabled()) {
+    Dart_NotifyIdle(deadline);
+  }
+  // END
 
   // Idle notifications being in isolate scope are part of the contract.
   if (idle_notification_callback_) {
@@ -308,6 +315,10 @@ void RuntimeController::Render(Scene* scene) {
   client_.Render(scene->takeLayerTree());
 }
 
+void RuntimeController::AddNextFrameCallback(fml::closure callback) {
+  client_.AddNextFrameCallback(callback);
+}
+
 void RuntimeController::UpdateSemantics(SemanticsUpdate* update) {
   if (window_data_.semantics_enabled) {
     client_.UpdateSemantics(update->takeNodes(), update->takeActions());
@@ -364,6 +375,14 @@ std::pair<bool, uint32_t> RuntimeController::GetRootIsolateReturnCode() {
   return root_isolate_return_code_;
 }
 
+// BD ADD: START
+void RuntimeController::ExitApp() {
+  if (auto* window = GetWindowIfAvailable()) {
+    window->ExitApp();
+  }
+}
+// END
+
 RuntimeController::Locale::Locale(std::string language_code_,
                                   std::string country_code_,
                                   std::string script_code_,
@@ -380,5 +399,13 @@ RuntimeController::WindowData::WindowData() = default;
 RuntimeController::WindowData::WindowData(const WindowData& other) = default;
 
 RuntimeController::WindowData::~WindowData() = default;
+
+// BD ADD: START
+std::vector<double> RuntimeController::GetFps(int thread_type,
+                                              int fps_type,
+                                              bool do_clear) {
+  return client_.GetFps(thread_type, fps_type, do_clear);
+}
+// END
 
 }  // namespace flutter

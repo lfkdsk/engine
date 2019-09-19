@@ -961,6 +961,16 @@ class Window {
   _SetNeedsReportTimingsFunc _setNeedsReportTimings;
   void _nativeSetNeedsReportTimings(bool value) native 'Window_setNeedsReportTimings';
 
+  // BD ADD: QiuXinyue
+  VoidCallback get exitApp => _exitApp;
+  VoidCallback _exitApp;
+  Zone _exitAppZone;
+  set exitApp(VoidCallback callback) {
+    _exitApp = callback;
+    _exitAppZone = Zone.current;
+  }
+  // END
+
   /// A callback that is invoked when pointer data is available.
   ///
   /// The framework invokes this callback in the same zone in which the
@@ -1117,6 +1127,8 @@ class Window {
   /// Note that this does not rename any child isolates of the root.
   void setIsolateDebugName(String name) native 'Window_setIsolateDebugName';
 
+  void addNextFrameCallback(VoidCallback callback) native 'Window_addNextFrameCallback';
+
   /// Sends a message to a platform-specific plugin.
   ///
   /// The `name` parameter determines which plugin receives the message. The
@@ -1176,6 +1188,34 @@ class Window {
       registrationZone.runUnaryGuarded(callback, data);
     };
   }
+
+  /**
+   *  BD ADD:
+   *
+   *  [threadType]
+   *     kUiThreadType = 1, get fps in ui thread
+   *     kGpuThreadType = 2, get fps in gpu thread
+   *
+   *  [fpsType]
+   *    kAvgFpsType = 1, get the average fps in the buffer
+   *    kWorstFpsType = 2, get the worst fps in the buffer
+   *
+   *  [doClear]
+   *    if true, will clear fps buffer after get fps
+   *
+   *  [result]
+   *    result is a list,
+   *    index [0] represents the fps value
+   *    index [1] represents average time (or worst time in fpsType is kWorstFpsType)
+   *    index [2] represents number of frames (or 0 in kWorstFpsType mode)
+   *    index [3] represents number of dropped frames (or 0 in kWorstFpsType mode)
+   */
+  List getFps(int threadType, int fpsType, bool doClear) native 'Window_getFps';
+
+  /**
+   *  BD ADD:
+   */
+  int getFpsMaxSamples() native 'Window_getFpsMaxSamples';
 }
 
 /// Additional accessibility features that may be enabled by the platform.

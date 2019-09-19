@@ -17,6 +17,10 @@ namespace flutter {
 // DEPRECATED
 // The frame per second FPS could be different than 60 (e.g., 120).
 static const double kOneFrameMS = 1e3 / 60.0;
+// BD ADD: START
+static const int kAvgFpsType = 1;
+static const int kWorstFpsType = 2;
+// END
 
 class Stopwatch {
  public:
@@ -41,6 +45,12 @@ class Stopwatch {
   void Stop();
 
   void SetLapTime(const fml::TimeDelta& delta);
+
+  // BD ADD: START
+  std::vector<double> GetFps(int type = kAvgFpsType) const;
+  void ClearFps();
+  static int GetMaxSamples();
+  // END
 
  private:
   fml::TimePoint start_;

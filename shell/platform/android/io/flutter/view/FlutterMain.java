@@ -20,13 +20,21 @@ import android.view.WindowManager;
 
 import io.flutter.BuildConfig;
 import io.flutter.embedding.engine.FlutterJNI;
+
+import org.json.JSONObject;
+
 import io.flutter.util.PathUtils;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 /**
  * A class to intialize the Flutter engine.
+ *
+ * 临时把初始化改成了异步，后续需要完整的重构一下。
  */
 public class FlutterMain {
     private static final String TAG = "FlutterMain";
@@ -81,13 +89,79 @@ public class FlutterMain {
     @Nullable
     private static Settings sSettings;
 
+    // BD ADD LiMengyun
+    public interface SoLoader {
+        void loadLibrary(Context context, String libraryName);
+    }
+
+    private static InitTask sInitTask;
+
+    private static class InitTask extends AsyncTask<Void, Void, Void> {
+        private final Context context;
+
+        public InitTask(Context applicationContext) {
+            this.context = applicationContext;
+        }
+
+        @Override
+        protected Void doInBackground(Void... unused) {
+            try {
+                long initStartTimestampMillis = SystemClock.uptimeMillis();
+                initConfig(applicationContext);
+                initResources(applicationContext);
+
+                System.loadLibrary("flutter");
+
+                VsyncWaiter
+                    .getInstance((WindowManager) applicationContext.getSystemService(Context.WINDOW_SERVICE))
+                    .init();
+
+                // We record the initialization time using SystemClock because at the start of the
+                // initialization we have not yet loaded the native library to call into dart_tools_api.h.
+                // To get Timeline timestamp of the start of initialization we simply subtract the delta
+                // from the Timeline timestamp at the current moment (the assumption is that the overhead
+                // of the JNI call is negligible).
+                long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
+                FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
+            } catch (Exception e){
+                throw new RuntimeException("InitTask failed.", e);
+            }
+            return null;
+        }
+    }
+
+
     public static class Settings {
         private String logTag;
+        private String nativeLibraryDir;
+        private SoLoader soLoader;
+        //BD ADD: START
+        private Runnable onInitResources;
+        private boolean disableLeakVM = false;
+        // END
 
         @Nullable
         public String getLogTag() {
             return logTag;
         }
+
+        public String getNativeLibraryDir() {
+            return nativeLibraryDir;
+        }
+
+        public SoLoader getSoLoader() {
+            return soLoader;
+        }
+
+        //BD ADD: START
+        public Runnable getOnInitResourcesCallback() {
+            return onInitResources;
+        }
+
+        public boolean isDisableLeakVM() {
+            return disableLeakVM;
+        }
+        //END
 
         /**
          * Set the tag associated with Flutter app log messages.
@@ -96,6 +170,25 @@ public class FlutterMain {
         public void setLogTag(String tag) {
             logTag = tag;
         }
+
+        public void setNativeLibraryDir(String dir) {
+            nativeLibraryDir = dir;
+        }
+
+        public void setSoLoader(SoLoader loader) {
+            soLoader = loader;
+        }
+
+        //BD ADD: START
+        public void setOnInitResourcesCallback(Runnable callback) {
+            onInitResources = callback;
+        }
+
+        // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
+        public void disableLeakVM() {
+            disableLeakVM = true;
+        }
+        //END
     }
 
     /**
@@ -115,7 +208,9 @@ public class FlutterMain {
      * @param applicationContext The Android application context.
      * @param settings Configuration settings.
      */
-    public static void startInitialization(@NonNull Context applicationContext, @NonNull Settings settings) {
+     // BD MOD: XieRan
+    public static void startInitialization(@NonNull final Context applicationContext, @NonNull Settings settings) {
+     // END
         // Do nothing if we're running this in a Robolectric test.
         if (isRunningInRobolectricTest) {
             return;
@@ -131,23 +226,15 @@ public class FlutterMain {
 
         sSettings = settings;
 
-        long initStartTimestampMillis = SystemClock.uptimeMillis();
-        initConfig(applicationContext);
-        initResources(applicationContext);
+        sInitTask = new InitTask(applicationContext);
+        sInitTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-        System.loadLibrary("flutter");
-
-        VsyncWaiter
-            .getInstance((WindowManager) applicationContext.getSystemService(Context.WINDOW_SERVICE))
-            .init();
-
-        // We record the initialization time using SystemClock because at the start of the
-        // initialization we have not yet loaded the native library to call into dart_tools_api.h.
-        // To get Timeline timestamp of the start of initialization we simply subtract the delta
-        // from the Timeline timestamp at the current moment (the assumption is that the overhead
-        // of the JNI call is negligible).
-        long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
-        FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new ResourceCleaner(applicationContext).start();
+            }
+        }, 5000L);
     }
 
     /**
@@ -164,22 +251,29 @@ public class FlutterMain {
         if (Looper.myLooper() != Looper.getMainLooper()) {
           throw new IllegalStateException("ensureInitializationComplete must be called on the main thread");
         }
-        if (sSettings == null) {
+        if (sSettings == null || sInitTask == null) {
           throw new IllegalStateException("ensureInitializationComplete must be called after startInitialization");
         }
         if (sInitialized) {
             return;
         }
         try {
+            sInitTask.get();
+            // BD MOD LiMengyun
+            // sResourceExtractor.waitForCompletion();
             if (sResourceExtractor != null) {
-                sResourceExtractor.waitForCompletion();
+              sResourceExtractor.waitForCompletion();
             }
 
             List<String> shellArgs = new ArrayList<>();
             shellArgs.add("--icu-symbol-prefix=_binary_icudtl_dat");
-
-            ApplicationInfo applicationInfo = getApplicationInfo(applicationContext);
-            shellArgs.add("--icu-native-lib-path=" + applicationInfo.nativeLibraryDir + File.separator + DEFAULT_LIBRARY);
+            String nativeLibraryDir = sSettings.getNativeLibraryDir();
+            if (nativeLibraryDir == null) {
+                ApplicationInfo applicationInfo = applicationContext.getPackageManager().getApplicationInfo(
+                        applicationContext.getPackageName(), PackageManager.GET_META_DATA);
+                nativeLibraryDir = applicationInfo.nativeLibraryDir;
+            }
+            shellArgs.add("--icu-native-lib-path=" + nativeLibraryDir + File.separator + DEFAULT_LIBRARY);
 
             if (args != null) {
                 Collections.addAll(shellArgs, args);
@@ -205,6 +299,11 @@ public class FlutterMain {
             if (sSettings.getLogTag() != null) {
                 shellArgs.add("--log-tag=" + sSettings.getLogTag());
             }
+            // BD ADD:START
+            if (sSettings.isDisableLeakVM()) {
+                shellArgs.add("--disable-leak-vm");
+            }
+            // END
 
             String appStoragePath = PathUtils.getFilesDir(applicationContext);
             String engineCachesPath = PathUtils.getCacheDirectory(applicationContext);
@@ -223,10 +322,12 @@ public class FlutterMain {
      * thread, then invoking {@code callback} on the {@code callbackHandler}.
      */
     public static void ensureInitializationCompleteAsync(
-        @NonNull Context applicationContext,
-        @Nullable String[] args,
-        @NonNull Handler callbackHandler,
-        @NonNull Runnable callback
+        // BD MOD final XieRan
+        @NonNull final Context applicationContext,
+        @Nullable final String[] args,
+        @NonNull final Handler callbackHandler,
+        @NonNull final Runnable callback
+        // END
     ) {
         // Do nothing if we're running this in a Robolectric test.
         if (isRunningInRobolectricTest) {
@@ -245,6 +346,15 @@ public class FlutterMain {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                //BD ADD: SunKun
+                try {
+                    sInitTask.get();
+                } catch (Exception e) {
+                    Log.e(TAG, "Flutter initialization failed.", e);
+                    throw new RuntimeException(e);
+                }
+                //END
+
                 if (sResourceExtractor != null) {
                     sResourceExtractor.waitForCompletion();
                 }
@@ -302,7 +412,7 @@ public class FlutterMain {
             final String packageName = applicationContext.getPackageName();
             final PackageManager packageManager = applicationContext.getPackageManager();
             final AssetManager assetManager = applicationContext.getResources().getAssets();
-            sResourceExtractor = new ResourceExtractor(dataDirPath, packageName, packageManager, assetManager);
+            sResourceExtractor = new ResourceExtractor(dataDirPath, packageName, packageManager, assetManager, sSettings.getOnInitResourcesCallback());
 
             // In debug/JIT mode these assets will be written to disk and then
             // mapped into memory so they can be provided to the Dart VM.

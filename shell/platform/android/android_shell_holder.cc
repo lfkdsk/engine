@@ -174,4 +174,13 @@ fml::WeakPtr<PlatformViewAndroid> AndroidShellHolder::GetPlatformView() {
   return platform_view_;
 }
 
+// BD ADD:START
+void AndroidShellHolder::ExitApp(fml::closure closure) {
+    if (!IsValid()) {
+        return;
+    }
+    shell_->ExitApp(std::move(closure));
+}
+// END
+
 }  // namespace flutter

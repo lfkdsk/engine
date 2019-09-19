@@ -347,6 +347,10 @@ class Rasterizer final {
   ///
   void SetNextFrameCallback(fml::closure callback);
 
+  // BD ADD: XieRan
+  void AddNextFrameCallback(fml::closure callback);
+  // END
+
   //----------------------------------------------------------------------------
   /// @brief      Returns a pointer to the compositor context used by this
   ///             rasterizer. This pointer will never be `nullptr`.
@@ -408,6 +412,10 @@ class Rasterizer final {
   // thread configuration. This will be inserted to the front of the pipeline.
   std::unique_ptr<flutter::LayerTree> resubmitted_layer_tree_;
   fml::closure next_frame_callback_;
+  // BD ADD: XieRan
+  std::vector<fml::closure> next_frame_callbacks_;
+  // END
+
   bool user_override_resource_cache_bytes_;
   std::optional<size_t> max_cache_bytes_;
   fml::WeakPtrFactory<Rasterizer> weak_factory_;

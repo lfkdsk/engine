@@ -16,7 +16,11 @@ namespace flutter {
 
 IOSExternalTextureGL::IOSExternalTextureGL(int64_t textureId,
                                            NSObject<FlutterTexture>* externalTexture)
-    : Texture(textureId), external_texture_(externalTexture) {
+    // BD MOD: START
+    //  : Texture(textureId), external_texture_(externalTexture) {
+    : Texture(textureId),
+      external_texture_(fml::scoped_nsobject<NSObject<FlutterTexture>>([externalTexture retain])) {
+  // END
   FML_DCHECK(external_texture_);
 }
 
@@ -59,7 +63,11 @@ void IOSExternalTextureGL::Paint(SkCanvas& canvas,
                                  GrContext* context) {
   EnsureTextureCacheExists();
   if (!freeze) {
-    auto pixelBuffer = [external_texture_ copyPixelBuffer];
+    // BD MOD: QiuXinyue
+    // auto pixelBuffer = [external_texture_ copyPixelBuffer];
+    auto pixelBuffer = [external_texture_.get() copyPixelBuffer];
+    // END
+
     if (pixelBuffer) {
       buffer_ref_.Reset(pixelBuffer);
     }
@@ -89,7 +97,9 @@ void IOSExternalTextureGL::OnGrContextCreated() {
 }
 
 void IOSExternalTextureGL::OnGrContextDestroyed() {
-  texture_ref_.Reset(nullptr);
+  // Avoid video_player showing a black background when the app goes into the background and becomes
+  // active.
+  //  texture_ref_.Reset(nullptr);
   cache_ref_.Reset(nullptr);
 }
 

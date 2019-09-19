@@ -41,6 +41,10 @@ class EmbedderTaskRunner final : public fml::TaskRunner {
 
   // |fml::TaskRunner|
   bool RunsTasksOnCurrentThread() override;
+  // BD ADD:
+  // |fml::TaskRunner|
+  void PostTask(fml::closure task, bool is_low_priority) override;
+
 
  private:
   DispatchTable dispatch_table_;

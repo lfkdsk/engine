@@ -96,6 +96,12 @@ class ResourceExtractor {
                 }
             }
 
+            //BD ADD: XieRan
+            if (mOnInitResources != null) {
+                mOnInitResources.run();
+            }
+            //END
+
             return null;
         }
 
@@ -147,6 +153,8 @@ class ResourceExtractor {
     @NonNull
     private final HashSet<String> mResources;
     private ExtractTask mExtractTask;
+    // BD ADD
+    private Runnable mOnInitResources;
 
     ResourceExtractor(@NonNull String dataDirPath,
                       @NonNull String packageName,
@@ -157,6 +165,7 @@ class ResourceExtractor {
         mPackageManager = packageManager;
         mAssetManager = assetManager;
         mResources = new HashSet<>();
+        mOnInitResources = onInitResources;
     }
 
     ResourceExtractor addResource(@NonNull String resource) {

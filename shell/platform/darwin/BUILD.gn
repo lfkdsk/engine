@@ -31,6 +31,8 @@ source_set("flutter_channels") {
     "common/framework/Source/FlutterCodecs.mm",
     "common/framework/Source/FlutterStandardCodec.mm",
     "common/framework/Source/FlutterStandardCodec_Internal.h",
+    # BD ADD:
+    "common/framework/Source/FlutterBinaryMessengerProvider.h"
   ]
 
   deps = [

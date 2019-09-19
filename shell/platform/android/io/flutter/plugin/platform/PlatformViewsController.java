@@ -286,6 +286,9 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
      */
     @UiThread
     public void detach() {
+        // BD MOD: XieRan
+        // 使PlatformView在detach情况下依然可以dispose
+        // platformViewsChannel.setPlatformViewsHandler(null);
         platformViewsChannel.setPlatformViewsHandler(null);
         platformViewsChannel = null;
         context = null;

@@ -27,7 +27,13 @@
 #import "flutter/shell/platform/darwin/ios/ios_surface.h"
 #import "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 
-@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger>
+// BD ADD: QiuXinyue
+#include "FlutterBinaryMessengerProvider.h"
+// END
+
+// BD MOD: QiuXinyue
+// @interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger>
+@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger, FlutterBinaryMessengerProvider>
 // Maintains a dictionary of plugin names that have registered with the engine.  Used by
 // FlutterEngineRegistrar to implement a FlutterPluginRegistrar.
 @property(nonatomic, readonly) NSMutableDictionary* pluginPublications;
@@ -45,7 +51,10 @@
   std::unique_ptr<flutter::Shell> _shell;
   NSString* _labelPrefix;
   std::unique_ptr<fml::WeakPtrFactory<FlutterEngine>> _weakFactory;
-
+  // BD ADD: START
+  std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>
+      _weakBinaryMessengerFactory;
+  // END
   fml::WeakPtr<FlutterViewController> _viewController;
   fml::scoped_nsobject<FlutterObservatoryPublisher> _publisher;
 
@@ -84,7 +93,10 @@
   _labelPrefix = [labelPrefix copy];
 
   _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterEngine>>(self);
-
+  // BD ADD: START
+  _weakBinaryMessengerFactory =
+      std::make_unique<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>(self);
+  // END
   if (projectOrNil == nil)
     _dartProject.reset([[FlutterDartProject alloc] init]);
   else
@@ -177,11 +189,20 @@
 }
 
 - (void)destroyContext {
-  [self resetChannels];
-  self.isolateId = nil;
-  _shell.reset();
-  _threadHost.Reset();
-  _platformViewsController.reset();
+  // BD MOD: QiuXinyue
+  // [self resetChannels];
+  // self.isolateId = nil;
+  // _shell.reset();
+  // _threadHost.Reset();
+  // _platformViewsController.reset();
+  _shell->ExitApp([scoped_engine = fml::scoped_nsobject<FlutterEngine>([self retain])] {
+    [scoped_engine.get() resetChannels];
+    scoped_engine.get().isolateId = nil;
+    scoped_engine.get()->_platformViewsController.reset();
+    scoped_engine.get()->_shell.reset();
+    scoped_engine.get()->_threadHost.Reset();
+  });
+  // END
 }
 
 - (FlutterViewController*)viewController {
@@ -344,6 +365,10 @@
     settings.advisory_script_entrypoint = std::string("main");
     settings.advisory_script_uri = std::string("main.dart");
   }
+
+  settings.should_defer_decode_image_when_platform_view_invalid =
+      [[NSUserDefaults standardUserDefaults]
+          boolForKey:@"flutter_defer_decode_image_when_platform_view_invalid"];
 
   const auto threadLabel = [NSString stringWithFormat:@"%@.%zu", _labelPrefix, shellCount++];
   FML_DLOG(INFO) << "Creating threadHost for " << threadLabel.UTF8String;
@@ -574,6 +599,16 @@
   return self;
 }
 
+/**
+ * BD ADD:
+ *
+ */
+#pragma mark - FlutterImageLoaderRegistry
+
+- (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
+    self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+}
+
 #pragma mark - FlutterPluginRegistry
 
 - (NSObject<FlutterPluginRegistrar>*)registrarForPlugin:(NSString*)pluginKey {
@@ -598,6 +633,14 @@
   }
   [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
 }
+
+// BD ADD: QiuXinyue
+#pragma mark - FlutterPluginRegistry
+
+- (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
+  return _weakBinaryMessengerFactory->GetWeakPtr();
+}
+// END
 
 @end
 
@@ -626,6 +669,14 @@
 
 - (NSObject<FlutterTextureRegistry>*)textures {
   return _flutterEngine;
+}
+
+/**
+ * BD ADD:
+ *
+ */
+- (NSObject<FlutterImageLoaderRegistry>*)imageLoaders {
+    return _flutterEngine;
 }
 
 - (void)publish:(NSObject*)value {

@@ -224,6 +224,16 @@ class Engine final : public RuntimeDelegate {
     ///                              collected and send back to Dart.
     ///
     virtual void SetNeedsReportTimings(bool needs_reporting) = 0;
+
+    // BD ADD: XieRan
+    virtual void AddNextFrameCallback(fml::closure callback) = 0;
+    // END
+
+    // BD ADD: YuanHuihui
+    virtual std::vector<double> GetFps(int thread_type,
+                                       int fps_type,
+                                       bool do_clear) = 0;
+    // END
   };
 
   //----------------------------------------------------------------------------
@@ -699,6 +709,10 @@ class Engine final : public RuntimeDelegate {
 
   // |RuntimeDelegate|
   FontCollection& GetFontCollection() override;
+  void ScheduleBackgroundFrame();
+
+  // BD ADD:
+  void ExitApp();
 
  private:
   Engine::Delegate& delegate_;
@@ -728,6 +742,9 @@ class Engine final : public RuntimeDelegate {
   void HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) override;
 
   // |RuntimeDelegate|
+  void AddNextFrameCallback(fml::closure callback) override;
+
+  // |RuntimeDelegate|
   void UpdateIsolateDescription(const std::string isolate_name,
                                 int64_t isolate_port) override;
 
@@ -752,6 +769,12 @@ class Engine final : public RuntimeDelegate {
   RunStatus PrepareAndLaunchIsolate(RunConfiguration configuration);
 
   friend class testing::ShellTest;
+
+  // BD ADD: YuanHuihui
+  std::vector<double> GetFps(int thread_type,
+                             int fps_type,
+                             bool do_clear) override;
+  // END
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

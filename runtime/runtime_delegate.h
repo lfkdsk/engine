@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "flutter/flow/layers/layer_tree.h"
+#include "flutter/fml/closure.h"
 #include "flutter/lib/ui/semantics/custom_accessibility_action.h"
 #include "flutter/lib/ui/semantics/semantics_node.h"
 #include "flutter/lib/ui/text/font_collection.h"
@@ -30,12 +31,18 @@ class RuntimeDelegate {
 
   virtual void HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) = 0;
 
+  virtual void AddNextFrameCallback(fml::closure callback) = 0;
+
   virtual FontCollection& GetFontCollection() = 0;
 
   virtual void UpdateIsolateDescription(const std::string isolate_name,
                                         int64_t isolate_port) = 0;
 
   virtual void SetNeedsReportTimings(bool value) = 0;
+
+  // BD ADD: YuanHuihui
+  virtual std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) = 0;
+  // END
 
  protected:
   virtual ~RuntimeDelegate();

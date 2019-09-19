@@ -13,6 +13,8 @@
 #include "third_party/skia/include/gpu/GrBackendSurface.h"
 #include "third_party/skia/include/gpu/GrContextOptions.h"
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 // These are common defines present on all OpenGL headers. However, we don't
 // want to perform GL header reasolution on each platform we support. So just
 // define these upfront. It is unlikely we will need more. But, if we do, we can
@@ -292,10 +294,14 @@ bool GPUSurfaceGL::PresentSurface(SkCanvas* canvas) {
     onscreen_surface_->getCanvas()->flush();
   }
 
+  // BD ADD:
+  Boost::Current()->WaitSwapBufferIfNeed();
   if (!delegate_->GLContextPresent()) {
     return false;
   }
 
+  // BD ADD:
+  Boost::Current()->UpdateVsync(false);
   if (delegate_->GLContextFBOResetAfterPresent()) {
     auto current_size =
         SkISize::Make(onscreen_surface_->width(), onscreen_surface_->height());
