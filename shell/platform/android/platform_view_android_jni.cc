@@ -317,7 +317,6 @@ void CallJavaImageLoader(jobject android_image_loader, const std::string url, co
   auto key = url + std::to_string(reinterpret_cast<jlong>(loadContext.get()));
   g_image_load_contexts[key] = loadContext;
   auto nativeCallback = new fml::jni::ScopedJavaLocalRef<jobject>(env, env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor));
-  FML_LOG(ERROR)<<"call java image loader"<<std::endl;
   env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(),
                       reinterpret_cast<jint>(width), reinterpret_cast<jint>(height), scale, nativeCallback->obj(), fml::jni::StringToJavaString(env, key).obj());
 }
