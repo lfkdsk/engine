@@ -229,6 +229,10 @@ class Shell final : public PlatformView::Delegate,
   fml::WeakPtr<Engine> GetEngine();
 #endif  // OS_FUCHSIA
 
+  // BD ADD: XIERAN
+  // 用来在Engine.cc内部的UI线程获取engine
+  fml::WeakPtr<Engine> GetWeakEngine();
+
   //----------------------------------------------------------------------------
   /// @brief      Platform views may only be accessed on the platform task
   ///             runner.
@@ -363,7 +367,7 @@ class Shell final : public PlatformView::Delegate,
   // How many frames have been timed since last report.
   size_t UnreportedFramesCount() const;
 
-  Shell(DartVMRef vm, TaskRunners task_runners, Settings settings);
+  Shell(TaskRunners task_runners, Settings settings);
 
   static std::unique_ptr<Shell> CreateShellOnPlatformThread(
       TaskRunners task_runners,
