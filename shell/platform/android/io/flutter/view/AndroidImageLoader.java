@@ -16,7 +16,7 @@ public class AndroidImageLoader {
      * @param url      the image url to load
      * @param callback the callback to notify load result
      */
-    void load(String url, NativeLoadCallback callback, String key);
+    void load(String url, int width, int height, float scale, NativeLoadCallback callback, String key);
 
     /**
      * release android image resources
@@ -34,12 +34,12 @@ public class AndroidImageLoader {
    * @param url      the image url to load
    * @param callback the callback to notify load result
    */
-  void load(String url, NativeLoadCallback callback, String key) {
+  void load(String url, int width, int height, float scale, NativeLoadCallback callback, String key) {
     if (realImageLoader == null) {
       callback.onLoadFail(key);
       return;
     }
-    realImageLoader.load(url, callback, key);
+    realImageLoader.load(url, width, height, scale, callback, key);
   }
 
   /**
