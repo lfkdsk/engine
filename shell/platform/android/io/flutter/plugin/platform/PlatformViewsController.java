@@ -103,11 +103,21 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
                     physicalHeight,
                     request.viewId,
                     createParams,
-                    (view, hasFocus) -> {
-                        if (hasFocus) {
-                            platformViewsChannel.invokeViewFocused(request.viewId);
-                        }
-                    }
+//                     BD MOD: YuShijia
+//                     (view, hasFocus) -> {
+//                         if (hasFocus) {
+//                             platformViewsChannel.invokeViewFocused(request.viewId);
+//                         }
+//                     }
+                    new OnFocusChangeListener(){
+                                        			@Override
+                                        			public void onFocusChange(View v, boolean hasFocus) {
+                                        				// TODO Auto-generated method stub
+                                        				if(hasFocus){
+                                        					platformViewsChannel.invokeViewFocused(request.viewId);
+                                        				}
+                                        			}
+                                        		}
             );
 
             if (vdController == null) {

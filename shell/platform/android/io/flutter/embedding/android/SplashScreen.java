@@ -70,7 +70,7 @@ public interface SplashScreen {
    */
   // We suppress NewApi because the CI linter thinks that "default" methods are unsupported.
   @SuppressLint("NewApi")
-  default boolean doesSplashViewRememberItsTransition() {
+  boolean doesSplashViewRememberItsTransition() {
     return false;
   }
 
@@ -81,7 +81,7 @@ public interface SplashScreen {
   // We suppress NewApi because the CI linter thinks that "default" methods are unsupported.
   @SuppressLint("NewApi")
   @Nullable
-  default Bundle saveSplashScreenState() {
+  Bundle saveSplashScreenState() {
     return null;
   }
 }
