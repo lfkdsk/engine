@@ -116,7 +116,6 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
 //                                io_manager = io_manager->GetWeakPtr()
       fml::MakeCopyable([shell = shell.get(),                               //
                          vsync_waiter = std::move(vsync_waiter),            //
-                         snapshot_delegate = std::move(snapshot_delegate),  //
                          io_manager = io_manager->GetWeakPtr()              //
   ]() mutable {
         TRACE_EVENT0("flutter", "ShellSetupUISubsystem");
@@ -153,7 +152,6 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
                                      task_runners,                           //
                                      shell->GetSettings(),                   //
                                      std::move(animator),                    //
-                                     std::move(snapshot_delegate),           //
                                      std::move(io_manager)                   //
             );
         shell->engine_ = std::move(engine);
@@ -264,8 +262,8 @@ Shell::Shell(TaskRunners task_runners, Settings settings)
       settings_(std::move(settings)),
       // BD MOD: XieRan
 //      vm_(std::move(vm)),
-//      weak_factory_(this) {
-      engine_created_(false) {
+      engine_created_(false),
+      weak_factory_(this) {
      // END
   FML_DCHECK(task_runners_.IsValid());
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
@@ -383,21 +381,23 @@ void Shell::RunEngine(RunConfiguration run_configuration,
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
-  if (!weak_engine_) {
-    result(Engine::RunStatus::Failure);
-  }
+  // BD MOD: XIERAN
+  // if (!weak_engine_) {
+  //   result(Engine::RunStatus::Failure);
+  // }
   fml::TaskRunner::RunNowOrPostTask(
       task_runners_.GetUITaskRunner(),
       fml::MakeCopyable(
           [run_configuration = std::move(run_configuration),
-           weak_engine = weak_engine_, result]() mutable {
-            if (!weak_engine) {
+           this, result]() mutable {
+            auto engine = GetWeakEngine();
+            if (!engine) {
               FML_LOG(ERROR)
                   << "Could not launch engine with configuration - no engine.";
               result(Engine::RunStatus::Failure);
               return;
             }
-            auto run_result = weak_engine->Run(std::move(run_configuration));
+            auto run_result = engine->Run(std::move(run_configuration));
             if (run_result == flutter::Engine::RunStatus::Failure) {
               FML_LOG(ERROR) << "Could not launch engine with configuration.";
             }
@@ -460,7 +460,8 @@ bool Shell::Setup(std::unique_ptr<PlatformView> platform_view,
 
   // The weak ptr must be generated in the platform thread which owns the unique
   // ptr.
-  weak_engine_ = engine_->GetWeakPtr();
+  // BD MOD: XieRan
+  // weak_engine_ = engine_->GetWeakPtr();
   weak_rasterizer_ = rasterizer_->GetWeakPtr();
   weak_platform_view_ = platform_view_->GetWeakPtr();
 
@@ -491,7 +492,14 @@ fml::WeakPtr<Rasterizer> Shell::GetRasterizer() {
 // TODO(dnfield): Remove this when either Topaz is up to date or flutter_runner
 // is built out of this repo.
 #ifdef OS_FUCHSIA
-fml::WeakPtr<Engine> Shell::GetEngine() {
+  fml::WeakPtr<Engine> Shell::GetEngine() {
+  FML_DCHECK(is_setup_);
+  return weak_engine_;
+}
+#endif  // OS_FUCHSIA
+
+// BD ADD: XIERAN
+fml::WeakPtr<Engine> Shell::GetWeakEngine() {
   if (!engine_created_) {
     ui_latch_.Wait();
   }
@@ -506,7 +514,6 @@ fml::WeakPtr<Engine> Shell::GetEngine() {
   // END
 
 }
-#endif  // OS_FUCHSIA
 
 fml::WeakPtr<PlatformView> Shell::GetPlatformView() {
   FML_DCHECK(is_setup_);
@@ -526,7 +533,7 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
 
   // BD ADD: XieRan
   auto ui_task = [this] {
-    auto engine = GetEngine();
+    auto engine = GetWeakEngine();
     if (engine) {
       engine->OnOutputSurfaceCreated();
     }
@@ -553,7 +560,8 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
 //                });
 
   auto gpu_task =
-      fml::MakeCopyable([rasterizer = rasterizer_->GetWeakPtr(),            //
+      fml::MakeCopyable([& waiting_for_first_frame = waiting_for_first_frame_,
+                         rasterizer = rasterizer_->GetWeakPtr(),            //
                          surface = std::move(surface),                      //
                          ui_task_runner = task_runners_.GetUITaskRunner(),  //
                          ui_task, &latch]() mutable {
@@ -674,7 +682,7 @@ void Shell::OnPlatformViewDestroyed() {
 
   auto ui_task = [this, gpu_task_runner = task_runners_.GetGPUTaskRunner(),
                   gpu_task, should_post_gpu_task, &latch]() {
-    auto engine = GetEngine();
+    auto engine = GetWeakEngine();
     if (engine) {
       engine->OnOutputSurfaceDestroyed();
     }
@@ -726,7 +734,7 @@ void Shell::OnPlatformViewSetViewportMetrics(const ViewportMetrics& metrics) {
 //      });
 
     task_runners_.GetUITaskRunner()->PostTask([this, metrics]() {
-        auto engine = GetEngine();
+        auto engine = GetWeakEngine();
         if (engine) {
             engine->SetViewportMetrics(metrics);
         }
@@ -743,7 +751,7 @@ void Shell::OnPlatformViewDispatchPlatformMessage(
 
   task_runners_.GetUITaskRunner()->PostTask(
       [this, message = std::move(message)] {
-        auto engine = GetEngine();
+        auto engine = GetWeakEngine();
         if (engine) {
           engine->DispatchPlatformMessage(std::move(message));
         }
@@ -759,7 +767,7 @@ void Shell::OnPlatformViewDispatchPointerDataPacket(
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
   task_runners_.GetUITaskRunner()->PostTask(fml::MakeCopyable(
       [this, packet = std::move(packet), flow_id = next_pointer_flow_id_] {
-        auto engine = GetEngine();
+        auto engine = GetWeakEngine();
         if (engine) {
           engine->DispatchPointerDataPacket(*packet, flow_id);
         }
@@ -776,7 +784,7 @@ void Shell::OnPlatformViewDispatchSemanticsAction(int32_t id,
 
   task_runners_.GetUITaskRunner()->PostTask(
       [this, id, action, args = std::move(args)] {
-        auto engine = GetEngine();
+        auto engine = GetWeakEngine();
         if (engine) {
           engine->DispatchSemanticsAction(id, action, std::move(args));
         }
@@ -789,7 +797,7 @@ void Shell::OnPlatformViewSetSemanticsEnabled(bool enabled) {
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
   task_runners_.GetUITaskRunner()->PostTask([this, enabled] {
-    auto engine = GetEngine();
+    auto engine = GetWeakEngine();
     if (engine) {
       engine->SetSemanticsEnabled(enabled);
     }
@@ -802,7 +810,7 @@ void Shell::OnPlatformViewSetAccessibilityFeatures(int32_t flags) {
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
   task_runners_.GetUITaskRunner()->PostTask([this, flags] {
-    auto engine = GetEngine();
+    auto engine = GetWeakEngine();
     if (engine) {
       engine->SetAccessibilityFeatures(flags);
     }
@@ -865,7 +873,7 @@ void Shell::OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) {
 
   // Schedule a new frame without having to rebuild the layer tree.
   task_runners_.GetUITaskRunner()->PostTask([this]() {
-    auto engine = GetEngine();
+    auto engine = GetWeakEngine();
     if (engine) {
       engine->ScheduleFrame(false);
     }
@@ -1054,7 +1062,8 @@ void Shell::ReportTimings() {
 
   auto timings = std::move(unreported_timings_);
   unreported_timings_ = {};
-  task_runners_.GetUITaskRunner()->PostTask([timings, engine = weak_engine_] {
+  task_runners_.GetUITaskRunner()->PostTask([this, timings] {
+    auto engine = GetWeakEngine();
     if (engine) {
       engine->ReportTimings(std::move(timings));
     }
@@ -1457,7 +1466,7 @@ void Shell::ExitApp(fml::closure closure) {
           [this, ui_task_runner = task_runners_.GetUITaskRunner(),
            platform_task_runner = task_runners_.GetPlatformTaskRunner(),
            closure = std::move(closure)]() {
-            auto engine = GetEngine();
+            auto engine = GetWeakEngine();
             if (engine) {
               engine->ExitApp();
             }
