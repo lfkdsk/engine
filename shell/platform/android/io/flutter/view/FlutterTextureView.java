@@ -4,35 +4,35 @@
 
 package io.flutter.view;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Handler;
 import android.os.LocaleList;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
+import android.support.annotation.UiThread;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import android.view.TextureView;
+import android.view.View;
 import android.view.WindowInsets;
-import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
-import android.view.inputmethod.InputMethodManager;
 
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
@@ -59,7 +59,6 @@ import io.flutter.embedding.engine.systemchannels.SettingsChannel;
 import io.flutter.embedding.engine.systemchannels.SystemChannel;
 import io.flutter.plugin.common.ActivityLifecycleListener;
 import io.flutter.plugin.common.BinaryMessenger;
-import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.editing.TextInputPlugin;
 import io.flutter.plugin.platform.PlatformPlugin;
 import io.flutter.plugin.platform.PlatformViewsController;
@@ -68,7 +67,7 @@ import io.flutter.plugin.platform.PlatformViewsController;
  * BD ADD:
  * An Android view containing a Flutter app.
  */
-public class FlutterTextureView extends CachedTextureView implements BinaryMessenger, TextureRegistry, IFlutterView {
+public class FlutterTextureView extends CachedTextureView implements BinaryMessenger, TextureRegistry, IFlutterView, ImageLoaderRegistry {
     /**
      * Interface for those objects that maintain and expose a reference to a
      * {@code FlutterView} (such as a full-screen Flutter activity).
@@ -103,7 +102,12 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         int physicalViewInsetRight = 0;
         int physicalViewInsetBottom = 0;
         int physicalViewInsetLeft = 0;
+        int systemGestureInsetTop = 0;
+        int systemGestureInsetRight = 0;
+        int systemGestureInsetBottom = 0;
+        int systemGestureInsetLeft = 0;
 
+        // BD ADD: XieRan
         void update(ViewportMetrics metrics) {
             devicePixelRatio = metrics.devicePixelRatio;
             physicalWidth = metrics.physicalWidth;
@@ -116,6 +120,10 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
             physicalViewInsetRight = metrics.physicalViewInsetRight;
             physicalViewInsetBottom = metrics.physicalViewInsetBottom;
             physicalViewInsetLeft = metrics.physicalViewInsetLeft;
+            systemGestureInsetTop = metrics.systemGestureInsetTop;
+            systemGestureInsetRight = metrics.systemGestureInsetRight;
+            systemGestureInsetBottom = metrics.systemGestureInsetBottom;
+            systemGestureInsetLeft = metrics.systemGestureInsetLeft;
         }
 
         /**
@@ -134,8 +142,13 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
             metrics.physicalViewInsetRight = physicalViewInsetRight;
             metrics.physicalViewInsetBottom = physicalViewInsetBottom;
             metrics.physicalViewInsetLeft = physicalViewInsetLeft;
+            metrics.systemGestureInsetTop = systemGestureInsetTop;
+            metrics.systemGestureInsetRight = systemGestureInsetRight;
+            metrics.systemGestureInsetBottom = systemGestureInsetBottom;
+            metrics.systemGestureInsetLeft = systemGestureInsetLeft;
             return metrics;
         }
+        // END
 
     }
 
@@ -159,6 +172,11 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     private final AtomicLong nextTextureId = new AtomicLong(0L);
     private FlutterNativeView mNativeView;
     private boolean mIsSoftwareRenderingEnabled = false; // using the software renderer or not
+    private boolean didRenderFirstFrame = false;
+
+    // BD ADD: HuWeijie
+    private AndroidImageLoader mAndroidImageLoader;
+    // END
 
     private final AccessibilityBridge.OnAccessibilityChangeListener onAccessibilityChangeListener = new AccessibilityBridge.OnAccessibilityChangeListener() {
         @Override
@@ -255,11 +273,20 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         settingsChannel = new SettingsChannel(dartExecutor);
 
         // Create and setup plugins
-        // PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
-        // addActivityLifecycleListener(platformPlugin);
-        mTextInputPlugin = new TextInputPlugin(this, dartExecutor);
+        // BD MOD: XieRan
+//         PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
+//         addActivityLifecycleListener(new ActivityLifecycleListener() {
+//             @Override
+//             public void onPostResume() {
+//                 platformPlugin.updateSystemUiOverlays();
+//             }
+//         });
+//         mImm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        PlatformViewsController platformViewsController = mNativeView.getPluginRegistry().getPlatformViewsController();
+        mTextInputPlugin = new TextInputPlugin(this, dartExecutor, platformViewsController);
         androidKeyProcessor = new AndroidKeyProcessor(keyEventChannel, mTextInputPlugin);
         androidTouchProcessor = new AndroidTouchProcessor(flutterRenderer);
+        mNativeView.getPluginRegistry().getPlatformViewsController().attachTextInputPlugin(mTextInputPlugin);
 
         // Send initial platform information to Dart
         sendLocalesToDart(getResources().getConfiguration());
@@ -332,6 +359,11 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         return null;
     }
 
+    @NonNull
+    public DartExecutor getDartExecutor() {
+        return dartExecutor;
+    }
+
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (!isAttached()) {
@@ -395,6 +427,14 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
 
     public void onMemoryPressure() {
         systemChannel.sendMemoryPressureWarning();
+    }
+
+    /**
+     * Returns true if the Flutter experience associated with this {@code FlutterView} has
+     * rendered its first frame, or false otherwise.
+     */
+    public boolean hasRenderedFirstFrame() {
+        return didRenderFirstFrame;
     }
 
     /**
@@ -494,6 +534,11 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     @Override
     public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
         return mTextInputPlugin.createInputConnection(this, outAttrs);
+    }
+
+    @Override
+    public boolean checkInputConnectionProxy(View view) {
+        return mNativeView.getPluginRegistry().getPlatformViewsController().checkInputConnectionProxy(view);
     }
 
     @Override
@@ -612,9 +657,13 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
 
     // This callback is not present in API < 20, which means lower API devices will see
     // the wider than expected padding when the status and navigation bars are hidden.
+    // The annotations to suppress "InlinedApi" and "NewApi" lints prevent lint warnings
+    // caused by usage of Android Q APIs. These calls are safe because they are
+    // guarded.
     @Override
     @TargetApi(20)
     @RequiresApi(20)
+    @SuppressLint({"InlinedApi", "NewApi"})
     public final WindowInsets onApplyWindowInsets(WindowInsets insets) {
         boolean statusBarHidden =
             (SYSTEM_UI_FLAG_FULLSCREEN & getWindowSystemUiVisibility()) != 0;
@@ -644,6 +693,14 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         mMetrics.physicalViewInsetBottom =
             navigationBarHidden ? calculateBottomKeyboardInset(insets) : insets.getSystemWindowInsetBottom();
         mMetrics.physicalViewInsetLeft = 0;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Insets systemGestureInsets = insets.getSystemGestureInsets();
+            mMetrics.systemGestureInsetTop = systemGestureInsets.top;
+            mMetrics.systemGestureInsetRight = systemGestureInsets.right;
+            mMetrics.systemGestureInsetBottom = systemGestureInsets.bottom;
+            mMetrics.systemGestureInsetLeft = systemGestureInsets.left;
+        }
         updateViewportMetrics();
         return super.onApplyWindowInsets(insets);
     }
@@ -745,15 +802,23 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     private void updateViewportMetrics() {
         if (!isAttached())
             return;
-        mNativeView.getFlutterJNI().setViewportMetrics(mMetrics.devicePixelRatio, mMetrics.physicalWidth,
-                mMetrics.physicalHeight, mMetrics.physicalPaddingTop, mMetrics.physicalPaddingRight,
-                mMetrics.physicalPaddingBottom, mMetrics.physicalPaddingLeft, mMetrics.physicalViewInsetTop,
-                mMetrics.physicalViewInsetRight, mMetrics.physicalViewInsetBottom, mMetrics.physicalViewInsetLeft);
-
-        WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-        float fps = wm.getDefaultDisplay().getRefreshRate();
-        VsyncWaiter.refreshPeriodNanos = (long) (1000000000.0 / fps);
-        VsyncWaiter.refreshRateFPS = fps;
+        mNativeView.getFlutterJNI().setViewportMetrics(
+                mMetrics.devicePixelRatio,
+                mMetrics.physicalWidth,
+                mMetrics.physicalHeight,
+                mMetrics.physicalPaddingTop,
+                mMetrics.physicalPaddingRight,
+                mMetrics.physicalPaddingBottom,
+                mMetrics.physicalPaddingLeft,
+                mMetrics.physicalViewInsetTop,
+                mMetrics.physicalViewInsetRight,
+                mMetrics.physicalViewInsetBottom,
+                mMetrics.physicalViewInsetLeft,
+                mMetrics.systemGestureInsetTop,
+                mMetrics.systemGestureInsetRight,
+                mMetrics.systemGestureInsetBottom,
+                mMetrics.systemGestureInsetLeft
+        );
     }
 
     // Called by native to update the semantics/accessibility tree.
@@ -781,9 +846,13 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         }
     }
 
-    // Called by native to notify first Flutter frame rendered.
+    // Called by FlutterNativeView to notify first Flutter frame rendered.
+    // BD ADD: XieRan
     @Override
+    // END
     public void onFirstFrame() {
+        didRenderFirstFrame = true;
+
         // Allow listeners to remove themselves when they are called.
         List<FirstFrameListener> listeners = new ArrayList<>(mFirstFrameListeners);
         for (FirstFrameListener listener : listeners) {
@@ -838,11 +907,13 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     }
 
     @Override
+    @UiThread
     public void send(String channel, ByteBuffer message) {
         send(channel, message, null);
     }
 
     @Override
+    @UiThread
     public void send(String channel, ByteBuffer message, BinaryReply callback) {
         if (!isAttached()) {
             Log.d(TAG, "FlutterView.send called on a detached view, channel=" + channel);
@@ -852,6 +923,7 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     }
 
     @Override
+    @UiThread
     public void setMessageHandler(String channel, BinaryMessageHandler handler) {
         mNativeView.setMessageHandler(channel, handler);
     }
@@ -862,6 +934,45 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
      */
     public interface FirstFrameListener {
         void onFirstFrame();
+    }
+
+    /**
+     * BD ADD: register android image loader
+     */
+    @Override
+    public void registerImageLoader(AndroidImageLoader.RealImageLoader realImageLoader) {
+        ensureAndroidImageLoaderAttached();
+        mAndroidImageLoader.registerImageLoader(realImageLoader);
+    }
+    /**
+     * BD ADD: unregister android image loader
+     */
+    @Override
+    public void unRegisterImageLoader() {
+        mAndroidImageLoader.unRegisterImageLoader();
+    }
+    /**
+     * BD ADD: initialize android image loader
+     */
+    private void ensureAndroidImageLoaderAttached() {
+        if (mAndroidImageLoader != null) {
+            return;
+        }
+
+        mAndroidImageLoader = new AndroidImageLoader();
+        registerAndroidImageLoader(mAndroidImageLoader);
+    }
+    /**
+     * BD ADD: register android image loader
+     */
+    private void registerAndroidImageLoader(AndroidImageLoader androidImageLoader) {
+        mNativeView.getFlutterJNI().registerAndroidImageLoader(androidImageLoader);
+    }
+    /**
+     * BD ADD: unregister android image loader
+     */
+    private void unRegisterAndroidImageLoader() {
+        mNativeView.getFlutterJNI().unRegisterAndroidImageLoader();
     }
 
     @Override

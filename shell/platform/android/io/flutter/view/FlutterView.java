@@ -280,7 +280,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
 //                 platformPlugin.updateSystemUiOverlays();
 //             }
 //         });
-        mImm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+//         mImm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         PlatformViewsController platformViewsController = mNativeView.getPluginRegistry().getPlatformViewsController();
         mTextInputPlugin = new TextInputPlugin(this, dartExecutor, platformViewsController);
         androidKeyProcessor = new AndroidKeyProcessor(keyEventChannel, mTextInputPlugin);
