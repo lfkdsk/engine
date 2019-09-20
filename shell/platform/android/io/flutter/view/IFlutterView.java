@@ -2,6 +2,7 @@ package io.flutter.view;
 
 import java.nio.ByteBuffer;
 
+import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.plugin.common.BinaryMessenger;
 
 /**
@@ -13,4 +14,5 @@ public interface IFlutterView extends TextureRegistry, BinaryMessenger {
     void updateCustomAccessibilityActions(ByteBuffer buffer, String[] strings);
     void onFirstFrame();
     void resetAccessibilityTree();
+    DartExecutor getDartExecutor();
 }
