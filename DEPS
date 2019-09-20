@@ -143,7 +143,7 @@ allowed_hosts = [
 deps = {
    # BD MOD: YuShijia
    # 'src': 'https://github.com/flutter/buildroot.git' + '@' + '5a33d6ab06fa2cc94cdd864ff238d2c58d6b7e4e',
-  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + 'db8481bf51bdf9e4583356585b478e5bab25a857',
+  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + '74a7f3062044d13cc24539e6404a52ee9d8756f2',
 
    # Fuchsia compatibility
    #
