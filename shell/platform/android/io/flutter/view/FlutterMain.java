@@ -110,7 +110,11 @@ public class FlutterMain {
                 initConfig(applicationContext);
                 initResources(applicationContext);
 
-                System.loadLibrary("flutter");
+                if (sSettings.getSoLoader() != null) {
+                    sSettings.getSoLoader().loadLibrary(context, "flutter");
+                } else {
+                    System.loadLibrary("flutter");
+                }
 
                 VsyncWaiter
                     .getInstance((WindowManager) applicationContext.getSystemService(Context.WINDOW_SERVICE))
@@ -135,8 +139,6 @@ public class FlutterMain {
         private String logTag;
         private String nativeLibraryDir;
         private SoLoader soLoader;
-        //BD ADD: START
-        private Runnable onInitResources;
         private boolean disableLeakVM = false;
         // END
 
@@ -151,11 +153,6 @@ public class FlutterMain {
 
         public SoLoader getSoLoader() {
             return soLoader;
-        }
-
-        //BD ADD: START
-        public Runnable getOnInitResourcesCallback() {
-            return onInitResources;
         }
 
         public boolean isDisableLeakVM() {
@@ -177,11 +174,6 @@ public class FlutterMain {
 
         public void setSoLoader(SoLoader loader) {
             soLoader = loader;
-        }
-
-        //BD ADD: START
-        public void setOnInitResourcesCallback(Runnable callback) {
-            onInitResources = callback;
         }
 
         // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
@@ -412,7 +404,7 @@ public class FlutterMain {
             final String packageName = applicationContext.getPackageName();
             final PackageManager packageManager = applicationContext.getPackageManager();
             final AssetManager assetManager = applicationContext.getResources().getAssets();
-            sResourceExtractor = new ResourceExtractor(dataDirPath, packageName, packageManager, assetManager, sSettings.getOnInitResourcesCallback());
+            sResourceExtractor = new ResourceExtractor(dataDirPath, packageName, packageManager, assetManager);
 
             // In debug/JIT mode these assets will be written to disk and then
             // mapped into memory so they can be provided to the Dart VM.
