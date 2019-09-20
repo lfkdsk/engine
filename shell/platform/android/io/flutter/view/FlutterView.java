@@ -205,8 +205,10 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         }
     };
 
+    // BD ADD: XIERAN
     private PlatformPlugin mPlatformPlugin;
     private WeakReference<Activity> mActivityRef;
+    private ActivityLifecycleListener mActivityLifecycleListener;
 
     public FlutterView(Context context) {
         this(context, null);
@@ -273,13 +275,12 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
 
         // Create and setup plugins
         // BD MOD: XieRan
-//         PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
-//         addActivityLifecycleListener(new ActivityLifecycleListener() {
-//             @Override
-//             public void onPostResume() {
-//                 platformPlugin.updateSystemUiOverlays();
-//             }
-//         });
+        mActivityLifecycleListener = new ActivityLifecycleListener() {
+            @Override
+            public void onPostResume() {
+                mPlatformPlugin.updateSystemUiOverlays();
+            }
+        };
 //         mImm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         PlatformViewsController platformViewsController = mNativeView.getPluginRegistry().getPlatformViewsController();
         mTextInputPlugin = new TextInputPlugin(this, dartExecutor, platformViewsController);
@@ -301,7 +302,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         detachActivity();
         mNativeView.attachViewAndActivity(this, activity);
         mPlatformPlugin = new PlatformPlugin(activity, platformChannel);
-        addActivityLifecycleListener(mPlatformPlugin);
+        addActivityLifecycleListener(mActivityLifecycleListener);
         mActivityRef = new WeakReference<>(activity);
     }
 
@@ -311,7 +312,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
     public void detachActivity() {
         // mPlatformPlugin hold the strong reference of Activity, need to release.
         if (mPlatformPlugin != null) {
-            removeActivityLifecycleListener(mPlatformPlugin);
+            removeActivityLifecycleListener(mActivityLifecycleListener);
             mPlatformPlugin = null;
             platformChannel.setPlatformMessageHandler(null);
             if (mNativeView != null && mNativeView.isAttached()) {
