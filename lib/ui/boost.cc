@@ -5,7 +5,7 @@
 
 #include "boost.h"
 #include <thread>
-#include "SkCanvas.h"
+#include "third_party/skia/include/core/SkCanvas.h"
 #include "flutter/lib/ui/text/font_collection.h"
 #include "flutter/lib/ui/window/window.h"
 #include "minikin/FontLanguageListCache.h"

@@ -184,17 +184,17 @@ class SingleViewPresentation extends Presentation {
 
     public PresentationState detachState() {
         // BD MOD: XieRan
-        if (mContainer != null) {
-            mContainer.removeAllViews();
+        if (container != null) {
+            container.removeAllViews();
         }
         // END
         // BD MOD: XieRan
-        if (mRootView != null) {
-            mRootView.removeAllViews();
+        if (rootView != null) {
+            rootView.removeAllViews();
         }
         // END
 
-        return mState;
+        return state;
     }
 
     public PlatformView getView() {

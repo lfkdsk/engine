@@ -14,6 +14,7 @@
 
 #include "flutter/assets/directory_asset_bundle.h"
 #include "flutter/common/settings.h"
+#include "flutter/fml/arraysize.h"
 #include "flutter/fml/file.h"
 #include "flutter/fml/platform/android/jni_util.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
@@ -1011,22 +1012,6 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
       return false;
   }
   // END
-
-
-  static const JNINativeMethod callback_info_methods[] = {
-      {
-          .name = "nativeLookupCallbackInformation",
-          .signature = "(J)Lio/flutter/view/FlutterCallbackInformation;",
-          .fnPtr = reinterpret_cast<void*>(&LookupCallbackInformation),
-      },
-  };
-
-  if (env->RegisterNatives(g_flutter_callback_info_class->obj(),
-                           callback_info_methods,
-                           arraysize(callback_info_methods)) != 0) {
-    FML_LOG(ERROR) << "Failed to RegisterNatives with FlutterCallbackInfo";
-    return false;
-  }
 
   g_is_released_method =
       env->GetMethodID(g_surface_texture_class->obj(), "isReleased", "()Z");

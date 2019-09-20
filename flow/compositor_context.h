@@ -104,7 +104,7 @@ class CompositorContext {
 
   // BD MOD: YuanHuihui
   // const Stopwatch& raster_time() const { return raster_time_; }
-  Stopwatch& raster_time() { return raster_time; }
+  Stopwatch& raster_time() { return raster_time_; }
   // END
 
   Stopwatch& ui_time() { return ui_time_; }

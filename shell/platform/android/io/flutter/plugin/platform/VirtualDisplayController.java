@@ -92,7 +92,7 @@ class VirtualDisplayController {
                 focusChangeListener);
         // BD MOD: XieRan
         // presentation.show();
-        if (mContext instanceof Activity && !((Activity) mContext).isFinishing()) {
+        if (context instanceof Activity && !((Activity) context).isFinishing()) {
           presentation.show();
         }
         // END
@@ -154,7 +154,7 @@ class VirtualDisplayController {
                 isFocused);
         // BD MOD: XieRan
         // presentation.show();
-        if (mContext instanceof Activity && !((Activity) mContext).isFinishing()) {
+        if (context instanceof Activity && !((Activity) context).isFinishing()) {
           presentation.show();
         }
         // END
