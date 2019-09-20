@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -107,8 +108,8 @@ public class FlutterMain {
         protected Void doInBackground(Void... unused) {
             try {
                 long initStartTimestampMillis = SystemClock.uptimeMillis();
-                initConfig(applicationContext);
-                initResources(applicationContext);
+                initConfig(context);
+                initResources(context);
 
                 if (sSettings.getSoLoader() != null) {
                     sSettings.getSoLoader().loadLibrary(context, "flutter");
@@ -117,7 +118,7 @@ public class FlutterMain {
                 }
 
                 VsyncWaiter
-                    .getInstance((WindowManager) applicationContext.getSystemService(Context.WINDOW_SERVICE))
+                    .getInstance((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
                     .init();
 
                 // We record the initialization time using SystemClock because at the start of the
@@ -284,7 +285,7 @@ public class FlutterMain {
                 // Most devices can load the AOT shared library based on the library name
                 // with no directory path.  Provide a fully qualified path to the library
                 // as a workaround for devices where that fails.
-                shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + applicationInfo.nativeLibraryDir + File.separator + sAotSharedLibraryName);
+                shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + nativeLibraryDir + File.separator + sAotSharedLibraryName);
             }
 
             shellArgs.add("--cache-dir-path=" + PathUtils.getCacheDirectory(applicationContext));
