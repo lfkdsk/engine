@@ -103,7 +103,7 @@ void MessageLoopImpl::DoRun() {
   task_queue_->Dispose(queue_id_);
 
   // BD ADD: WangYing
-  low_priority_tasks_ = {};
+//  low_priority_tasks_ = {};
   // END
 }
 
@@ -172,9 +172,9 @@ void MessageLoopImpl::PostTask(fml::closure task,
     PostTask(task, target_time);
 }
 
-void MessageLoopImpl::RegisterTask(fml::closure task,
-                                   fml::TimePoint target_time,
-                                   bool is_low_priority) {
+//void MessageLoopImpl::RegisterTask(fml::closure task,
+//                                   fml::TimePoint target_time,
+//                                   bool is_low_priority) {
 //  FML_DCHECK(task != nullptr);
 //  if (terminated_) {
 //    // If the message loop has already been terminated, PostTask should destruct
@@ -189,7 +189,7 @@ void MessageLoopImpl::RegisterTask(fml::closure task,
 //    delayed_tasks_.push({++order_, std::move(task), target_time});
 //    WakeUp(delayed_tasks_.top().target_time);
 //  }
-}
+//}
 
 void MessageLoopImpl::FlushLowPriorityTasks(FlushType type) {
 //  TRACE_EVENT0("fml", "MessageLoop::FlushLowPriorityTasks");

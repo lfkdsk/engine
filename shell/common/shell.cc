@@ -1158,22 +1158,22 @@ std::vector<double> Shell::GetFps(int thread_type,
   fml::WeakPtr<Rasterizer> rasterizer = rasterizer_->GetWeakPtr();
   if (rasterizer) {
     if (thread_type == kUiThreadType) {
-      result = rasterizer->compositor_context()->engine_time().GetFps(fps_type);
+      result = rasterizer->compositor_context()->ui_time().GetFps(fps_type);
       if (do_clear) {
         task_runners_.GetUITaskRunner()->PostTask(
             [rasterizer = rasterizer_->GetWeakPtr()] {
               if (rasterizer) {
-                rasterizer->compositor_context()->engine_time().ClearFps();
+                rasterizer->compositor_context()->ui_time().ClearFps();
               }
             });
       }
     } else if (thread_type == kGpuThreadType) {
-      result = rasterizer->compositor_context()->frame_time().GetFps(fps_type);
+      result = rasterizer->compositor_context()->raster_time().GetFps(fps_type);
       if (do_clear) {
         task_runners_.GetGPUTaskRunner()->PostTask(
             [rasterizer = rasterizer_->GetWeakPtr()] {
               if (rasterizer) {
-                rasterizer->compositor_context()->frame_time().ClearFps();
+                rasterizer->compositor_context()->raster_time().ClearFps();
               }
             });
       }

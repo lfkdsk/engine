@@ -14,7 +14,6 @@
 
 #include "flutter/assets/directory_asset_bundle.h"
 #include "flutter/common/settings.h"
-#include "flutter/fml/arraysize.h"
 #include "flutter/fml/file.h"
 #include "flutter/fml/platform/android/jni_util.h"
 #include "flutter/fml/platform/android/jni_weak_ref.h"
@@ -1007,7 +1006,7 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
 
   if (env->RegisterNatives(g_image_loader_callback_class->obj(),
                            native_load_callback_methods,
-                           arraysize(native_load_callback_methods)) != 0) {
+                           fml::size(native_load_callback_methods) != 0)) {
       FML_LOG(ERROR) << "Failed to RegisterNatives with NativeLoadCallback";
       return false;
   }

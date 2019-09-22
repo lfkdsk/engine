@@ -80,10 +80,10 @@ class MessageLoopImpl : public Wakeable,
 
   // BD ADD: START
   std::atomic_bool barrier_enabled_;
-  DelayedTaskQueue low_priority_tasks_ FML_GUARDED_BY(delayed_tasks_mutex_);
-  void RegisterTask(fml::closure task,
-                    fml::TimePoint target_time,
-                    bool is_low_priority);
+//  DelayedTaskQueue low_priority_tasks_ FML_GUARDED_BY(delayed_tasks_mutex_);
+//  void RegisterTask(fml::closure task,
+//                    fml::TimePoint target_time,
+//                    bool is_low_priority);
   void FlushLowPriorityTasks(FlushType type);
   // END
 

@@ -7,7 +7,7 @@
 //
 
 #import "flutter/fml/memory/weak_ptr.h"
-#import "flutter/shell/platform/darwin/ios/framework/Headers/FlutterBinaryMessenger.h"
+#import "flutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessenger.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -581,7 +581,7 @@ typedef enum UIAccessibilityContrast : NSInteger {
 //
 //
 - (void)scheduleBackgroundFrame {
-  [_engine.get() shell].GetEngine()->ScheduleBackgroundFrame();
+  [_engine.get() shell].GetWeakEngine()->ScheduleBackgroundFrame();
 }
 // END
 

@@ -61,6 +61,16 @@ class TestIOManager final : public IOManager {
     return unref_queue_;
   }
 
+  // |IOManager|
+  bool IsResourceContextValidForDecodeImage() const override {
+    return false;
+  }
+
+  // |IOManager|
+  std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override {
+    return nullptr;
+  }
+
  private:
   TestGLSurface gl_surface_;
   sk_sp<GrContext> gl_context_;

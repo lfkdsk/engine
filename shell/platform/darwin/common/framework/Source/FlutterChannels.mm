@@ -9,7 +9,7 @@
  * getBinaryMessengerWeakPtr和getBinaryMessenger是为了避免MethodChannel直接持有FlutterEngine，因为FlutterEngine里面通过PlatformMessageRouter已经间接持有了Channel
  * 同时避免了因为plugin持有channel导致engine不能释放的问题，以及兼容macos
  */
-#include "flutter/shell/platform/darwin/ios/framework/Source/FlutterBinaryMessengerProvider.h"
+#include "flutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
 
 @protocol FlutterBinaryMessengerChannel <NSObject>
 

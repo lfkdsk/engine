@@ -28,7 +28,7 @@
 #import "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 
 // BD ADD: QiuXinyue
-#include "FlutterBinaryMessengerProvider.h"
+#include "flutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
 // END
 
 // BD MOD: QiuXinyue
