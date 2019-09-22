@@ -14,6 +14,8 @@
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/platform/darwin/common/command_line.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
+// BD ADD:
+#include "flutter/shell/platform/darwin/ios/framework/Source/FlutterCompressSizeModeManager.h"
 
 extern "C" {
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
@@ -25,6 +27,14 @@ extern const intptr_t kPlatformStrongDillSize;
 
 static id<DynamicFlutterDelegate> dynamicDelegate;
 static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
+// BD ADD: START
+NSString* const FlutterIsolateDataFileName = @"isolate_snapshot_data";
+NSString* const FlutterVMDataFileName = @"vm_snapshot_data";
+NSString* const FlutterIcudtlDataFileName = @"icudtl.dat";
+static NSString* const kFLTAssetsPath = @"FLTAssetsPath";
+static NSString* const kFlutterAssets = @"flutter_assets";
+static FlutterCompressSizeModeMonitor kFlutterCompressSizeModeMonitor;
+// END
 
 static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   auto command_line = flutter::CommandLineFromNSProcessInfo();
@@ -185,6 +195,18 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   if (self) {
     _precompiledDartBundle.reset([bundle retain]);
     _settings = DefaultSettingsForProcess(bundle);
+
+    // BD ADD: START
+    [[FlutterCompressSizeModeManager sharedInstance] removePreviousDecompressedData];
+    if ([FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode) {
+      NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance]
+          getDecompressedDataPath:kFlutterCompressSizeModeMonitor];
+      [self setDecompressedDataPath:decompressedDataPath];
+      self.isValid = (decompressedDataPath.length > 0);
+    } else {
+      self.isValid = YES;
+    }
+    // END
   }
 
   return self;
@@ -193,6 +215,22 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 // BD ADD: START
 - (void)setLeakDartVMEnabled:(BOOL)enabled {
   _settings.leak_vm = enabled;
+}
+// END
+
+// BD ADD: START
+- (void)setDecompressedDataPath:(NSString*)path {
+  if (path.length == 0) {
+    return;
+  }
+  _settings.icu_data_path =
+      [path stringByAppendingPathComponent:FlutterIcudtlDataFileName].UTF8String;
+  _settings.assets_path =
+      [path stringByAppendingPathComponent:[FlutterDartProject flutterAssetsPath]].UTF8String;
+  _settings.isolate_snapshot_data_path =
+      [path stringByAppendingPathComponent:FlutterIsolateDataFileName].UTF8String;
+  _settings.vm_snapshot_data_path =
+      [path stringByAppendingPathComponent:FlutterVMDataFileName].UTF8String;
 }
 // END
 
@@ -238,9 +276,13 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   if (bundle == nil) {
     bundle = [NSBundle mainBundle];
   }
-  NSString* flutterAssetsName = [bundle objectForInfoDictionaryKey:@"FLTAssetsPath"];
+  // BD MOD:
+  // NSString* flutterAssetsName = [bundle objectForInfoDictionaryKey:@"FLTAssetsPath"];
+  NSString* flutterAssetsName = [bundle objectForInfoDictionaryKey:kFLTAssetsPath];
   if (flutterAssetsName == nil) {
-    flutterAssetsName = @"Frameworks/App.framework/flutter_assets";
+    // BD MOD:
+    // flutterAssetsName = @"Frameworks/App.framework/flutter_assets";
+    flutterAssetsName = [NSString stringWithFormat:@"Frameworks/App.framework/%@", kFlutterAssets];
   }
   return flutterAssetsName;
 }
@@ -268,5 +310,27 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 + (NSString*)defaultBundleIdentifier {
   return @"io.flutter.flutter.app";
 }
+
+// BD ADD: START
++ (void)setCompressSizeModeMonitor:(FlutterCompressSizeModeMonitor)flutterCompressSizeModeMonitor {
+  kFlutterCompressSizeModeMonitor = [flutterCompressSizeModeMonitor copy];
+}
+
++ (void)predecompressData {
+  [[FlutterCompressSizeModeManager sharedInstance] decompressDataAsync:nil];
+}
+
++ (NSString*)flutterAssetsPath {
+  NSBundle* bundle = [NSBundle bundleWithIdentifier:[FlutterDartProject defaultBundleIdentifier]];
+  if (bundle == nil) {
+    bundle = [NSBundle mainBundle];
+  }
+  NSString* flutterAssetsPath = [bundle objectForInfoDictionaryKey:kFLTAssetsPath];
+  if (flutterAssetsPath == nil) {
+    flutterAssetsPath = kFlutterAssets;
+  }
+  return flutterAssetsPath;
+}
+// END
 
 @end

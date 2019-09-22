@@ -20,6 +20,9 @@
 
 @end
 
+// BD ADD:
+typedef void (^FlutterCompressSizeModeMonitor)(NSString* path, BOOL succeeded, NSError* error);
+
 /**
  * A set of Flutter and Dart assets used by a `FlutterEngine` to initialize execution.
  */
@@ -96,6 +99,12 @@ FLUTTER_EXPORT
  * application.
  */
 + (NSString*)defaultBundleIdentifier;
+
+// BD ADD: START
++ (void)setCompressSizeModeMonitor:(FlutterCompressSizeModeMonitor)flutterCompressSizeModeMonitor;
+
++ (void)predecompressData;
+// END
 
 @end
 
