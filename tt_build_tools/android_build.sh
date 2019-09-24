@@ -97,6 +97,11 @@ for mode in 'debug' 'profile' 'release'; do
 
             if [ -z "$doCompile" ]; then
                 ninja -C $androidDir -j $jcount
+                # check ninja result
+                if [ $? -ne 0 ]; then
+                    echo "Compile failed !"
+                    exit 1
+                fi
             fi
 
             if [ $mode != 'debug' ]; then
