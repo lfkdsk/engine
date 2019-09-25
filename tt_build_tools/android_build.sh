@@ -17,18 +17,14 @@ else
     dynamics=('normal' 'dynamic')
 fi
 
-doCompile=$3
+tosDir=$(git rev-parse HEAD)
 
-tosDir=$4
-if [ ! $tosDir ]
-then 
-	tosDir=$(git rev-parse HEAD)
-fi
-
-if [ ! $tosDir ]
-then 
-	tosDir='default'
-fi
+function checkResult() {
+    if [ $? -ne 0 ]; then
+        echo "Host debug compile failed !"
+        exit 1
+    fi
+}
 
 cd ..
 
@@ -36,34 +32,35 @@ cacheDir=out/tt_android_cache
 rm -rf $cacheDir
 mkdir $cacheDir
 
-hostDir=out/host_debug
-#./flutter/tools/gn
-#ninja -C $hostDir -j $jcount
+./flutter/tools/gn --no-lto --full-dart-sdk
+ninja -C out/host_debug -j $jcount
+checkResult
 
 # flutter_patched_sdk.zip
 rm -f $cacheDir/flutter_patched_sdk.zip
-cd $hostDir
+cd out/host_debug
 zip -rq ../../$cacheDir/flutter_patched_sdk.zip flutter_patched_sdk
 cd ..
 cd ..
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/flutter_patched_sdk.zip flutter/framework/$tosDir/flutter_patched_sdk.zip
 echo uploaded flutter/framework/$tosDir/flutter_patched_sdk.zip
 
-hostDir=out/host_release
-#./flutter/tools/gn --runtime-mode=release
-#ninja -C $hostDir -j $jcount
-rm -f $cacheDir/dart-sdk-darwin-x64.zip
-cd $hostDir
+# dart-sdk-darwin-x64.zip
+cd out/host_debug
 zip -rq ../../$cacheDir/dart-sdk-darwin-x64.zip dart-sdk
 cd ..
 cd ..
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/dart-sdk-darwin-x64.zip flutter_infra/flutter/$tosDir/dart-sdk-darwin-x64.zip
 echo uploaded flutter_infra/flutter/$tosDir/dart-sdk-darwin-x64.zip
 
-# flutter_patched_sdk.zip
+./flutter/tools/gn --runtime-mode=release --no-lto
+ninja -C out/host_release -j $jcount
+checkResult
+
+# flutter_patched_sdk_product.zip
 rm -f $cacheDir/flutter_patched_sdk_product.zip
 rm -rf $cacheDir/flutter_patched_sdk_product
-cp -r $hostDir/flutter_patched_sdk $cacheDir/flutter_patched_sdk_product
+cp -r out/host_release/flutter_patched_sdk $cacheDir/flutter_patched_sdk_product
 cd $cacheDir
 zip -rq flutter_patched_sdk_product.zip flutter_patched_sdk_product
 cd ..
@@ -102,14 +99,8 @@ for mode in 'debug' 'profile' 'release'; do
                 androidDir=out/android_${mode}${platformPostFix}
             fi
 
-            if [ -z "$doCompile" ]; then
-                ninja -C $androidDir -j $jcount
-                # check ninja result
-                if [ $? -ne 0 ]; then
-                    echo "Compile failed !"
-                    exit 1
-                fi
-            fi
+            ninja -C $androidDir -j $jcount
+            checkResult
 
             if [ $mode != 'debug' ]; then
                 modeDir=$modeDir-$mode
@@ -145,18 +136,18 @@ done
 modeDir=darwin-x64
 rm -rf $cacheDir/$modeDir
 mkdir $cacheDir/$modeDir
-cp out/android_release/gen/flutter/lib/snapshot/isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin
-cp out/android_release/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
-zip -rjq $cacheDir/$modeDir/artifacts.zip $hostDir/flutter_tester $hostDir/gen/frontend_server.dart.snapshot \
-out/android_release/flutter_shell_assets/icudtl.dat out/android_debug/gen/flutter/lib/snapshot/isolate_snapshot.bin \
-out/android_debug/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin \
-$cacheDir/$modeDir/product_vm_isolate_snapshot.bin
+cp out/host_release/gen/flutter/lib/snapshot/isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin
+cp out/host_release/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
+zip -rjq $cacheDir/$modeDir/artifacts.zip out/host_debug/flutter_tester out/host_debug/gen/frontend_server.dart.snapshot \
+third_party/icu/flutter/icudtl.dat out/host_debug/gen/flutter/lib/snapshot/isolate_snapshot.bin \
+out/host_debug/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin \
+$cacheDir/$modeDir/product_vm_isolate_snapshot.bin out/host_debug/gen_snapshot
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 
 rm -rf $cacheDir/pkg
 mkdir $cacheDir/pkg
-cp -rf $hostDir/gen/dart-pkg/sky_engine $cacheDir/pkg/sky_engine
+cp -rf out/host_debug/gen/dart-pkg/sky_engine $cacheDir/pkg/sky_engine
 rm -rf $cacheDir/pkg/sky_engine/packages
 cd $cacheDir/pkg
 zip -rq ../../../$cacheDir/pkg/sky_engine.zip sky_engine
