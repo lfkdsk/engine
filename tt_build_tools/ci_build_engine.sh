@@ -54,33 +54,11 @@ gclient sync -D -f
 
 cd ..
 
-if [ "$PLATFORM" != "none" ]; then
-
-	./flutter/tools/gn
-	ninja -C out/host_debug -j $JCOUNT
-
-	./flutter/tools/gn --runtime-mode=release --dynamicart
-	ninja -C out/host_release_dynamicart -j $JCOUNT
-
-fi
-
 cd flutter/tt_build_tools
 
-if [ $PLATFORM == 'all' -o $PLATFORM == 'android' ]; then
-	docompile=
-else
-	docompile=false
-fi
+bash android_build.sh $JCOUNT $MODE
 
-bash android_build.sh $JCOUNT $MODE $docompile
-
-if [ $PLATFORM == 'all' -o $PLATFORM == 'ios' ]; then
-	docompile=
-else
-	docompile=false
-fi
-
-bash iOS_build.sh $JCOUNT $docompile
+bash iOS_build.sh $JCOUNT
 
 curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release/libflutter.so" http://symbolicate.byted.org/android_upload
 curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_arm64/libflutter.so" http://symbolicate.byted.org/android_upload

@@ -18,18 +18,7 @@ else
     dynamics=('normal' 'dynamicart')
 fi
 
-doCompile=$3
-
-tosDir=$4
-if [ ! $tosDir ]
-then 
-	tosDir=$(git rev-parse HEAD)
-fi
-
-if [ ! $tosDir ]
-then 
-	tosDir='default'
-fi
+tosDir=$(git rev-parse HEAD)
 
 cd ..
 
@@ -38,8 +27,8 @@ rm -rf $cacheDir
 mkdir $cacheDir
 
 hostDir=out/host_debug
-#./flutter/tools/gn
-#ninja -C $hostDir -j $jcount
+./flutter/tools/gn
+ninja -C $hostDir -j $jcount
 
 # flutter_patched_sdk.zip
 rm -f $cacheDir/flutter_patched_sdk.zip
@@ -50,9 +39,9 @@ cd ..
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/flutter_patched_sdk.zip flutter/framework/$tosDir/flutter_patched_sdk.zip
 echo uploaded flutter/framework/$tosDir/flutter_patched_sdk.zip
 
-hostDir=out/host_release_dynamicart
-#./flutter/tools/gn --runtime-mode=release
-#ninja -C $hostDir -j $jcount
+hostDir=out/host_release
+./flutter/tools/gn --runtime-mode=release
+ninja -C $hostDir -j $jcount
 rm -f $cacheDir/dart-sdk-darwin-x64.zip
 cd $hostDir
 zip -rq ../../$cacheDir/dart-sdk-darwin-x64.zip dart-sdk
@@ -104,9 +93,7 @@ for mode in 'debug' 'profile' 'release'; do
                 androidDir=out/android_${mode}${platformPostFix}
             fi
 
-            if [ -z "$doCompile" ]; then
-                ninja -C $androidDir -j $jcount
-            fi
+            ninja -C $androidDir -j $jcount
 
             if [ $mode != 'debug' ]; then
                 modeDir=$modeDir-$mode
@@ -142,11 +129,11 @@ done
 modeDir=darwin-x64
 rm -rf $cacheDir/$modeDir
 mkdir $cacheDir/$modeDir
-cp out/android_release/gen/flutter/lib/snapshot/isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin
-cp out/android_release/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
-zip -rjq $cacheDir/$modeDir/artifacts.zip $hostDir/flutter_tester $hostDir/gen/frontend_server.dart.snapshot \
-out/android_release/flutter_shell_assets/icudtl.dat out/android_debug/gen/flutter/lib/snapshot/isolate_snapshot.bin \
-out/android_debug/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin \
+cp out/host_release/gen/flutter/lib/snapshot/isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin
+cp out/host_release/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
+zip -rjq $cacheDir/$modeDir/artifacts.zip out/host_debug/flutter_tester out/host_debug/gen/frontend_server.dart.snapshot \
+third_party/icu/flutter/icudtl.dat out/host_debug/gen/flutter/lib/snapshot/isolate_snapshot.bin \
+out/host_debug/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin \
 $cacheDir/$modeDir/product_vm_isolate_snapshot.bin
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip

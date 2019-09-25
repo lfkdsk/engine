@@ -16,9 +16,7 @@ then
     jcount=4
 fi
 
-doCompile=$2
-
-tosDir=$3
+tosDir=$2
 if [ ! $tosDir ]
 then 
 	tosDir=$(git rev-parse HEAD)
@@ -51,25 +49,23 @@ for mode in 'debug' 'profile' 'release' 'release_dynamicart'
 #		ninja -C $hostDir -j $jcount
 
 		# 编译各种架构引擎
-        if [ -z "$doCompile" ]; then
-        	if [ "$mode" == "release_dynamicart" ]
-        	then 
-		    	./flutter/tools/gn --ios --runtime-mode=release --dynamicart
-		    	ninja -C $iOSArm64Dir -j $jcount
+        if [ "$mode" == "release_dynamicart" ]
+        then
+            ./flutter/tools/gn --ios --runtime-mode=release --dynamicart
+            ninja -C $iOSArm64Dir -j $jcount
 
-	            ./flutter/tools/gn --ios --runtime-mode=release --ios-cpu=arm --dynamicart
-    	        ninja -C $iOSArmV7Dir -j $jcount
-    	    else
-    	    	./flutter/tools/gn --ios --runtime-mode=$mode
-		    	ninja -C $iOSArm64Dir -j $jcount
+            ./flutter/tools/gn --ios --runtime-mode=release --ios-cpu=arm --dynamicart
+            ninja -C $iOSArmV7Dir -j $jcount
+        else
+            ./flutter/tools/gn --ios --runtime-mode=$mode
+            ninja -C $iOSArm64Dir -j $jcount
 
-	            ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
-    	        ninja -C $iOSArmV7Dir -j $jcount
-    	    fi
+            ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
+            ninja -C $iOSArmV7Dir -j $jcount
+        fi
 
-            ./flutter/tools/gn --ios --runtime-mode=debug --simulator
-            ninja -C $iOSSimDir -j $jcount
-		fi
+        ./flutter/tools/gn --ios --runtime-mode=debug --simulator
+        ninja -C $iOSSimDir -j $jcount
 
 		# 多种引擎架构合成一个
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
