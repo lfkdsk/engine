@@ -51,12 +51,27 @@ for mode in 'debug' 'profile' 'release'
         if [ -z "$doCompile" ]; then
 		    ./flutter/tools/gn --ios --runtime-mode=$mode
 		    ninja -C $iOSArm64Dir -j $jcount
+		    # check ninja result
+            if [ $? -ne 0 ]; then
+                echo "Compile failed !"
+                exit 1
+            fi
 
             ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
             ninja -C $iOSArmV7Dir -j $jcount
+            # check ninja result
+            if [ $? -ne 0 ]; then
+                echo "Compile failed !"
+                exit 1
+            fi
 
             ./flutter/tools/gn --ios --runtime-mode=debug --simulator
             ninja -C $iOSSimDir -j $jcount
+            # check ninja result
+            if [ $? -ne 0 ]; then
+                echo "Compile failed !"
+                exit 1
+            fi
 		fi
 
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
