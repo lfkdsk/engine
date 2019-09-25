@@ -152,7 +152,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     succeeded = [self decompressData:&error];
   }
   if (completion) {
-    completion(succeeded ? self.cacheDirectoryForCurrentUUID : nil, succeeded, error);
+    completion(succeeded, error);
   }
   return succeeded ? self.cacheDirectoryForCurrentUUID : nil;
 }

@@ -142,7 +142,12 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     }
 
     if (!assetsPath || assetsPath.length == 0) {
-      NSLog(@"Failed to find assets path for \"%@\"", assetsName);
+      // BD MOD: START
+      // NSLog(@"Failed to find assets path for \"%@\"", assetsName);
+      if (![FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode) {
+        NSLog(@"Failed to find assets path for \"%@\"", assetsName);
+      }
+      // END
     } else {
       settings.assets_path = assetsPath.UTF8String;
 

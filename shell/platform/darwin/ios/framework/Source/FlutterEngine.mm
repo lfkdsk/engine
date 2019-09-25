@@ -117,6 +117,11 @@
 }
 
 - (void)updateViewportMetrics:(flutter::ViewportMetrics)viewportMetrics {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   self.shell.GetTaskRunners().GetUITaskRunner()->PostTask(
       [engine = self.shell.GetEngine(), metrics = viewportMetrics]() {
         if (engine) {
@@ -128,6 +133,11 @@
 - (void)dispatchPointerDataPacket:(std::unique_ptr<flutter::PointerDataPacket>)packet {
   TRACE_EVENT0("flutter", "dispatchPointerDataPacket");
   TRACE_FLOW_BEGIN("flutter", "PointerEvent", _nextPointerFlowId);
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   self.shell.GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable(
       [engine = self.shell.GetEngine(), packet = std::move(packet), flow_id = _nextPointerFlowId] {
         if (engine) {
@@ -139,25 +149,56 @@
 
 - (fml::WeakPtr<flutter::PlatformView>)platformView {
   FML_DCHECK(_shell);
-  return _shell->GetPlatformView();
+  // BD MOD: START
+  // return _shell->GetPlatformView();
+  if (_shell != nullptr) {
+    return _shell->GetPlatformView();
+  } else {
+    return fml::WeakPtr<flutter::PlatformView>();
+  }
+  // END
 }
 
 - (flutter::PlatformViewIOS*)iosPlatformView {
   FML_DCHECK(_shell);
-  return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  // BD MOD: START
+  // return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  if (_shell != nullptr) {
+    return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  } else {
+    return nullptr;
+  }
+  // END
 }
 
 - (fml::RefPtr<fml::TaskRunner>)platformTaskRunner {
   FML_DCHECK(_shell);
-  return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  // BD MOD: START
+  // return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  if (_shell != nullptr) {
+    return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  } else {
+    return nullptr;
+  }
+  // END
 }
 
 - (void)ensureSemanticsEnabled {
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   self.iosPlatformView->SetSemanticsEnabled(true);
 }
 
 - (void)setViewController:(FlutterViewController*)viewController {
   FML_DCHECK(self.iosPlatformView);
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   _viewController = [viewController getWeakPtr];
   self.iosPlatformView->SetOwnerViewController(_viewController);
   [self maybeSetupPlatformViewChannels];
@@ -174,6 +215,9 @@
   // [self resetChannels];
   // _shell.reset();
   // _threadHost.Reset();
+  if (_shell == nullptr) {
+    return;
+  }
   _shell->ExitApp([scoped_engine = fml::scoped_nsobject<FlutterEngine>([self retain])] {
     [scoped_engine.get() resetChannels];
     scoped_engine.get()->_platformViewsController.reset();
@@ -296,17 +340,34 @@
     [_textInputChannel.get() setMethodCallHandler:^(FlutterMethodCall* call, FlutterResult result) {
       [_textInputPlugin.get() handleMethodCall:call result:result];
     }];
-    self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
+    // BD MOD: START
+    // self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
+    if (self.iosPlatformView != nullptr) {
+      self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
+    }
+    // END
   }
 }
 
 - (flutter::Rasterizer::Screenshot)screenshot:(flutter::Rasterizer::ScreenshotType)type
                                  base64Encode:(bool)base64Encode {
-  return self.shell.Screenshot(type, base64Encode);
+  // BD MOD: START
+  // return self.shell.Screenshot(type, base64Encode);
+  if (_shell != nullptr) {
+    return self.shell.Screenshot(type, base64Encode);
+  } else {
+    return flutter::Rasterizer::Screenshot();
+  }
+  // END
 }
 
 - (void)launchEngine:(NSString*)entrypoint libraryURI:(NSString*)libraryOrNil {
   // Launch the Dart application with the inferred run configuration.
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   self.shell.GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable(
       [engine = _shell->GetEngine(),
        config = [_dartProject.get() runConfigurationForEntrypoint:entrypoint
@@ -369,46 +430,88 @@
       [](flutter::Shell& shell) {
         return std::make_unique<flutter::Rasterizer>(shell.GetTaskRunners());
       };
+  // BD MOD: START
+  // if (flutter::IsIosEmbeddedViewsPreviewEnabled()) {
+  //   // Embedded views requires the gpu and the platform views to be the same.
+  //   // The plan is to eventually dynamically merge the threads when there's a
+  //   // platform view in the layer tree.
+  //   // For now we use a fixed thread configuration with the same thread used as the
+  //   // gpu and platform task runner.
+  //   // TODO(amirh/chinmaygarde): remove this, and dynamically change the thread configuration.
+  //   // https://github.com/flutter/flutter/issues/23975
+  //
+  //   flutter::TaskRunners task_runners(threadLabel.UTF8String,                          // label
+  //                                     fml::MessageLoop::GetCurrent().GetTaskRunner(),  //
+  //                                     platform fml::MessageLoop::GetCurrent().GetTaskRunner(), //
+  //                                     gpu _threadHost.ui_thread->GetTaskRunner(),          // ui
+  //                                     _threadHost.io_thread->GetTaskRunner()           // io
+  //   );
+  //   // Create the shell. This is a blocking operation.
+  //   _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
+  //                                   std::move(settings),      // settings
+  //                                   on_create_platform_view,  // platform view creation
+  //                                   on_create_rasterizer      // rasterzier creation
+  //   );
+  // } else {
+  //   flutter::TaskRunners task_runners(threadLabel.UTF8String,                          // label
+  //                                    fml::MessageLoop::GetCurrent().GetTaskRunner(),   //
+  //                                    platform _threadHost.gpu_thread->GetTaskRunner(), // gpu
+  //                                    _threadHost.ui_thread->GetTaskRunner(),           // ui
+  //                                    _threadHost.io_thread->GetTaskRunner()            // io
+  //   );
+  //   // Create the shell. This is a blocking operation.
+  //   _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
+  //                                   std::move(settings),      // settings
+  //                                   on_create_platform_view,  // platform view creation
+  //                                   on_create_rasterizer      // rasterzier creation
+  //   );
+  // }
+  if (_dartProject.get().isValid) {
+    if (flutter::IsIosEmbeddedViewsPreviewEnabled()) {
+      // Embedded views requires the gpu and the platform views to be the same.
+      // The plan is to eventually dynamically merge the threads when there's a
+      // platform view in the layer tree.
+      // For now we use a fixed thread configuration with the same thread used as the
+      // gpu and platform task runner.
+      // TODO(amirh/chinmaygarde): remove this, and dynamically change the thread configuration.
+      // https://github.com/flutter/flutter/issues/23975
 
-  if (flutter::IsIosEmbeddedViewsPreviewEnabled()) {
-    // Embedded views requires the gpu and the platform views to be the same.
-    // The plan is to eventually dynamically merge the threads when there's a
-    // platform view in the layer tree.
-    // For now we use a fixed thread configuration with the same thread used as the
-    // gpu and platform task runner.
-    // TODO(amirh/chinmaygarde): remove this, and dynamically change the thread configuration.
-    // https://github.com/flutter/flutter/issues/23975
-
-    flutter::TaskRunners task_runners(threadLabel.UTF8String,                          // label
-                                      fml::MessageLoop::GetCurrent().GetTaskRunner(),  // platform
-                                      fml::MessageLoop::GetCurrent().GetTaskRunner(),  // gpu
-                                      _threadHost.ui_thread->GetTaskRunner(),          // ui
-                                      _threadHost.io_thread->GetTaskRunner()           // io
-    );
-    // Create the shell. This is a blocking operation.
-    _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
-                                    std::move(settings),      // settings
-                                    on_create_platform_view,  // platform view creation
-                                    on_create_rasterizer      // rasterzier creation
-    );
-  } else {
-    flutter::TaskRunners task_runners(threadLabel.UTF8String,                          // label
-                                      fml::MessageLoop::GetCurrent().GetTaskRunner(),  // platform
-                                      _threadHost.gpu_thread->GetTaskRunner(),         // gpu
-                                      _threadHost.ui_thread->GetTaskRunner(),          // ui
-                                      _threadHost.io_thread->GetTaskRunner()           // io
-    );
-    // Create the shell. This is a blocking operation.
-    _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
-                                    std::move(settings),      // settings
-                                    on_create_platform_view,  // platform view creation
-                                    on_create_rasterizer      // rasterzier creation
-    );
+      flutter::TaskRunners task_runners(threadLabel.UTF8String,                          // label
+                                        fml::MessageLoop::GetCurrent().GetTaskRunner(),  // platform
+                                        fml::MessageLoop::GetCurrent().GetTaskRunner(),  // gpu
+                                        _threadHost.ui_thread->GetTaskRunner(),          // ui
+                                        _threadHost.io_thread->GetTaskRunner()           // io
+      );
+      // Create the shell. This is a blocking operation.
+      _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
+                                      std::move(settings),      // settings
+                                      on_create_platform_view,  // platform view creation
+                                      on_create_rasterizer      // rasterzier creation
+      );
+    } else {
+      flutter::TaskRunners task_runners(threadLabel.UTF8String,                          // label
+                                        fml::MessageLoop::GetCurrent().GetTaskRunner(),  // platform
+                                        _threadHost.gpu_thread->GetTaskRunner(),         // gpu
+                                        _threadHost.ui_thread->GetTaskRunner(),          // ui
+                                        _threadHost.io_thread->GetTaskRunner()           // io
+      );
+      // Create the shell. This is a blocking operation.
+      _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
+                                      std::move(settings),      // settings
+                                      on_create_platform_view,  // platform view creation
+                                      on_create_rasterizer      // rasterzier creation
+      );
+    }
   }
+  // END
 
   if (_shell == nullptr) {
+    // BD MOD: START
+    // FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
+    //                   << entrypoint.UTF8String;
     FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
-                   << entrypoint.UTF8String;
+                   << (entrypoint != nil ? entrypoint.UTF8String : "");
+    // END
   } else {
     [self setupChannels];
     if (!_platformViewsController) {
@@ -509,7 +612,14 @@
 - (flutter::Rasterizer::Screenshot)takeScreenshot:(flutter::Rasterizer::ScreenshotType)type
                                   asBase64Encoded:(BOOL)base64Encode {
   FML_DCHECK(_shell) << "Cannot takeScreenshot without a shell";
-  return _shell->Screenshot(type, base64Encode);
+  // BD MOD: START
+  // return _shell->Screenshot(type, base64Encode);
+  if (_shell != nullptr) {
+    return _shell->Screenshot(type, base64Encode);
+  } else {
+    return flutter::Rasterizer::Screenshot();
+  }
+  // END
 }
 
 #pragma mark - FlutterBinaryMessenger
@@ -522,6 +632,11 @@
               message:(NSData*)message
           binaryReply:(FlutterBinaryReply)callback {
   NSAssert(channel, @"The channel must not be null");
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   fml::RefPtr<flutter::PlatformMessageResponseDarwin> response =
       (callback == nil) ? nullptr
                         : fml::MakeRefCounted<flutter::PlatformMessageResponseDarwin>(
@@ -541,6 +656,11 @@
               binaryMessageHandler:(FlutterBinaryMessageHandler)handler {
   NSAssert(channel, @"The channel must not be null");
   FML_DCHECK(_shell && _shell->IsSetup());
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   self.iosPlatformView->GetPlatformMessageRouter().SetMessageHandler(channel.UTF8String, handler);
 }
 
@@ -548,15 +668,30 @@
 
 - (int64_t)registerTexture:(NSObject<FlutterTexture>*)texture {
   int64_t textureId = _nextTextureId++;
-  self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  // BD MOD: START
+  // self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  if (self.iosPlatformView != nullptr) {
+    self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  }
+  // END
   return textureId;
 }
 
 - (void)unregisterTexture:(int64_t)textureId {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   _shell->GetPlatformView()->UnregisterTexture(textureId);
 }
 
 - (void)textureFrameAvailable:(int64_t)textureId {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   _shell->GetPlatformView()->MarkTextureFrameAvailable(textureId);
 }
 
