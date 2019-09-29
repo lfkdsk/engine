@@ -27,6 +27,13 @@ then
 	tosDir='default'
 fi
 
+function checkResult() {
+    if [ $? -ne 0 ]; then
+        echo "Host debug compile failed !"
+        exit 1
+    fi
+}
+
 cd ..
 
 for mode in 'debug' 'profile' 'release' 'release_dynamicart'
@@ -53,19 +60,24 @@ for mode in 'debug' 'profile' 'release' 'release_dynamicart'
         then
             ./flutter/tools/gn --ios --runtime-mode=release --dynamicart
             ninja -C $iOSArm64Dir -j $jcount
+            checkResult
 
             ./flutter/tools/gn --ios --runtime-mode=release --ios-cpu=arm --dynamicart
             ninja -C $iOSArmV7Dir -j $jcount
+            checkResult
         else
             ./flutter/tools/gn --ios --runtime-mode=$mode
             ninja -C $iOSArm64Dir -j $jcount
+            checkResult
 
             ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm
             ninja -C $iOSArmV7Dir -j $jcount
+            checkResult
         fi
 
         ./flutter/tools/gn --ios --runtime-mode=debug --simulator
         ninja -C $iOSSimDir -j $jcount
+        checkResult
 
 		# 多种引擎架构合成一个
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
