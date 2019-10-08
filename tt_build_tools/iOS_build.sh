@@ -91,7 +91,8 @@ for mode in 'debug' 'profile' 'release'
 		cp -r $iOSArm64Dir/Flutter.framework $cacheDir/Flutter.framework
 		mv $cacheDir/Flutter $cacheDir/Flutter.framework/Flutter
 
-		lipo -create $iOSArm64Dir/clang_x64/gen_snapshot $iOSArmV7Dir/clang_x86/gen_snapshot -output $cacheDir/gen_snapshot
+		cp $iOSArm64Dir/clang_x64/gen_snapshot $cacheDir/gen_snapshot_arm64
+		cp $iOSArmV7Dir/clang_x64/gen_snapshot $cacheDir/gen_snapshot_armv7
 
 		cp $iOSArm64Dir/Flutter.podspec $cacheDir/Flutter.podspec
 		cp flutter/lib/snapshot/snapshot.dart $cacheDir/snapshot.dart
@@ -103,9 +104,10 @@ for mode in 'debug' 'profile' 'release'
 		cd ..
 		mv Flutter.framework/Flutter.framework.zip Flutter.framework.zip
 		[ -d Flutter.framework ] && rm -rf Flutter.framework
-		zip -rq artifacts.zip Flutter.framework.zip gen_snapshot Flutter.podspec snapshot.dart
+		zip -rq artifacts.zip Flutter.framework.zip gen_snapshot_arm64 gen_snapshot_armv7 Flutter.podspec snapshot.dart
 		[ -e Flutter.framework.zip ] && rm -rf Flutter.framework.zip
-		[ -e gen_snapshot ] && rm -rf gen_snapshot
+		[ -e gen_snapshot_arm64 ] && rm -rf gen_snapshot_arm64
+		[ -e gen_snapshot_armv7 ] && rm -rf gen_snapshot_armv7
 		[ -e Flutter.podspec ] && rm -rf Flutter.podspec
 		[ -e snapshot.dart ] && rm -rf snapshot.dart
 
