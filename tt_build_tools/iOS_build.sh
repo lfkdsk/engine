@@ -104,6 +104,10 @@ for mode in 'debug' 'profile' 'release'
 		cd ..
 		mv Flutter.framework/Flutter.framework.zip Flutter.framework.zip
 		[ -d Flutter.framework ] && rm -rf Flutter.framework
+		if [ ! -e Flutter.framework.zip -o ! -e gen_snapshot_arm64 -o ! -e gen_snapshot_armv7 -o ! -e Flutter.podspec ]; then
+		    echo "Compile failed !"
+            exit 1
+        fi
 		zip -rq artifacts.zip Flutter.framework.zip gen_snapshot_arm64 gen_snapshot_armv7 Flutter.podspec snapshot.dart
 		[ -e Flutter.framework.zip ] && rm -rf Flutter.framework.zip
 		[ -e gen_snapshot_arm64 ] && rm -rf gen_snapshot_arm64
