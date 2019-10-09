@@ -1317,7 +1317,7 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
-    [_engine.get() registerImageLoader:imageLoader];
+  [_engine.get() registerImageLoader:imageLoader];
 }
 
 #pragma mark - FlutterPluginRegistry
@@ -1351,5 +1351,13 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 - (BOOL)isPresentingViewController {
   return self.presentedViewController != nil || self.isPresentingViewControllerAnimating;
 }
+
+// BD ADD: START
+#pragma mark - FlutterBinaryMessengerProvider
+
+- (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
+  return [_engine.get() getWeakBinaryMessengerPtr];
+}
+// END
 
 @end

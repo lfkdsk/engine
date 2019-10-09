@@ -62,7 +62,9 @@ class AccessibilityBridge final : public AccessibilityBridgeIos {
 
   UIView<UITextInput>* textInputView() override;
 
-  UIView* view() const override { return view_; }
+  // BD MOD:
+  // UIView* view() const override { return view_; }
+  UIView* view() const override { return view_.get(); }
 
   fml::WeakPtr<AccessibilityBridge> GetWeakPtr();
 
@@ -78,7 +80,9 @@ class AccessibilityBridge final : public AccessibilityBridgeIos {
                                         NSMutableArray<NSNumber*>* doomed_uids);
   void HandleEvent(NSDictionary<NSString*, id>* annotatedEvent);
 
-  UIView* view_;
+  // BD MOD:
+  // UIView* view_;
+  fml::scoped_nsobject<UIView> view_;
   PlatformViewIOS* platform_view_;
   FlutterPlatformViewsController* platform_views_controller_;
   fml::scoped_nsobject<NSMutableDictionary<NSNumber*, SemanticsObject*>> objects_;
