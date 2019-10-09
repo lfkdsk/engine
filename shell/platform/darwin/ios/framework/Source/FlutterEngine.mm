@@ -901,7 +901,7 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
-    self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
 }
 
 #pragma mark - FlutterPluginRegistry
@@ -994,7 +994,7 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 }
 
 // BD ADD: START
-#pragma mark - FlutterPluginRegistry
+#pragma mark - FlutterBinaryMessengerProvider
 
 - (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
   return _weakBinaryMessengerFactory->GetWeakPtr();
@@ -1033,7 +1033,7 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
  *
  */
 - (NSObject<FlutterImageLoaderRegistry>*)imageLoaders {
-    return _flutterEngine;
+  return _flutterEngine;
 }
 
 - (void)publish:(NSObject*)value {

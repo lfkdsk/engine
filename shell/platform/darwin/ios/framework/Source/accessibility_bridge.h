@@ -66,7 +66,9 @@ class AccessibilityBridge final : public AccessibilityBridgeIos {
 
   UIView<UITextInput>* textInputView() override;
 
-  UIView* view() const override { return view_controller_.view; }
+  // BD MOD:
+  // UIView* view() const override { return view_controller_.view; }
+  UIView* view() const override { return view_controller_.get().view; }
 
   fml::WeakPtr<AccessibilityBridge> GetWeakPtr();
 
@@ -83,7 +85,9 @@ class AccessibilityBridge final : public AccessibilityBridgeIos {
                                         NSMutableArray<NSNumber*>* doomed_uids);
   void HandleEvent(NSDictionary<NSString*, id>* annotatedEvent);
 
-  FlutterViewController* view_controller_;
+  // BD MOD:
+  // FlutterViewController* view_controller_;
+  fml::scoped_nsobject<FlutterViewController> view_controller_;
   PlatformViewIOS* platform_view_;
   FlutterPlatformViewsController* platform_views_controller_;
   // If the this id is kSemanticObjectIdInvalid, it means either nothing has

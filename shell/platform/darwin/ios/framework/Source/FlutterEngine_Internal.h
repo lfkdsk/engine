@@ -23,8 +23,12 @@
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterEngine.h"
+// BD ADD:
+#include "flutter/bdflutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
 
-@interface FlutterEngine () <FlutterViewEngineDelegate>
+// BD MOD:
+// @interface FlutterEngine () <FlutterViewEngineDelegate>
+@interface FlutterEngine () <FlutterViewEngineDelegate, FlutterBinaryMessengerProvider>
 
 - (flutter::Shell&)shell;
 

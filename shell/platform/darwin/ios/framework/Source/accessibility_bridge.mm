@@ -40,7 +40,9 @@ AccessibilityBridge::AccessibilityBridge(FlutterViewController* view_controller,
                                          PlatformViewIOS* platform_view,
                                          FlutterPlatformViewsController* platform_views_controller,
                                          std::unique_ptr<IosDelegate> ios_delegate)
-    : view_controller_(view_controller),
+    // BD MOD:
+    // : view_controller_(view_controller),
+    : view_controller_(fml::scoped_nsobject<FlutterViewController>([view_controller retain])),
       platform_view_(platform_view),
       platform_views_controller_(platform_views_controller),
       last_focused_semantics_object_id_(kSemanticObjectIdInvalid),
@@ -62,7 +64,9 @@ AccessibilityBridge::AccessibilityBridge(FlutterViewController* view_controller,
 AccessibilityBridge::~AccessibilityBridge() {
   [accessibility_channel_.get() setMessageHandler:nil];
   clearState();
-  view_controller_.view.accessibilityElements = nil;
+  // BD MOD: START
+  // view_controller_.view.accessibilityElements = nil;
+  view_controller_.get().view.accessibilityElements = nil;
 }
 
 UIView<UITextInput>* AccessibilityBridge::textInputView() {
@@ -162,9 +166,14 @@ void AccessibilityBridge::UpdateSemantics(flutter::SemanticsNodeUpdates nodes,
   SemanticsObject* lastAdded = nil;
 
   if (root) {
-    if (!view_controller_.view.accessibilityElements) {
-      view_controller_.view.accessibilityElements = @[ [root accessibilityContainer] ];
+    // BD MOD: START
+    // if (!view_controller_.view.accessibilityElements) {
+    //   view_controller_.view.accessibilityElements = @[ [root accessibilityContainer] ];
+    // }
+    if (!view_controller_.get().view.accessibilityElements) {
+      view_controller_.get().view.accessibilityElements = @[ [root accessibilityContainer] ];
     }
+    // END
     NSMutableArray<SemanticsObject*>* newRoutes = [[[NSMutableArray alloc] init] autorelease];
     [root collectRoutes:newRoutes];
     for (SemanticsObject* route in newRoutes) {
@@ -186,7 +195,9 @@ void AccessibilityBridge::UpdateSemantics(flutter::SemanticsNodeUpdates nodes,
       previous_routes_.push_back([route uid]);
     }
   } else {
-    view_controller_.view.accessibilityElements = nil;
+    // BD MOD:
+    // view_controller_.view.accessibilityElements = nil;
+    view_controller_.get().view.accessibilityElements = nil;
   }
 
   NSMutableArray<NSNumber*>* doomed_uids = [NSMutableArray arrayWithArray:[objects_.get() allKeys]];

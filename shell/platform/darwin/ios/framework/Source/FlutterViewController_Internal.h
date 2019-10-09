@@ -7,6 +7,8 @@
 
 #include "flutter/fml/memory/weak_ptr.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
+// BD ADD:
+#import "flutter/bdflutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
 
 namespace flutter {
 class FlutterPlatformViewsController;
@@ -21,7 +23,9 @@ extern NSNotificationName const FlutterViewControllerHideHomeIndicator;
 FLUTTER_EXPORT
 extern NSNotificationName const FlutterViewControllerShowHomeIndicator;
 
-@interface FlutterViewController ()
+// BD MOD:
+// @interface FlutterViewController ()
+@interface FlutterViewController () <FlutterBinaryMessengerProvider>
 
 @property(nonatomic, readonly) BOOL isPresentingViewController;
 - (fml::WeakPtr<FlutterViewController>)getWeakPtr;
