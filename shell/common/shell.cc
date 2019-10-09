@@ -494,6 +494,13 @@ void Shell::OnPlatformViewDestroyed() {
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
+  // BD ADD: START
+  fml::TaskRunner::RunNowOrPostTask(
+      task_runners_.GetIOTaskRunner(), [io_manager = io_manager_.get()] {
+        io_manager->UpdatePlatformViewValid(false);
+      });
+  // END
+
   // Note:
   // This is a synchronous operation because certain platforms depend on
   // setup/suspension of all activities that may be interacting with the GPU in
@@ -507,7 +514,6 @@ void Shell::OnPlatformViewDestroyed() {
     io_manager->GetSkiaUnrefQueue()->Drain();
     // Step 3: All done. Signal the latch that the platform thread is waiting
     // on.
-    io_manager->UpdatePlatformViewValid(false);
     latch.Signal();
   };
 
