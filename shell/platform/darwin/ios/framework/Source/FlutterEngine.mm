@@ -25,12 +25,8 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/platform_message_response_darwin.h"
 #include "flutter/shell/platform/darwin/ios/ios_surface.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
-// BD ADD:
-#include "FlutterBinaryMessengerProvider.h"
 
-// BD MOD:
-// @interface FlutterEngine () <FlutterTextInputDelegate>
-@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessengerProvider>
+@interface FlutterEngine () <FlutterTextInputDelegate>
 // Maintains a dictionary of plugin names that have registered with the engine.  Used by
 // FlutterEngineRegistrar to implement a FlutterPluginRegistrar.
 @property(nonatomic, readonly) NSMutableDictionary* pluginPublications;
@@ -583,7 +579,7 @@
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
-    self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
 }
 
 #pragma mark - FlutterPluginRegistry
@@ -605,7 +601,7 @@
 }
 
 // BD ADD: START
-#pragma mark - FlutterPluginRegistry
+#pragma mark - FlutterBinaryMessengerProvider
 
 - (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
   return _weakBinaryMessengerFactory->GetWeakPtr();
@@ -646,7 +642,7 @@
  *
  */
 - (NSObject<FlutterImageLoaderRegistry>*)imageLoaders {
-    return _flutterEngine;
+  return _flutterEngine;
 }
 
 - (void)publish:(NSObject*)value {
