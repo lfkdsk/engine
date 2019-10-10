@@ -1223,7 +1223,7 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
-    [_engine.get() registerImageLoader:imageLoader];
+  [_engine.get() registerImageLoader:imageLoader];
 }
 
 #pragma mark - FlutterPluginRegistry
@@ -1239,5 +1239,13 @@ constexpr CGFloat kStandardStatusBarHeight = 20.0;
 - (NSObject*)valuePublishedByPlugin:(NSString*)pluginKey {
   return [_engine.get() valuePublishedByPlugin:pluginKey];
 }
+
+// BD ADD: START
+#pragma mark - FlutterBinaryMessengerProvider
+
+- (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
+  return [_engine.get() getWeakBinaryMessengerPtr];
+}
+// END
 
 @end
