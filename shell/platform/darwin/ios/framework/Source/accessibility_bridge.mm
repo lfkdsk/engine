@@ -563,7 +563,9 @@ namespace flutter {
 AccessibilityBridge::AccessibilityBridge(UIView* view,
                                          PlatformViewIOS* platform_view,
                                          FlutterPlatformViewsController* platform_views_controller)
-    : view_(view),
+    // BD MOD:
+    // : view_(view),
+    : view_(fml::scoped_nsobject<UIView>([view retain])),
       platform_view_(platform_view),
       platform_views_controller_(platform_views_controller),
       objects_([[NSMutableDictionary alloc] init]),
@@ -581,7 +583,11 @@ AccessibilityBridge::AccessibilityBridge(UIView* view,
 
 AccessibilityBridge::~AccessibilityBridge() {
   clearState();
-  view_.accessibilityElements = nil;
+  // BD MOD: START
+  // view_.accessibilityElements = nil;
+  // [accessibility_channel_.get() setMessageHandler:nil];
+  view_.get().accessibilityElements = nil;
+  // END
 }
 
 UIView<UITextInput>* AccessibilityBridge::textInputView() {
@@ -650,9 +656,14 @@ void AccessibilityBridge::UpdateSemantics(flutter::SemanticsNodeUpdates nodes,
   SemanticsObject* lastAdded = nil;
 
   if (root) {
-    if (!view_.accessibilityElements) {
-      view_.accessibilityElements = @[ [root accessibilityContainer] ];
+    // BD MOD: START
+    // if (!view_.accessibilityElements) {
+    //  view_.accessibilityElements = @[ [root accessibilityContainer] ];
+    // }
+    if (!view_.get().accessibilityElements) {
+      view_.get().accessibilityElements = @[ [root accessibilityContainer] ];
     }
+    // END
     NSMutableArray<SemanticsObject*>* newRoutes = [[[NSMutableArray alloc] init] autorelease];
     [root collectRoutes:newRoutes];
     for (SemanticsObject* route in newRoutes) {
@@ -674,7 +685,9 @@ void AccessibilityBridge::UpdateSemantics(flutter::SemanticsNodeUpdates nodes,
       previous_routes_.push_back([route uid]);
     }
   } else {
-    view_.accessibilityElements = nil;
+    // BD MOD:
+    // view_.accessibilityElements = nil;
+    view_.get().accessibilityElements = nil;
   }
 
   NSMutableArray<NSNumber*>* doomed_uids = [NSMutableArray arrayWithArray:[objects_.get() allKeys]];
