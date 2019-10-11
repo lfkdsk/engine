@@ -12,7 +12,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterPlatformViews_Internal.h"
 // BD ADD:
-#import "flutter/shell/platform/darwin/ios/framework/Source/FlutterBinaryMessengerProvider.h"
+#import "flutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
 
 // BD MOD:
 // @interface FlutterViewController ()
