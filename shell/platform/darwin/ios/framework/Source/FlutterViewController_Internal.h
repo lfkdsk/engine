@@ -11,8 +11,12 @@
 #include "flutter/shell/common/shell.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterPlatformViews_Internal.h"
+// BD ADD:
+#import "flutter/shell/platform/darwin/ios/framework/Source/FlutterBinaryMessengerProvider.h"
 
-@interface FlutterViewController ()
+// BD MOD:
+// @interface FlutterViewController ()
+@interface FlutterViewController () <FlutterBinaryMessengerProvider>
 
 - (fml::WeakPtr<FlutterViewController>)getWeakPtr;
 - (flutter::FlutterPlatformViewsController*)platformViewsController;

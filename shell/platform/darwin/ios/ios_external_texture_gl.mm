@@ -16,7 +16,11 @@ namespace flutter {
 
 IOSExternalTextureGL::IOSExternalTextureGL(int64_t textureId,
                                            NSObject<FlutterTexture>* externalTexture)
-    : Texture(textureId), external_texture_(externalTexture) {
+    // BD MOD: START
+    //  : Texture(textureId), external_texture_(externalTexture) {
+    : Texture(textureId),
+      external_texture_(fml::scoped_nsobject<NSObject<FlutterTexture>>([externalTexture retain])) {
+  // END
   FML_DCHECK(external_texture_);
 }
 
@@ -39,7 +43,9 @@ void IOSExternalTextureGL::Paint(SkCanvas& canvas,
   }
   fml::CFRef<CVPixelBufferRef> bufferRef;
   if (!freeze) {
-    bufferRef.Reset([external_texture_ copyPixelBuffer]);
+    // BD MOD:
+    // bufferRef.Reset([external_texture_ copyPixelBuffer]);
+    bufferRef.Reset([external_texture_.get() copyPixelBuffer]);
     if (bufferRef != nullptr) {
       CVOpenGLESTextureRef texture;
       CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(
@@ -61,9 +67,8 @@ void IOSExternalTextureGL::Paint(SkCanvas& canvas,
                                  CVOpenGLESTextureGetName(texture_ref_), GL_RGBA8_OES};
   GrBackendTexture backendTexture(bounds.width(), bounds.height(), GrMipMapped::kNo, textureInfo);
   sk_sp<SkImage> image =
-      SkImage::MakeFromTexture(context, backendTexture,
-                               kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType,
-                               kPremul_SkAlphaType, nullptr);
+      SkImage::MakeFromTexture(context, backendTexture, kTopLeft_GrSurfaceOrigin,
+                               kRGBA_8888_SkColorType, kPremul_SkAlphaType, nullptr);
   FML_DCHECK(image) << "Failed to create SkImage from Texture.";
   if (image) {
     canvas.drawImage(image, bounds.x(), bounds.y());

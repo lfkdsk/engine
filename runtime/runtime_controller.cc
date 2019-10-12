@@ -12,6 +12,8 @@
 #include "flutter/runtime/runtime_delegate.h"
 #include "third_party/tonic/dart_message_handler.h"
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 namespace flutter {
 
 RuntimeController::RuntimeController(
@@ -214,7 +216,12 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   tonic::DartState::Scope scope(root_isolate);
 
-  Dart_NotifyIdle(deadline);
+  // BD MOD: START
+  // Dart_NotifyIdle(deadline);
+  if (!Boost::Current()->IsGCDisabled()) {
+    Dart_NotifyIdle(deadline);
+  }
+  // END
 
   // Idle notifications being in isolate scope are part of the contract.
   if (idle_notification_callback_) {

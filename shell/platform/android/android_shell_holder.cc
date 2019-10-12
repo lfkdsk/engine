@@ -225,10 +225,10 @@ fml::WeakPtr<PlatformViewAndroid> AndroidShellHolder::GetPlatformView() {
 
 // BD ADD:START
 void AndroidShellHolder::ExitApp(fml::closure closure) {
-    if (!IsValid()) {
-        return;
-    }
-    shell_->ExitApp(std::move(closure));
+  if (!IsValid()) {
+    return;
+  }
+  shell_->ExitApp(std::move(closure));
 }
 
 void AndroidShellHolder::UpdateSettings(const std::string& dynamic_dill_path) {

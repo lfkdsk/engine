@@ -20,6 +20,7 @@
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_git': 'https://dart.googlesource.com',
+  # BD ADD:
   'tt_dart_git': 'ssh://git@code.byted.org/tech_client/dart',
   'fuchsia_git': 'https://fuchsia.googlesource.com',
   'github_git': 'https://github.com',
@@ -32,6 +33,8 @@ vars = {
   # Dart is: https://github.com/dart-lang/sdk/blob/master/DEPS.
   # You can use //tools/dart/create_updated_flutter_deps.py to produce
   # updated revision list of existing dependencies.
+  # BD MOD:
+  #'dart_revision': 'a1668566e563aef64025d0af88a099cbbe847b7e',
   'dart_revision': 'd6c0f4ee3fc9f9bfe0e47b3b9b5b570fd04ae9eb',
 
   # WARNING: DO NOT EDIT MANUALLY
@@ -122,7 +125,7 @@ allowed_hosts = [
 ]
 
 deps = {
-  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + '3b7bcee5ca43dfed373ad32b6a8c1a603294b6b4',
+  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + '9a38f8433e0318c7d4a833279ce540ef1fae5a93',
 
    # Fuchsia compatibility
    #
@@ -169,6 +172,8 @@ deps = {
    Var('chromium_git') + '/chromium/deps/icu.git' + '@' + 'c56c671998902fcc4fc9ace88c83daa99f980793',
 
   'src/third_party/dart':
+   # BD MOD:
+   #Var('dart_git') + '/sdk.git' + '@' + Var('dart_revision'),
    Var('tt_dart_git') + '@' + Var('dart_revision'),
 
   'src/third_party/boringssl':

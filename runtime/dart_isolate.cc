@@ -27,6 +27,8 @@
 #include "third_party/tonic/logging/dart_invoke.h"
 #include "third_party/tonic/scopes/dart_api_scope.h"
 #include "third_party/tonic/scopes/dart_isolate_scope.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 namespace flutter {
 
@@ -193,7 +195,9 @@ void DartIsolate::SetMessageHandlingTaskRunner(
   message_handling_task_runner_ = runner;
 
   message_handler().Initialize(
-      [runner](std::function<void()> task) { runner->PostTask(task); });
+      // BD MOD:
+      // [runner](std::function<void()> task) { runner->PostTask(task); });
+      [runner](std::function<void()> task) { runner->PostTask(task, Boost::Current()->IsDelayFuture()); });
 }
 
 // Updating thread names here does not change the underlying OS thread names.

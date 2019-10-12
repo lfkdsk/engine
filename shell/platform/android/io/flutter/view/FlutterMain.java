@@ -152,8 +152,10 @@ public class FlutterMain {
         private String logTag;
         private String nativeLibraryDir;
         private SoLoader soLoader;
-        // BD ADD
+        //BD ADD: START
+        private Runnable onInitResources;
         private boolean disableLeakVM = false;
+        // END
 
         public String getLogTag() {
             return logTag;
@@ -167,11 +169,15 @@ public class FlutterMain {
             return soLoader;
         }
 
-        // BD ADD:START
+        //BD ADD: START
+        public Runnable getOnInitResourcesCallback() {
+            return onInitResources;
+        }
+
         public boolean isDisableLeakVM() {
             return disableLeakVM;
         }
-        // END
+        //END
 
         /**
          * Set the tag associated with Flutter app log messages.
@@ -189,12 +195,16 @@ public class FlutterMain {
             soLoader = loader;
         }
 
-        // BD ADD:START
+        //BD ADD: START
+        public void setOnInitResourcesCallback(Runnable callback) {
+            onInitResources = callback;
+        }
+
         // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
         public void disableLeakVM() {
             disableLeakVM = true;
         }
-        // END
+        //END
     }
 
     /**
@@ -330,6 +340,14 @@ public class FlutterMain {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                //BD ADD: START
+                try {
+                    sInitTask.get();
+                } catch (Exception e) {
+                    Log.e(TAG, "Flutter initialization failed.", e);
+                    throw new RuntimeException(e);
+                }
+                //END
                 sResourceExtractor.waitForCompletion();
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -348,7 +366,8 @@ public class FlutterMain {
     private static void initResources(Context applicationContext) {
         Context context = applicationContext;
 
-        sResourceExtractor = new ResourceExtractor(context);
+        // BD MOD
+        sResourceExtractor = new ResourceExtractor(context, sSettings.getOnInitResourcesCallback());
 
         sResourceExtractor
             .addResource(fromFlutterAssets(sFlx))

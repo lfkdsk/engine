@@ -34,6 +34,8 @@ _flutter_framework_headers = [
   "framework/Headers/FlutterPluginAppLifeCycleDelegate.h",
   "framework/Headers/FlutterTexture.h",
   "framework/Headers/FlutterViewController.h",
+  # BD ADD:
+  "framework/Headers/FlutterImageLoader.h",
 ]
 
 _flutter_framework_headers_copy_dir = "$_flutter_framework_dir/Headers"
@@ -100,6 +102,10 @@ shared_library("create_flutter_framework_dylib") {
     "ios_surface_software.mm",
     "platform_view_ios.h",
     "platform_view_ios.mm",
+    # BD ADD: START
+    "ios_external_image_loader.h",
+    "ios_external_image_loader.mm"
+    # END
   ]
 
   sources += _flutter_framework_headers

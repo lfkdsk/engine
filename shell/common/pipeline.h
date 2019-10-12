@@ -10,6 +10,8 @@
 #include "flutter/fml/synchronization/semaphore.h"
 #include "flutter/fml/trace_event.h"
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -90,10 +92,18 @@ class Pipeline : public fml::RefCountedThreadSafe<Pipeline<R>> {
 
   ~Pipeline() = default;
 
-  bool IsValid() const { return empty_.IsValid() && available_.IsValid(); }
+  // BD MOD: START
+  // bool IsValid() const { return (empty_.IsValid() && available_.IsValid(); }
+  bool IsValid() const {
+    return (empty_.IsValid() || Boost::Current()->IsValidExtension()) &&
+           available_.IsValid();
+  }
+  // END
 
   ProducerContinuation Produce() {
-    if (!empty_.TryWait()) {
+    // BD MOD:
+    // if (!empty_.TryWait())
+    if (!empty_.TryWait() && !Boost::Current()->TryWaitExtension()) {
       return {};
     }
 
@@ -131,7 +141,12 @@ class Pipeline : public fml::RefCountedThreadSafe<Pipeline<R>> {
       consumer(std::move(resource));
     }
 
-    empty_.Signal();
+    // BD MOD: START
+    // empty_.Signal();
+    if (!Boost::Current()->SignalExtension()) {
+      empty_.Signal();
+    }
+    // END
 
     TRACE_FLOW_END("flutter", "PipelineItem", trace_id);
     TRACE_EVENT_ASYNC_END0("flutter", "PipelineItem", trace_id);

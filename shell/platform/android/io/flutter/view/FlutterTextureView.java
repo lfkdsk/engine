@@ -65,6 +65,7 @@ import io.flutter.plugin.platform.PlatformPlugin;
 import io.flutter.plugin.platform.PlatformViewsController;
 
 /**
+ * BD ADD:
  * An Android view containing a Flutter app.
  */
 public class FlutterTextureView extends CachedTextureView implements BinaryMessenger, TextureRegistry, IFlutterView {
@@ -286,6 +287,7 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
         if (mPlatformPlugin != null) {
             removeActivityLifecycleListener(mPlatformPlugin);
             mPlatformPlugin = null;
+            platformChannel.setPlatformMessageHandler(null);
             if (mNativeView != null && mNativeView.isAttached()) {
                 mNativeView.detachFromFlutterView();
             }
@@ -476,6 +478,10 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     }
 
     public void destroy() {
+        if (mAccessibilityNodeProvider != null) {
+            mAccessibilityNodeProvider.release();
+            mAccessibilityNodeProvider = null;
+        }
         if (!isAttached())
             return;
 
@@ -788,17 +794,17 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
-        PlatformViewsController platformViewsController = getPluginRegistry().getPlatformViewsController();
-        mAccessibilityNodeProvider = new AccessibilityBridge(
-            this,
-            new AccessibilityChannel(dartExecutor, getFlutterNativeView().getFlutterJNI()),
-            (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE),
-            getContext().getContentResolver(),
-            platformViewsController
-        );
-        mAccessibilityNodeProvider.setOnAccessibilityChangeListener(onAccessibilityChangeListener);
-
+        if (mAccessibilityNodeProvider == null) {
+            PlatformViewsController platformViewsController = getPluginRegistry().getPlatformViewsController();
+            mAccessibilityNodeProvider = new AccessibilityBridge(
+                    this,
+                    new AccessibilityChannel(dartExecutor, getFlutterNativeView().getFlutterJNI()),
+                    (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE),
+                    getContext().getContentResolver(),
+                    platformViewsController
+            );
+            mAccessibilityNodeProvider.setOnAccessibilityChangeListener(onAccessibilityChangeListener);
+        }
         resetWillNotDraw(
             mAccessibilityNodeProvider.isAccessibilityEnabled(),
             mAccessibilityNodeProvider.isTouchExplorationEnabled()
@@ -808,9 +814,6 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
-        mAccessibilityNodeProvider.release();
-        mAccessibilityNodeProvider = null;
     }
 
     // TODO(mattcarroll): Confer with Ian as to why we need this method. Delete if possible, otherwise add comments.

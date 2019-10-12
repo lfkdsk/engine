@@ -52,13 +52,19 @@ git clean -fd
 
 gclient sync -D -f
 
-cd ..
-
-cd flutter/tt_build_tools
+cd tt_build_tools
 
 bash android_build.sh $JCOUNT $MODE
+if [ $? -ne 0 ]; then
+	echo "android_build Compile failed !"
+	exit 1
+fi
 
 bash iOS_build.sh $JCOUNT
+if [ $? -ne 0 ]; then
+	echo "iOS_build Compile failed !"
+	exit 1
+fi
 
 curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release/libflutter.so" http://symbolicate.byted.org/android_upload
 curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_arm64/libflutter.so" http://symbolicate.byted.org/android_upload

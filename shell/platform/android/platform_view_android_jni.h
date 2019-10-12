@@ -45,6 +45,10 @@ void SurfaceTextureGetTransformMatrix(JNIEnv* env,
                                       jfloatArray result);
 
 void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj);
+/**
+ * BD ADD: call android to load image
+ */
+void CallJavaImageLoader(jobject android_image_loader, const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback);
 
 }  // namespace flutter
 

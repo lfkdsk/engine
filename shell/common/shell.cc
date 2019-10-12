@@ -27,6 +27,8 @@
 #include "flutter/shell/common/skia_event_tracer_impl.h"
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/common/vsync_waiter.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
 #include "third_party/skia/include/core/SkGraphics.h"
 #include "third_party/tonic/common/log.h"
@@ -492,6 +494,13 @@ void Shell::OnPlatformViewDestroyed() {
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
+  // BD ADD: START
+  fml::TaskRunner::RunNowOrPostTask(
+      task_runners_.GetIOTaskRunner(), [io_manager = io_manager_.get()] {
+        io_manager->UpdatePlatformViewValid(false);
+      });
+  // END
+
   // Note:
   // This is a synchronous operation because certain platforms depend on
   // setup/suspension of all activities that may be interacting with the GPU in
@@ -505,7 +514,6 @@ void Shell::OnPlatformViewDestroyed() {
     io_manager->GetSkiaUnrefQueue()->Drain();
     // Step 3: All done. Signal the latch that the platform thread is waiting
     // on.
-    io_manager->UpdatePlatformViewValid(false);
     latch.Signal();
   };
 
@@ -711,6 +719,23 @@ void Shell::OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) {
   });
 }
 
+/**
+ * BD ADD:
+ */
+// |PlatformView::Delegate|
+void Shell::OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) {
+    FML_DCHECK(is_setup_);
+    FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
+
+    task_runners_.GetIOTaskRunner()->PostTask(
+      [io_manager = io_manager_->GetWeakPtr(),
+       imageLoader = std::move(imageLoader)] {
+        if (io_manager) {
+          io_manager->RegisterImageLoader(imageLoader);
+      }
+    });
+}
+    
 // |PlatformView::Delegate|
 void Shell::OnPlatformViewSetNextFrameCallback(fml::closure closure) {
   FML_DCHECK(is_setup_);
@@ -800,7 +825,9 @@ void Shell::OnEngineHandlePlatformMessage(
         if (view) {
           view->HandlePlatformMessage(std::move(message));
         }
-      });
+      // BD MOD:
+      // });
+      }, Boost::Current()->IsDelayPlatformMessage());
 }
 
 void Shell::HandleEngineSkiaMessage(fml::RefPtr<PlatformMessage> message) {

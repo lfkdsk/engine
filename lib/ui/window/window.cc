@@ -14,6 +14,8 @@
 #include "third_party/tonic/dart_microtask_queue.h"
 #include "third_party/tonic/logging/dart_invoke.h"
 #include "third_party/tonic/typed_data/dart_byte_data.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 namespace flutter {
 namespace {
@@ -360,6 +362,9 @@ void Window::BeginFrame(fml::TimePoint frameTime) {
     return;
   tonic::DartState::Scope scope(dart_state);
 
+  // BD ADD:
+  Boost::Current()->CheckFinished();
+  
   int64_t microseconds = (frameTime - fml::TimePoint()).ToMicroseconds();
 
   tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_beginFrame",

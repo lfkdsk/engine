@@ -9,6 +9,8 @@
 
 #include "flutter/common/task_runners.h"
 #include "flutter/flow/texture.h"
+// BD ADD:
+#include "flutter/lib/ui/painting/image_loader.h"
 #include "flutter/fml/macros.h"
 #include "flutter/fml/memory/weak_ptr.h"
 #include "flutter/lib/ui/semantics/custom_accessibility_action.h"
@@ -60,6 +62,12 @@ class PlatformView {
 
     virtual void OnPlatformViewMarkTextureFrameAvailable(
         int64_t texture_id) = 0;
+    /**
+     * BD ADD:
+     *
+     */
+    virtual void OnPlatformViewRegisterImageLoader(
+        std::shared_ptr<flutter::ImageLoader> imageLoader) = 0;
   };
 
   explicit PlatformView(Delegate& delegate, TaskRunners task_runners);
@@ -113,6 +121,9 @@ class PlatformView {
 
   // Called once per texture update (e.g. video frame), on the platform thread.
   void MarkTextureFrameAvailable(int64_t texture_id);
+  
+  // BD ADD:
+  void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
 
  protected:
   PlatformView::Delegate& delegate_;

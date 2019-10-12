@@ -114,4 +114,20 @@ bool ShellIOManager::IsResourceContextValidForDecodeImage() const {
          (should_defer_decode_image_when_platform_view_invalid_ &&
           is_platform_view_valid_);
 }
+  
+/**
+ * BD ADD:
+ *
+ */
+void ShellIOManager::RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) {
+  imageLoader_ = imageLoader;
+}
+  
+/**
+ * BD ADD:
+ *
+ */
+std::shared_ptr<flutter::ImageLoader> ShellIOManager::GetImageLoader() const {
+  return imageLoader_;
+}
 }  // namespace flutter
