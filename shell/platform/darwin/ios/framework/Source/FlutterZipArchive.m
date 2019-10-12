@@ -248,7 +248,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
   int crc_ret = 0;
   unsigned char buffer[4096] = {0};
   NSFileManager* fileManager = [NSFileManager defaultManager];
-  NSMutableArray<NSDictionary*>* directoriesModificationDates = [[NSMutableArray alloc] init];
+  NSMutableArray<NSDictionary*>* directoriesModificationDates =
+      [[[NSMutableArray alloc] init] autorelease];
 
   // Message delegate
   if ([delegate respondsToSelector:@selector(zipArchiveWillUnzipArchiveAtPath:zipInfo:)]) {
@@ -466,8 +467,9 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
                 NSNumber* permissionsValue = @(permissions);
 
                 // Retrieve any existing attributes
-                NSMutableDictionary* attrs = [[NSMutableDictionary alloc]
-                    initWithDictionary:[fileManager attributesOfItemAtPath:fullPath error:nil]];
+                NSMutableDictionary* attrs = [[[NSMutableDictionary alloc]
+                    initWithDictionary:[fileManager attributesOfItemAtPath:fullPath
+                                                                     error:nil]] autorelease];
 
                 // Set the value in the attributes dict
                 [attrs setObject:permissionsValue forKey:NSFilePosixPermissions];
@@ -759,6 +761,7 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
   components.second = (msdosDateTime & kSecondMask) * 2;
 
   NSDate* date = [self._gregorian dateFromComponents:components];
+  [components release];
   return date;
 }
 
@@ -825,10 +828,10 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo) {
     *s++ = hexChars[*bytes & 0xF];
     bytes++;
   }
-  NSString* str = [[NSString alloc] initWithBytesNoCopy:chars
-                                                 length:length * 2
-                                               encoding:NSASCIIStringEncoding
-                                           freeWhenDone:YES];
+  NSString* str = [[[NSString alloc] initWithBytesNoCopy:chars
+                                                  length:length * 2
+                                                encoding:NSASCIIStringEncoding
+                                            freeWhenDone:YES] autorelease];
   return str;
 }
 

@@ -33,7 +33,7 @@ NSString* const FlutterVMDataFileName = @"vm_snapshot_data";
 NSString* const FlutterIcudtlDataFileName = @"icudtl.dat";
 static NSString* const kFLTAssetsPath = @"FLTAssetsPath";
 static NSString* const kFlutterAssets = @"flutter_assets";
-static FlutterCompressSizeModeMonitor kFlutterCompressSizeModeMonitor;
+static FlutterCompressSizeModeMonitor kFlutterCompressSizeModeMonitor = nil;
 // END
 
 static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
@@ -322,7 +322,8 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 }
 
 + (void)predecompressData {
-  [[FlutterCompressSizeModeManager sharedInstance] decompressDataAsync:nil];
+  [[FlutterCompressSizeModeManager sharedInstance]
+      decompressDataAsync:kFlutterCompressSizeModeMonitor];
 }
 
 + (NSString*)flutterAssetsPath {

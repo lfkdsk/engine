@@ -20,8 +20,12 @@
 
 @end
 
-// BD ADD:
-typedef void (^FlutterCompressSizeModeMonitor)(BOOL succeeded, NSError* error);
+// BD ADD: START
+typedef void (^FlutterCompressSizeModeMonitor)(BOOL needDecompress,
+                                               BOOL isPredecompressMode,
+                                               BOOL succeeded,
+                                               NSError* error);
+// END
 
 /**
  * A set of Flutter and Dart assets used by a `FlutterEngine` to initialize execution.

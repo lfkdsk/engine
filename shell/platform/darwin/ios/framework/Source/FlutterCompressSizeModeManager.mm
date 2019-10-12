@@ -67,7 +67,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     NSUUID* uuid = [[[NSUUID alloc] initWithUUIDBytes:uuidPtr] autorelease];
     uuidString = [uuid UUIDString];
   }
-  if (!uuidString) {
+  if (uuidString.length == 0) {
     uuidString = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]];
   }
 
@@ -146,20 +146,27 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 }
 
 - (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion {
+  return [self getDecompressedDataPath:completion isAsync:NO];
+}
+
+- (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion
+                             isAsync:(BOOL)isAsync {
   NSError* error = nil;
   BOOL succeeded = YES;
+  BOOL needDecompress = NO;
   if ([self needDecompressData]) {
+    needDecompress = YES;
     succeeded = [self decompressData:&error];
   }
   if (completion) {
-    completion(succeeded, error);
+    completion(needDecompress, isAsync, succeeded, error);
   }
   return succeeded ? self.cacheDirectoryForCurrentUUID : nil;
 }
 
 - (void)decompressDataAsync:(FlutterCompressSizeModeMonitor)completion {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-    [self getDecompressedDataPath:completion];
+    [self getDecompressedDataPath:completion isAsync:YES];
   });
 }
 
