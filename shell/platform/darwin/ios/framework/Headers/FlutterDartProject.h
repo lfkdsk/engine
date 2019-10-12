@@ -36,7 +36,7 @@ FLUTTER_EXPORT
  */
 - (instancetype)initFromDefaultSourceForConfiguration FLUTTER_UNAVAILABLE("Use -init instead.");
 
-// BYTEDANCE ADD:
+// BD ADD:
 /**
  * dynamic settings
  */

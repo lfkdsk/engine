@@ -60,8 +60,7 @@ public class FlutterActivity extends Activity implements FlutterView.Provider, P
      */
     @Override
     public FlutterNativeView createFlutterNativeView() {
-        // BYTEDANCE MOD
-        return new FlutterNativeView(getApplicationContext(), FlutterActivityDelegate.getArgsFromIntent(getIntent()));
+        return null;
     }
 
     @Override

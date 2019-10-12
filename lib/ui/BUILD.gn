@@ -10,8 +10,6 @@ source_set("ui") {
     "compositing/scene_builder.h",
     "dart_runtime_hooks.cc",
     "dart_runtime_hooks.h",
-    "native_bridge.h",
-    "native_bridge.cc",
     "dart_ui.cc",
     "dart_ui.h",
     "dart_wrapper.h",

@@ -69,6 +69,7 @@ class DartIsolate : public UIDartState {
 
   Phase GetPhase() const;
 
+  // BD ADD:
   FML_WARN_UNUSED_RESULT
   bool PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> kernel);
 

@@ -44,11 +44,16 @@ class AndroidShellHolder {
 
   void UpdateAssetManager(fml::RefPtr<flutter::AssetManager> asset_manager);
 
-  // BD ADD
+  // BD ADD: START
   void ExitApp(fml::closure closure);
 
+  void UpdateSettings(const std::string& dynamic_dill_path);
+  // END
  private:
-  const flutter::Settings settings_;
+  // BD MOD:
+  // BEFORE: const flutter::Settings settings_;
+  flutter::Settings settings_;
+  // END
   const fml::jni::JavaObjectWeakGlobalRef java_object_;
   fml::WeakPtr<PlatformViewAndroid> platform_view_;
   ThreadHost thread_host_;

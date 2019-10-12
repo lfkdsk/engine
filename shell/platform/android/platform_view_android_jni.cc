@@ -170,24 +170,26 @@ void SurfaceTextureDetachFromGLContext(JNIEnv* env, jobject obj) {
 
 // Called By Java
 
-// BYTEDANCE MOD:
 static jlong AttachJNI(JNIEnv* env,
                        jclass clazz,
                        jobject flutterJNI,
-                       jobjectArray jargs,
                        jboolean is_background_view) {
   fml::jni::JavaObjectWeakGlobalRef java_object(env, flutterJNI);
-  // 每个Holder拥有自己的Settings
-  Settings settings(FlutterMain::Get().GetSettings());
-  settings.dynamic_dill_path = FlutterMain::SettingsFromArgs(env, jargs).dynamic_dill_path;
   auto shell_holder = std::make_unique<AndroidShellHolder>(
-      settings, java_object, is_background_view);
+      FlutterMain::Get().GetSettings(), java_object, is_background_view);
   if (shell_holder->IsValid()) {
     return reinterpret_cast<jlong>(shell_holder.release());
   } else {
     return 0;
   }
 }
+
+// BD ADD:
+static void UpdateSettings(JNIEnv *env, jobject jcaller, jlong shell_holder, jstring dynamic_dill_path) {
+  // 每个Holder都拥有自己的Settings，需要设置不同的dynamic_dill_path
+  ANDROID_SHELL_HOLDER->UpdateSettings(fml::jni::JavaStringToString(env, dynamic_dill_path));
+}
+// END
 
 static void DestroyJNI(JNIEnv *env, jobject jcaller, jlong shell_holder) {
     // BD MOD
@@ -226,29 +228,14 @@ static void SurfaceDestroyed(JNIEnv* env, jobject jcaller, jlong shell_holder) {
   ANDROID_SHELL_HOLDER->GetPlatformView()->NotifyDestroyed();
 }
 
-// BD MOD: 增加 const Settings& settings 参数
 std::unique_ptr<IsolateConfiguration> CreateIsolateConfiguration(
     flutter::AssetManager& asset_manager, const Settings& settings) {
-  // BD ADD:
-  // Running in Dynamicart mode.
+  // BD ADD: START
+  // Running in Dynamicart mode. 注意：仅Android调用
   if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
-    // 如果是动态模式，asset_manager也给一并更新了。动态资源放在最前面，优先级最高。
-    const auto file_ext_index = settings.dynamic_dill_path.rfind('.');
-    if (settings.dynamic_dill_path.substr(file_ext_index) != ".zip") {
-      asset_manager.PushFront(std::make_unique<DirectoryAssetBundle>(fml::OpenDirectory(
-          settings.dynamic_dill_path.c_str(), false, fml::FilePermission::kRead)));
-    } else {
-      asset_manager.PushFront(std::make_unique<ZipAssetStore>(settings.dynamic_dill_path.c_str(), "flutter_assets"));
-    }
-
-    std::unique_ptr<fml::Mapping> kernel = asset_manager.GetAsMapping("kernel_blob.bin");
-    if (kernel != nullptr && kernel->GetSize() > 0) {
-      TT_LOG() << "Created IsolateConfiguration For Running DynamicartKernel.";
-      return IsolateConfiguration::CreateForDynamicartKernel(std::move(kernel));
-    } else {
-      TT_LOG() << "No kernel_blob.bin in zip file " << settings.dynamic_dill_path.c_str();
-    }
+    return IsolateConfiguration::CreateForDynamicart(settings, asset_manager);
   }
+  // END
 
   if (flutter::DartVM::IsRunningPrecompiledCode()) {
     return IsolateConfiguration::CreateForAppSnapshot();
@@ -325,6 +312,7 @@ static void RunBundleAndSnapshotFromLibrary(JNIEnv* env,
   }
 
   // BD MOD: 跟iOS IsolateConfiguration::InferFromSettings 的逻辑对齐
+  // BEFORE: auto isolate_configuration = CreateIsolateConfiguration(*asset_manager);
   auto isolate_configuration = CreateIsolateConfiguration(*asset_manager, ANDROID_SHELL_HOLDER->GetSettings());
   if (!isolate_configuration) {
     FML_DLOG(ERROR)
@@ -593,10 +581,16 @@ bool RegisterApi(JNIEnv* env) {
       // Start of methods from FlutterNativeView
       {
           .name = "nativeAttach",
-          // BYTEDANCE MOD:
-          .signature = "(Lio/flutter/embedding/engine/FlutterJNI;[Ljava/lang/String;Z)J",
+          .signature = "(Lio/flutter/embedding/engine/FlutterJNI;Z)J",
           .fnPtr = reinterpret_cast<void*>(&AttachJNI),
       },
+      // BD ADD: START
+      {
+          .name = "nativeUpdateSettings",
+          .signature = "(JLjava/lang/String;)V",
+          .fnPtr = reinterpret_cast<void*>(&UpdateSettings),
+      },
+      // END
       {
           .name = "nativeDestroy",
           .signature = "(J)V",

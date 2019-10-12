@@ -19,6 +19,7 @@ import android.content.res.Resources.NotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+// BD ADD:
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -159,6 +160,12 @@ public final class FlutterActivityDelegate
         if (flutterView == null) {
             FlutterNativeView nativeView = viewFactory.createFlutterNativeView();
             flutterView = new FlutterView(activity, null, nativeView);
+
+            String path = activity.getIntent().getStringExtra("dynamic_dill_path");
+            if (!TextUtils.isEmpty(path)){
+                flutterView.getFlutterNativeView().updateNative(path);
+            }
+
             flutterView.setLayoutParams(matchParent);
             activity.setContentView(flutterView);
             launchView = createLaunchView();
@@ -286,7 +293,8 @@ public final class FlutterActivityDelegate
     @Override
     public void onConfigurationChanged(Configuration newConfig) {}
 
-    // BYTEDANCE MOD
+    // BD MOD:
+    // private static String[] getArgsFromIntent(Intent intent) {
     static String[] getArgsFromIntent(Intent intent) {
         // Before adding more entries to this list, consider that arbitrary
         // Android applications can generate intents with extra data and that
@@ -325,9 +333,11 @@ public final class FlutterActivityDelegate
         if (intent.getBooleanExtra("verbose-logging", false)) {
             args.add("--verbose-logging");
         }
+        // BD ADD:
         if (!TextUtils.isEmpty(intent.getStringExtra("dynamic_dill_path"))){
             args.add("--dynamic_dill_path="+intent.getStringExtra("dynamic_dill_path"));
         }
+        // END
         if (!args.isEmpty()) {
             String[] argsArray = new String[args.size()];
             return args.toArray(argsArray);

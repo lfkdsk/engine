@@ -78,19 +78,3 @@ int _isolateId; // ignore: unused_element
 Function _getPrintClosure() => _print;  // ignore: unused_element
 @pragma('vm:entry-point')
 Function _getScheduleMicrotaskClosure() => _scheduleMicrotask; // ignore: unused_element
-
-
-//// === native interpreter begin ===
-//bool nativeDetect(Function function) native 'NativeDetect';
-//
-//dynamic nativeCall0(Function closure, int optionalNamedParametersCount) native 'NativeCall0';
-//dynamic nativeCall1(Function closure, int optionalNamedParametersCount, dynamic arg1) native 'NativeCall1';
-//dynamic nativeCall2(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2) native 'NativeCall2';
-//dynamic nativeCall3(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3) native 'NativeCall3';
-//dynamic nativeCall4(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3, dynamic arg4) native 'NativeCall4';
-//dynamic nativeCall5(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3, dynamic arg4, dynamic arg5) native 'NativeCall5';
-//dynamic nativeCall6(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3, dynamic arg4, dynamic arg5, dynamic arg6) native 'NativeCall6';
-//dynamic nativeCall7(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3, dynamic arg4, dynamic arg5, dynamic arg6, dynamic arg7) native 'NativeCall7';
-//dynamic nativeCall8(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3, dynamic arg4, dynamic arg5, dynamic arg6, dynamic arg7, dynamic arg8) native 'NativeCall8';
-//dynamic nativeCall9(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3, dynamic arg4, dynamic arg5, dynamic arg6, dynamic arg7, dynamic arg8, dynamic arg9) native 'NativeCall9';
-//dynamic nativeCall10(Function closure, int optionalNamedParametersCount, dynamic arg1, dynamic arg2, dynamic arg3, dynamic arg4, dynamic arg5, dynamic arg6, dynamic arg7, dynamic arg8, dynamic arg9, dynamic arg10) native 'NativeCall10';

@@ -163,32 +163,13 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::InferFromSettings(
     const Settings& settings,
     std::shared_ptr<AssetManager> asset_manager,
     fml::RefPtr<fml::TaskRunner> io_worker) {
-  // Running in Dynamicart mode.
-  if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
-    // 如果是动态模式，asset_manager也给一并更新了。动态资源放在最前面，优先级最高。
-    size_t file_ext_index = settings.dynamic_dill_path.rfind('.');
-    if (file_ext_index == std::string::npos ||
-        settings.dynamic_dill_path.substr(file_ext_index) != ".zip") {
-      asset_manager->PushFront(std::make_unique<DirectoryAssetBundle>(
-          fml::OpenDirectory(settings.dynamic_dill_path.c_str(), false,
-                             fml::FilePermission::kRead)));
-    } else {
-      asset_manager->PushFront(std::make_unique<ZipAssetStore>(
-          settings.dynamic_dill_path.c_str(), "flutter_assets"));
-    }
 
-    // 塞进去一个kernel, 在isolate.PrepareForRunningFromDynamicartKernel()
-    // 中会被加载
-    std::unique_ptr<fml::Mapping> kernel =
-        asset_manager->GetAsMapping("kernel_blob.bin");
-    if (kernel != nullptr && kernel->GetSize() > 0) {
-      TT_LOG() << "Created IsolateConfiguration For Running DynamicartKernel.";
-      return IsolateConfiguration::CreateForDynamicartKernel(std::move(kernel));
-    } else {
-      TT_LOG() << "No kernel_blob.bin in zip file "
-               << settings.dynamic_dill_path.c_str();
-    }
+  // BD ADD:
+  // Running in Dynamicart mode. 注意：仅iOS调用
+  if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
+    CreateForDynamicart(settings, *asset_manager);
   }
+  // END
 
   // Running in AOT mode.
   if (DartVM::IsRunningPrecompiledCode()) {
@@ -241,12 +222,48 @@ IsolateConfiguration::CreateForAppSnapshot() {
   return std::make_unique<AppSnapshotIsolateConfiguration>();
 }
 
-// BD ADD:
+// BD ADD: START
+std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
+    const Settings& settings, AssetManager& asset_manager) {
+  // Running in Dynamicart mode.
+  if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
+    // 如果是动态模式，把动态包资源也加入asset_manager的查找范围中，且放在最前面，优先级最高。
+    // 根据dynamic_dill_path的后缀判断有不同的处理逻辑：
+    // 如果.zip结尾就作为ZipAssetStore处理
+    // 如果不是那就作为DirectoryAssetBundle处理
+    size_t file_ext_index = settings.dynamic_dill_path.rfind('.');
+    if (file_ext_index == std::string::npos ||
+        settings.dynamic_dill_path.substr(file_ext_index) != ".zip") {
+      asset_manager.PushFront(std::make_unique<DirectoryAssetBundle>(
+          fml::OpenDirectory(settings.dynamic_dill_path.c_str(), false,
+                             fml::FilePermission::kRead)));
+    } else {
+      asset_manager.PushFront(std::make_unique<ZipAssetStore>(
+          settings.dynamic_dill_path.c_str(), "flutter_assets"));
+    }
+
+    // 然后，从资源中找出kernel文件, 由此生成IsolateConfiguration
+    // 后续的逻辑会根据IsolateConfiguration创建isolate
+    // isolate.PrepareForRunningFromDynamicartKernel()中加载该kernel文件
+    std::unique_ptr<fml::Mapping> kernel =
+        asset_manager.GetAsMapping("kernel_blob.bin");
+    if (kernel != nullptr && kernel->GetSize() > 0) {
+      TT_LOG() << "Created IsolateConfiguration For Running Dynamicart Kernel.";
+      return IsolateConfiguration::CreateForDynamicartKernel(std::move(kernel));
+    } else {
+      TT_LOG() << "No kernel_blob.bin in dynamic_dill_path "
+               << settings.dynamic_dill_path.c_str();
+    }
+  }
+  return nullptr;
+}
+
 std::unique_ptr<IsolateConfiguration>
 IsolateConfiguration::CreateForDynamicartKernel(
     std::unique_ptr<const fml::Mapping> kernel) {
   return std::make_unique<DynamicartIsolateConfiguration>(std::move(kernel));
 }
+// END
 
 std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForKernel(
     std::unique_ptr<const fml::Mapping> kernel) {

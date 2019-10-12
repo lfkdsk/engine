@@ -30,7 +30,7 @@ class DartVM {
 
   static bool IsRunningPrecompiledCode();
 
-  // BYTEDANCE ADD：
+  // BD ADD：
   static bool IsRunningDynamicCode();
 
   static size_t GetVMLaunchCount();

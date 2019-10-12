@@ -124,16 +124,6 @@ static void RecordStartTimestamp(JNIEnv* env,
   flutter::engine_main_enter_ts = Dart_TimelineGetMicros() - initTimeMicros;
 }
 
-// BYTEDANCE ADD:
-Settings FlutterMain::SettingsFromArgs(JNIEnv* env, jobjectArray jargs) {
-  std::vector<std::string> args;
-  for (auto& arg : fml::jni::StringArrayToVector(env, jargs)) {
-    args.push_back(std::move(arg));
-  }
-  auto command_line = fml::CommandLineFromIteratorsWithArgv0("", args.begin(), args.end());
-  return SettingsFromCommandLine(command_line);
-}
-
 bool FlutterMain::Register(JNIEnv* env) {
   static const JNINativeMethod methods[] = {
       {

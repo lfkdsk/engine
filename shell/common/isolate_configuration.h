@@ -28,8 +28,11 @@ class IsolateConfiguration {
 
   static std::unique_ptr<IsolateConfiguration> CreateForAppSnapshot();
 
-  // BD ADD:
-  static std::unique_ptr<IsolateConfiguration> CreateForDynamicartKernel(std::unique_ptr<const fml::Mapping> kernel);
+  // BD ADD: START
+  static std::unique_ptr<IsolateConfiguration> CreateForDynamicart(
+      const Settings &settings,
+      AssetManager& asset_manager);
+  // END
 
   static std::unique_ptr<IsolateConfiguration> CreateForKernel(
       std::unique_ptr<const fml::Mapping> kernel);
@@ -51,6 +54,10 @@ class IsolateConfiguration {
   virtual bool DoPrepareIsolate(DartIsolate& isolate) = 0;
 
  private:
+  // BD ADD: START
+  static std::unique_ptr<IsolateConfiguration> CreateForDynamicartKernel(
+      std::unique_ptr<const fml::Mapping> kernel);
+  // END
   FML_DISALLOW_COPY_AND_ASSIGN(IsolateConfiguration);
 };
 

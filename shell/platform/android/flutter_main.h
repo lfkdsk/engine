@@ -20,9 +20,6 @@ class FlutterMain {
 
   static FlutterMain& Get();
 
-  // BYTEDANCE ADD:
-  static Settings SettingsFromArgs(JNIEnv* env, jobjectArray jargs);
-
   const flutter::Settings& GetSettings() const;
 
  private:
