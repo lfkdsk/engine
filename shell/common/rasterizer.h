@@ -118,7 +118,8 @@ class Rasterizer final : public SnapshotDelegate {
   ///
   /// @return     The size of Skia's resource cache, if available.
   ///
-  std::optional<size_t> GetResourceCacheMaxBytes() const;
+  // BD DEL:
+  // std::optional<size_t> GetResourceCacheMaxBytes() const;
 
  private:
   TaskRunners task_runners_;
@@ -128,7 +129,10 @@ class Rasterizer final : public SnapshotDelegate {
   fml::closure next_frame_callback_;
   std::vector<fml::closure> next_frame_callbacks_;
   bool user_override_resource_cache_bytes_;
-  std::optional<size_t> max_cache_bytes_;
+  // BD MOD: START
+  // std::optional是C++17新引入特性，当前154使用的是C++14，暂不支持，升级191的时候可以干掉
+  // std::optional<size_t> max_cache_bytes_;
+  size_t max_cache_bytes_ = 0;
   fml::WeakPtrFactory<Rasterizer> weak_factory_;
 
   // |SnapshotDelegate|

@@ -128,16 +128,20 @@
 
 - (void)updateViewportMetrics:(flutter::ViewportMetrics)viewportMetrics {
   // BD ADD: START
-  if (_shell == nullptr) {
+  //  if (_shell == nullptr) {
+  //    return;
+  //  }
+  //  // END
+  //  self.shell.GetTaskRunners().GetUITaskRunner()->PostTask(
+  //      [engine = self.shell.GetEngine(), metrics = viewportMetrics]() {
+  //        if (engine) {
+  //          engine->SetViewportMetrics(std::move(metrics));
+  //        }
+  //      });
+  if (!self.platformView) {
     return;
   }
-  // END
-  self.shell.GetTaskRunners().GetUITaskRunner()->PostTask(
-      [engine = self.shell.GetEngine(), metrics = viewportMetrics]() {
-        if (engine) {
-          engine->SetViewportMetrics(std::move(metrics));
-        }
-      });
+  self.platformView->SetViewportMetrics(std::move(viewportMetrics));
 }
 
 - (void)dispatchPointerDataPacket:(std::unique_ptr<flutter::PointerDataPacket>)packet {

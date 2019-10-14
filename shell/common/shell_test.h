@@ -28,8 +28,13 @@ class ShellTest : public ::testing::ThreadTest {
 
   TaskRunners GetTaskRunnersForFixture();
 
-  void SendEnginePlatformMessage(Shell* shell,
-                                 fml::RefPtr<PlatformMessage> message);
+  // BD DEL: START
+  // Cherry-pick Reland Skia Caching improvements (#10434)
+  // （commid-id:13df65fd29f133bf9b9ca97c0bb8bd6735caf956） 官方新增了一些test
+  // case，但是test依赖于一些前置cid引入的依赖，这里暂时关闭 void
+  // SendEnginePlatformMessage(Shell* shell,
+  //                               fml::RefPtr<PlatformMessage> message);
+  // END
 
   void AddNativeCallback(std::string name, Dart_NativeFunction callback);
 

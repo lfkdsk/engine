@@ -48,10 +48,16 @@ fml::WeakPtr<SnapshotDelegate> Rasterizer::GetSnapshotDelegate() const {
 
 void Rasterizer::Setup(std::unique_ptr<Surface> surface) {
   surface_ = std::move(surface);
-  if (max_cache_bytes_.has_value()) {
-    SetResourceCacheMaxBytes(max_cache_bytes_.value(),
+  // BD MOD: START
+  // if (max_cache_bytes_.has_value()) {
+  //   SetResourceCacheMaxBytes(max_cache_bytes_.value(),
+  //                            user_override_resource_cache_bytes_);
+  // }
+  if (max_cache_bytes_ > 0) {
+    SetResourceCacheMaxBytes(max_cache_bytes_,
                              user_override_resource_cache_bytes_);
   }
+  // END
   compositor_context_->OnGrContextCreated();
 }
 
@@ -383,7 +389,8 @@ void Rasterizer::AddNextFrameCallback(fml::closure callback) {
 
 void Rasterizer::FireNextFrameCallbackIfPresent() {
   if (!next_frame_callbacks_.empty()) {
-    for(auto it = next_frame_callbacks_.begin(); it != next_frame_callbacks_.end(); ++it) {
+    for (auto it = next_frame_callbacks_.begin();
+         it != next_frame_callbacks_.end(); ++it) {
       task_runners_.GetUITaskRunner()->PostTask(*it);
     }
     next_frame_callbacks_.clear();
@@ -418,19 +425,20 @@ void Rasterizer::SetResourceCacheMaxBytes(size_t max_bytes, bool from_user) {
     context->setResourceCacheLimits(max_resources, max_bytes);
   }
 }
-
-std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
-  if (!surface_) {
-    return std::nullopt;
-  }
-  GrContext* context = surface_->GetContext();
-  if (context) {
-    size_t max_bytes;
-    context->getResourceCacheLimits(nullptr, &max_bytes);
-    return max_bytes;
-  }
-  return std::nullopt;
-}
+// BD DEL: START
+// std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
+//  if (!surface_) {
+//    return std::nullopt;
+//  }
+//  GrContext* context = surface_->GetContext();
+//  if (context) {
+//    size_t max_bytes;
+//    context->getResourceCacheLimits(nullptr, &max_bytes);
+//    return max_bytes;
+//  }
+//  return std::nullopt;
+// }
+// END
 
 Rasterizer::Screenshot::Screenshot() {}
 
