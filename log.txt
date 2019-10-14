@@ -1,2 +1,0 @@
-ninja: Entering directory `out/android_release_unopt'
-ninja: fatal: chdir to 'out/android_release_unopt' - No such file or directory

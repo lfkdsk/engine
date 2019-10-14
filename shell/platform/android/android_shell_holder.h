@@ -52,6 +52,7 @@ class AndroidShellHolder {
  private:
   // BD MOD:
   // BEFORE: const flutter::Settings settings_;
+  // UpdateSettings中需要对每个Holder设置动态化path所以不能是const
   flutter::Settings settings_;
   // END
   const fml::jni::JavaObjectWeakGlobalRef java_object_;

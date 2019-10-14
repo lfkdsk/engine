@@ -25,6 +25,7 @@ bool IsolateConfiguration::PrepareIsolate(DartIsolate& isolate) {
   return DoPrepareIsolate(isolate);
 }
 
+// BD ADD: START
 class DynamicartIsolateConfiguration : public IsolateConfiguration {
  public:
   DynamicartIsolateConfiguration(std::unique_ptr<const fml::Mapping> kernel)
@@ -40,6 +41,7 @@ class DynamicartIsolateConfiguration : public IsolateConfiguration {
 
   FML_DISALLOW_COPY_AND_ASSIGN(DynamicartIsolateConfiguration);
 };
+// END
 
 class AppSnapshotIsolateConfiguration final : public IsolateConfiguration {
  public:

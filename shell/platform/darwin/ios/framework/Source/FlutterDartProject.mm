@@ -229,7 +229,7 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   return config;
 }
 
-// BD MOD: START
+// BD ADD: START
 - (void)setDynamicDillPath:(NSString*)path {
   if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
     return;

@@ -241,15 +241,15 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
         {aot_snapshot_path, aot_isolate_snapshot_instr_filename});
   }
 
-  command_line.GetOptionValue(FlagForSwitch(Switch::DynamicDillPath),
-                              &settings.dynamic_dill_path);
-
   command_line.GetOptionValue(FlagForSwitch(Switch::CacheDirPath),
                               &settings.temp_directory_path);
   // BD ADD:START
   if (command_line.HasOption(FlagForSwitch(Switch::DisableLeakVM))) {
       settings.leak_vm = false;
   }
+
+  command_line.GetOptionValue(FlagForSwitch(Switch::DynamicDillPath),
+                              &settings.dynamic_dill_path);
   // END
 
   if (settings.icu_initialization_required) {

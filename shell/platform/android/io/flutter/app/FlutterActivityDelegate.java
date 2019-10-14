@@ -161,10 +161,12 @@ public final class FlutterActivityDelegate
             FlutterNativeView nativeView = viewFactory.createFlutterNativeView();
             flutterView = new FlutterView(activity, null, nativeView);
 
+            // BD ADD:
             String path = activity.getIntent().getStringExtra("dynamic_dill_path");
             if (!TextUtils.isEmpty(path)){
                 flutterView.getFlutterNativeView().updateNative(path);
             }
+            // END
 
             flutterView.setLayoutParams(matchParent);
             activity.setContentView(flutterView);
@@ -293,9 +295,7 @@ public final class FlutterActivityDelegate
     @Override
     public void onConfigurationChanged(Configuration newConfig) {}
 
-    // BD MOD:
-    // private static String[] getArgsFromIntent(Intent intent) {
-    static String[] getArgsFromIntent(Intent intent) {
+    private static String[] getArgsFromIntent(Intent intent) {
         // Before adding more entries to this list, consider that arbitrary
         // Android applications can generate intents with extra data and that
         // there are many security-sensitive args in the binary.
@@ -333,11 +333,6 @@ public final class FlutterActivityDelegate
         if (intent.getBooleanExtra("verbose-logging", false)) {
             args.add("--verbose-logging");
         }
-        // BD ADD:
-        if (!TextUtils.isEmpty(intent.getStringExtra("dynamic_dill_path"))){
-            args.add("--dynamic_dill_path="+intent.getStringExtra("dynamic_dill_path"));
-        }
-        // END
         if (!args.isEmpty()) {
             String[] argsArray = new String[args.size()];
             return args.toArray(argsArray);
