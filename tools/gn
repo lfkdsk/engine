@@ -83,8 +83,8 @@ def to_gn_args(args):
 
 # BD ADD: START
     # dynamicart arg
-    if args.dynamicart and runtime_mode != 'release':
-        raise Exception('--dynamicart is only supported on --release')
+    if args.dynamicart and runtime_mode not in ['profile', 'release']:
+        raise Exception('--dynamicart is only supported on --release or --profile')
     gn_args['dynamicart'] = args.dynamicart # Enable dynamicart Mode.
 # END
     # Skia GN args.

@@ -89,7 +89,7 @@ for mode in 'debug' 'profile' 'release'; do
 
             # dynamicart只打release
             if [ $dynamic = 'dynamicart' ]; then
-                if [ $mode = 'release' ]; then
+                if [ $mode = 'release' -o $mode = 'profile' ]; then
                     ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamicart
                     androidDir=out/android_${mode}${platformPostFix}_dynamicart
                     modeDir=$modeDir-dynamicart

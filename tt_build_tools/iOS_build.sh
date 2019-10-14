@@ -38,14 +38,15 @@ function checkResult() {
 
 cd ..
 
-for mode in 'debug' 'profile' 'release' 'release_dynamicart'
+for mode in 'debug' 'profile' 'release' 'release_dynamicart' 'profile_dynamicart'
 	do
 #		hostDir=out/host_${mode}
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
-		if [ "$mode" == "release_dynamicart" ]
+		real_mode=${mode%_dynamicart}
+		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
 		then
-			iOSArmV7Dir=out/ios_release_arm_dynamicart
+		   iOSArmV7Dir=out/ios_${real_mode}_arm_dynamicart
 		fi
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
@@ -58,13 +59,13 @@ for mode in 'debug' 'profile' 'release' 'release_dynamicart'
 #		ninja -C $hostDir -j $jcount
 
 		# 编译各种架构引擎
-        if [ "$mode" == "release_dynamicart" ]
+        if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
         then
-            ./flutter/tools/gn --ios --runtime-mode=release --dynamicart
+            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --dynamicart
             ninja -C $iOSArm64Dir -j $jcount
             checkResult
 
-            ./flutter/tools/gn --ios --runtime-mode=release --ios-cpu=arm --dynamicart
+            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --ios-cpu=arm --dynamicart
             ninja -C $iOSArmV7Dir -j $jcount
             checkResult
         else
@@ -127,9 +128,9 @@ for mode in 'debug' 'profile' 'release' 'release_dynamicart'
 		elif [ "$mode" == "release" ]
 		then
 			modeDir=ios-release
-		elif [ "$mode" == "release_dynamicart" ]
+		elif [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
 		then
-			modeDir=ios-dynamicart-release
+			modeDir=ios-dynamicart-${real_mode}
 		else
 			modeDir=ios
 		fi
