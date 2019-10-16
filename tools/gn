@@ -150,6 +150,8 @@ def to_gn_args(args):
     else:
         # Building host artifacts
         gn_args['target_cpu'] = 'x64'
+        # BD ADD:
+        gn_args['dart_disable_boringssl'] = False
 
     # On iOS Devices, use the Dart bytecode interpreter so we don't incur
     # snapshotting and linking costs of the precompiler during development.
