@@ -728,7 +728,9 @@
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
-  self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  if (self.iosPlatformView != nullptr) {
+    self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  }
 }
 
 #pragma mark - FlutterPluginRegistry
