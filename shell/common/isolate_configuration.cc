@@ -169,7 +169,7 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::InferFromSettings(
   // BD ADD:
   // Running in Dynamicart mode. 注意：仅iOS调用
   if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
-    CreateForDynamicart(settings, *asset_manager);
+    return CreateForDynamicart(settings, *asset_manager);
   }
   // END
 

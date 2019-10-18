@@ -23,7 +23,6 @@ extern const intptr_t kPlatformStrongDillSize;
 #endif
 }
 
-static id<DynamicFlutterDelegate> dynamicDelegate;
 static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
 
 static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
@@ -107,21 +106,6 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     NSFileManager* fileManager = [NSFileManager defaultManager];
     NSString* assetsName = [FlutterDartProject flutterAssetsName:bundle];
     NSString* assetsPath = nil;
-    // check dynamic settings first
-    if (dynamicDelegate && [dynamicDelegate respondsToSelector:@selector(assetsPath)]) {
-      NSString* dynamicAssetsPath = [dynamicDelegate assetsPath];
-      if (dynamicAssetsPath && [dynamicAssetsPath isKindOfClass:[NSString class]]) {
-        BOOL isDirectory = NO;
-        BOOL isExist = [fileManager fileExistsAtPath:dynamicAssetsPath isDirectory:&isDirectory];
-        if (isDirectory && isExist) {
-          NSURL* kernelURL = [NSURL URLWithString:@(kApplicationKernelSnapshotFileName)
-                                    relativeToURL:[NSURL fileURLWithPath:dynamicAssetsPath]];
-          if ([fileManager fileExistsAtPath:kernelURL.path]) {
-            assetsPath = dynamicAssetsPath;
-          }
-        }
-      }
-    }
 
     if (!assetsPath || assetsPath.length == 0) {
       assetsPath = [bundle pathForResource:assetsName ofType:@""];
@@ -195,12 +179,6 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   _settings.leak_vm = enabled;
 }
 // END
-
-#pragma mark - Dynamic
-
-+ (void)registerDynamicDelegate:(id<DynamicFlutterDelegate>)delegate {
-  dynamicDelegate = delegate;
-}
 
 #pragma mark - Settings accessors
 
