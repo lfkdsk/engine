@@ -97,8 +97,6 @@ def to_gn_args(args):
     gn_args['skia_use_expat'] = args.target_os == 'android'
     gn_args['skia_use_fontconfig'] = False # Use the custom font manager instead.
     gn_args['is_official_build'] = True    # Disable Skia test utilities.
-    # BD ADD:
-    gn_args['dart_disable_boringssl'] = True    # remove boringssl
 
     gn_args['is_debug'] = args.unoptimized
     gn_args['android_full_debug'] = args.target_os == 'android' and args.unoptimized
