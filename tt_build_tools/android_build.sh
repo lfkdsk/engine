@@ -19,6 +19,13 @@ fi
 
 tosDir=$(git rev-parse HEAD)
 
+liteModeArg=$3
+liteModes=(${liteModeArg//,/ })
+if [ ${#liteModes[@]} == 0 ];then
+    liteModes=('normal')
+fi
+echo "Android build modes: ${liteModes[@]}"
+
 function checkResult() {
     if [ $? -ne 0 ]; then
         echo "Host debug compile failed !"
@@ -68,68 +75,82 @@ cd ..
 node ./flutter/tt_build_tools/tosUpload.js $cacheDir/flutter_patched_sdk_product.zip flutter/framework/$tosDir/flutter_patched_sdk_product.zip
 echo uploaded flutter/framework/$tosDir/flutter_patched_sdk_product.zip
 
-for mode in 'debug' 'profile' 'release'; do
-    for platform in ${platforms[@]}; do
-        # x64和x86只打debug
-        if [ $mode != 'debug' ]; then
-            if [ $platform = 'x64' -o $platform = 'x86' ]; then
-                continue
-            fi
-        fi
-        for dynamic in ${dynamics[@]}; do
-            modeDir=android-$platform
-            
-            # arm不带后缀
-            if [ $platform = 'arm' ]; then
-                platformPostFix=''
-            else
-                platformPostFix=_${platform}
-            fi
+for liteMode in ${liteModes[@]}; do
+  liteModeComdSuffix=''
+  if [ ${liteMode} != 'normal' ]; then
+      liteModeComdSuffix=--${liteMode}
+  fi
+  for mode in 'debug' 'profile' 'release'; do
+      for platform in ${platforms[@]}; do
+          # x64和x86只打debug
+          if [ $mode != 'debug' ]; then
+              if [ $platform = 'x64' -o $platform = 'x86' ]; then
+                  continue
+              fi
+          fi
+          for dynamic in ${dynamics[@]}; do
+              modeDir=android-$platform
 
-            # dynamic只打非debug
-            if [ $dynamic = 'dynamic' ]; then
-                if [ $mode = 'debug' ]; then
-                    continue
-                fi
-                ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamic
-                androidDir=out/android_dynamic_${mode}${platformPostFix}
-                modeDir=$modeDir-dynamic
-            else
-                ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform
-                androidDir=out/android_${mode}${platformPostFix}
-            fi
+              # arm不带后缀
+              if [ $platform = 'arm' ]; then
+                  platformPostFix=''
+              else
+                  platformPostFix=_${platform}
+              fi
 
-            ninja -C $androidDir -j $jcount
-            checkResult
+              # dynamic只打非debug
+              if [ $dynamic = 'dynamic' ]; then
+                  if [ $mode = 'debug' ]; then
+                      continue
+                  fi
+                  ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamic $liteModeComdSuffix
+                  androidDir=out/android_dynamic_${mode}${platformPostFix}
+                  modeDir=$modeDir-dynamic
+              else
+                  ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform $liteModeComdSuffix
+                  androidDir=out/android_${mode}${platformPostFix}
+              fi
 
-            if [ $mode != 'debug' ]; then
-                modeDir=$modeDir-$mode
-            fi
+              if [ "$liteMode" != 'normal' ]; then
+                  androidDir=${androidDir}_${liteMode}
+              fi
 
-            rm -f $cacheDir/$modeDir
-            mkdir $cacheDir/$modeDir
+              ninja -C $androidDir -j $jcount
+              checkResult
 
-            # 非debug还要带上gen_snapshot
-            if [ $mode != 'debug' ]; then
-                if [ -f "$androidDir/clang_x86/gen_snapshot" ];then
-                    zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x86/gen_snapshot
-                else
-                    zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x64/gen_snapshot
-                fi
-                node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/darwin-x64.zip flutter/framework/$tosDir/$modeDir/darwin-x64.zip
-                echo uploaded flutter/framework/$tosDir/$modeDir/darwin-x64.zip
-            fi
+              if [ $mode != 'debug' ]; then
+                  modeDir=$modeDir-$mode
+              fi
 
-            # x86和x64要带上libflutter.so
-            if [ $platform = 'x64' -o $platform = 'x86' ]; then
-                zip -rjq $cacheDir/$modeDir/artifacts.zip $androidDir/flutter.jar $androidDir/lib.stripped/libflutter.so
-            else
-                zip -rjq $cacheDir/$modeDir/artifacts.zip $androidDir/flutter.jar
-            fi
-            node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
-            echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
-        done
-    done
+              if [ "$liteMode" != 'normal' ]; then
+                  modeDir=${modeDir}-${liteMode}
+              fi
+
+              rm -f $cacheDir/$modeDir
+              mkdir $cacheDir/$modeDir
+
+              # 非debug还要带上gen_snapshot
+              if [ $mode != 'debug' ]; then
+                  if [ -f "$androidDir/clang_x86/gen_snapshot" ];then
+                      zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x86/gen_snapshot
+                  else
+                      zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x64/gen_snapshot
+                  fi
+                  node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/darwin-x64.zip flutter/framework/$tosDir/$modeDir/darwin-x64.zip
+                  echo uploaded flutter/framework/$tosDir/$modeDir/darwin-x64.zip
+              fi
+
+              # x86和x64要带上libflutter.so
+              if [ $platform = 'x64' -o $platform = 'x86' ]; then
+                  zip -rjq $cacheDir/$modeDir/artifacts.zip $androidDir/flutter.jar $androidDir/lib.stripped/libflutter.so
+              else
+                  zip -rjq $cacheDir/$modeDir/artifacts.zip $androidDir/flutter.jar
+              fi
+              node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
+              echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
+          done
+      done
+  done
 done
 
 # darwin-x64.zip

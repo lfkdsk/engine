@@ -42,6 +42,10 @@ def get_out_dir(args):
 
     if args.enable_vulkan:
         target_dir.append('vulkan')
+    # BD ADD: START
+    if args.enable_lite:
+        target_dir.append('lite')
+    # END
 
     return os.path.join(args.out_dir, 'out', '_'.join(target_dir))
 
@@ -77,6 +81,12 @@ def to_gn_args(args):
 
     gn_args = {}
 
+    # BD ADD: START
+    if args.enable_lite:
+        print("enable lite mode.")
+        gn_args['dart_disable_boringssl'] = True
+    # END
+
     # Skia GN args.
     gn_args['skia_enable_flutter_defines'] = True # Enable Flutter API guards in Skia.
     gn_args['skia_use_dng_sdk'] = False    # RAW image handling.
@@ -86,8 +96,6 @@ def to_gn_args(args):
     gn_args['skia_use_expat'] = args.target_os == 'android'
     gn_args['skia_use_fontconfig'] = False # Use the custom font manager instead.
     gn_args['is_official_build'] = True    # Disable Skia test utilities.
-    # BD ADD:
-    gn_args['dart_disable_boringssl'] = True    # remove boringssl
 
     gn_args['is_debug'] = args.unoptimized
     gn_args['android_full_debug'] = args.target_os == 'android' and args.unoptimized
@@ -299,6 +307,11 @@ def parse_args(args):
 
   parser.add_argument('--mac-sdk-path', default='', type=str,
                       help='On the mac, the SDK is inferred from the Xcode location unless this flag is specified.')
+
+  # BD ADD: START
+  parser.add_argument('--lite', dest='enable_lite', action='store_const', const='true',
+                      help='Enable lite mode.')
+  # END
 
   return parser.parse_args(args)
 
