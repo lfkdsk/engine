@@ -85,6 +85,7 @@ def to_gn_args(args):
     if args.enable_lite:
         print("enable lite mode.")
         gn_args['dart_disable_boringssl'] = True
+        gn_args['dart_enable_opt_oz'] = args.target_os == 'ios'
     # END
 
     # Skia GN args.
@@ -158,8 +159,10 @@ def to_gn_args(args):
     else:
         # Building host artifacts
         gn_args['target_cpu'] = 'x64'
-        # BD ADD:
+        # BD ADD: START
         gn_args['dart_disable_boringssl'] = False
+        gn_args['dart_enable_opt_oz'] = False
+        # END
 
     # On iOS Devices, use the Dart bytecode interpreter so we don't incur
     # snapshotting and linking costs of the precompiler during development.
