@@ -99,11 +99,21 @@
 
   [self setupChannels];
 
+  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center addObserver:self
+             selector:@selector(onMemoryWarning:)
+                 name:UIApplicationDidReceiveMemoryWarningNotification
+               object:nil];
+
   return self;
 }
 
 - (void)dealloc {
   [_pluginPublications release];
+
+  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+
   [super dealloc];
 }
 
@@ -118,16 +128,20 @@
 
 - (void)updateViewportMetrics:(flutter::ViewportMetrics)viewportMetrics {
   // BD ADD: START
-  if (_shell == nullptr) {
+  //  if (_shell == nullptr) {
+  //    return;
+  //  }
+  //  // END
+  //  self.shell.GetTaskRunners().GetUITaskRunner()->PostTask(
+  //      [engine = self.shell.GetEngine(), metrics = viewportMetrics]() {
+  //        if (engine) {
+  //          engine->SetViewportMetrics(std::move(metrics));
+  //        }
+  //      });
+  if (!self.platformView) {
     return;
   }
-  // END
-  self.shell.GetTaskRunners().GetUITaskRunner()->PostTask(
-      [engine = self.shell.GetEngine(), metrics = viewportMetrics]() {
-        if (engine) {
-          engine->SetViewportMetrics(std::move(metrics));
-        }
-      });
+  self.platformView->SetViewportMetrics(std::move(viewportMetrics));
 }
 
 - (void)dispatchPointerDataPacket:(std::unique_ptr<flutter::PointerDataPacket>)packet {
@@ -714,7 +728,9 @@
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
-  self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  if (self.iosPlatformView != nullptr) {
+    self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  }
 }
 
 #pragma mark - FlutterPluginRegistry
@@ -742,6 +758,15 @@
   return _weakBinaryMessengerFactory->GetWeakPtr();
 }
 // END
+
+#pragma mark - Memory Notifications
+
+- (void)onMemoryWarning:(NSNotification*)notification {
+  if (_shell) {
+    _shell->NotifyLowMemoryWarning();
+  }
+  [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
+}
 
 @end
 

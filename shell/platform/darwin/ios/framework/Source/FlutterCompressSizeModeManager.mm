@@ -235,9 +235,10 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
                                                          attributes:nil];
   if (!succeeded) {
     if (error) {
-      *error = [NSError errorWithDomain:kFlutterCompressSizeModeErrorDomain
-                                   code:-1001
-                               userInfo:@{@"reason" : @"解压缩并存储isolate data数据失败"}];
+      *error = [NSError
+          errorWithDomain:kFlutterCompressSizeModeErrorDomain
+                     code:-1001
+                 userInfo:@{NSLocalizedDescriptionKey : @"解压缩并存储isolate data数据失败"}];
     }
     return NO;
   } else {
@@ -256,9 +257,10 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
                                                          attributes:nil];
   if (!succeeded) {
     if (error) {
-      *error = [NSError errorWithDomain:kFlutterCompressSizeModeErrorDomain
-                                   code:-1002
-                               userInfo:@{@"reason" : @"解压缩并存储vm data数据失败"}];
+      *error =
+          [NSError errorWithDomain:kFlutterCompressSizeModeErrorDomain
+                              code:-1002
+                          userInfo:@{NSLocalizedDescriptionKey : @"解压缩并存储vm data数据失败"}];
     }
     return NO;
   } else {
