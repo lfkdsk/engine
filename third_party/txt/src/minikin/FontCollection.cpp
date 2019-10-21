@@ -70,6 +70,11 @@ FontCollection::FontCollection(
   init(typefaces);
 }
 
+// BD ADD: START
+FontCollection::~FontCollection() {
+  sFallbackFamilies.clear();
+}
+// END
 void FontCollection::init(
     const vector<std::shared_ptr<FontFamily>>& typefaces) {
   std::lock_guard<std::recursive_mutex> _l(gMinikinLock);
