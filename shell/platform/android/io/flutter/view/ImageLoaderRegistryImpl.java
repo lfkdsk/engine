@@ -1,7 +1,6 @@
-package flutter.shell.platform.android.io.flutter.view;
+package io.flutter.view;
 
 import io.flutter.view.AndroidImageLoader.RealImageLoader;
-import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.ImageLoaderRegistry;
 

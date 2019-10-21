@@ -12,7 +12,7 @@ import io.flutter.embedding.engine.FlutterEngine;
 import android.view.View;
 // BD ADD: START
 import io.flutter.view.ImageLoaderRegistry;
-import flutter.shell.platform.android.io.flutter.view.ImageLoaderRegistryImpl;
+import io.flutter.view.ImageLoaderRegistryImpl;
 // END
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.PluginRegistry;
