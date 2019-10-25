@@ -81,8 +81,10 @@ class RuntimeController final : public WindowClient {
 
   std::pair<bool, uint32_t> GetRootIsolateReturnCode();
 
-  // BD ADD:
+  // BD ADD: START
   void ExitApp();
+  void NotifyLowMemoryWarning();
+  // END
 
  private:
   struct Locale {

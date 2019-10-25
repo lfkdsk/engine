@@ -128,8 +128,10 @@ class Engine final : public RuntimeDelegate {
   FontCollection& GetFontCollection() override;
   void ScheduleBackgroundFrame();
 
-  // BD ADD:
+  // BD ADD: START
   void ExitApp();
+  void NotifyLowMemoryWarning();
+  // END
 
  private:
   Engine::Delegate& delegate_;

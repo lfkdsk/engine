@@ -405,6 +405,10 @@ void Engine::ScheduleBackgroundFrame() {
 void Engine::ExitApp() {
   runtime_controller_->ExitApp();
 }
+
+void Engine::NotifyLowMemoryWarning() {
+  runtime_controller_->NotifyLowMemoryWarning();
+}
 // END
 
 void Engine::Render(std::unique_ptr<flutter::LayerTree> layer_tree) {
