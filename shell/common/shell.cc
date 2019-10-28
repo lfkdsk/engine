@@ -32,6 +32,7 @@
 #include "third_party/dart/runtime/include/dart_tools_api.h"
 #include "third_party/skia/include/core/SkGraphics.h"
 #include "third_party/tonic/common/log.h"
+#include "flutter/common/fps_recorder.h"
 
 namespace flutter {
 
@@ -934,6 +935,7 @@ std::vector<double> Shell::GetFps(int thread_type,
               }
             });
       }
+      FpsRecorder::Current()->StartRecordFps("nothing");
     } else if (thread_type == kGpuThreadType) {
       result = rasterizer->compositor_context()->frame_time().GetFps(fps_type);
       if (do_clear) {

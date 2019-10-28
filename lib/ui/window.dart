@@ -951,6 +951,10 @@ class Window {
    *  BD ADD:
    */
   int getFpsMaxSamples() native 'Window_getFpsMaxSamples';
+
+  void startRecordFps(String key) native 'Window_startRecordFps';
+
+  List obtainFps(String key, bool stopRecord) native 'Window_obtainFps';
 }
 
 /// Additional accessibility features that may be enabled by the platform.
