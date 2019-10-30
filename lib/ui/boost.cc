@@ -14,7 +14,7 @@ namespace flutter {
 
 static const int64_t kDefaultMaxTime = 60000;
 
-static const int64_t kMaxSkipGCTime = 5000;
+static const int64_t kMaxSkipGCTime = 10000;
 
 Boost::Boost()
     : boost_flags_(0),
@@ -41,6 +41,9 @@ void Boost::StartUp(uint16_t flags, int millis) {
   if (flags & Flags::kDisableGC) {
     gc_deadline_ =
         millis < kMaxSkipGCTime ? deadline : (now + kMaxSkipGCTime * 1000);
+#if defined(DART_PERFORMANCE_EXTENSION)
+    Dart_SkipGCFromNow(millis < kMaxSkipGCTime ? millis : kMaxSkipGCTime);
+#endif
   }
   if (flags & Flags::kDisableAA) {
     aa_deadline_ = deadline;
@@ -95,6 +98,9 @@ void Boost::CheckFinished() {
   uint16_t finish_flags = 0;
   if (gc_deadline_ > 0 && gc_deadline_ < current_micros) {
     finish_flags |= kDisableGC;
+#if defined(DART_PERFORMANCE_EXTENSION)
+    Dart_SkipGCFromNow(0);
+#endif
   }
   if (aa_deadline_ > 0 && aa_deadline_ < current_micros) {
     finish_flags |= kDisableAA;
