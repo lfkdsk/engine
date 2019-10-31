@@ -461,6 +461,16 @@ public class FlutterJNI {
 
   private native void nativeDestroy(long nativePlatformViewId);
 
+  // BD ADD:START
+  @UiThread
+  public void notifyLowMemory() {
+    ensureAttachedToNative();
+    nativeNotifyLowMemory(nativePlatformViewId);
+  }
+
+  private native void nativeNotifyLowMemory(long nativePlatformViewId);
+  // END
+
   @UiThread
   public void runBundleAndSnapshotFromLibrary(
       @NonNull String[] prioritizedBundlePaths,

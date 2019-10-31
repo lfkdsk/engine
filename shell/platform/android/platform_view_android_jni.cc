@@ -348,6 +348,13 @@ static void DestroyJNI(JNIEnv *env, jobject jcaller, jlong shell_holder) {
     ANDROID_SHELL_HOLDER->ExitApp([holder = ANDROID_SHELL_HOLDER]() { delete holder; });
 }
 
+/**
+ * BD ADD
+ */
+static void NotifyLowMemory(JNIEnv *env, jobject jcaller, jlong shell_holder) {
+    ANDROID_SHELL_HOLDER->NotifyLowMemory();
+}
+
 static jstring GetObservatoryUri(JNIEnv* env, jclass clazz) {
   return env->NewStringUTF(
       flutter::DartServiceIsolate::GetObservatoryUri().c_str());
@@ -785,6 +792,13 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(J)V",
           .fnPtr = reinterpret_cast<void*>(&DestroyJNI),
       },
+      // BD ADD:START
+      {
+          .name = "nativeNotifyLowMemory",
+          .signature = "(J)V",
+          .fnPtr = reinterpret_cast<void*>(&NotifyLowMemory),
+      },
+      // END
       {
           .name = "nativeRunBundleAndSnapshotFromLibrary",
           .signature = "(J[Ljava/lang/String;Ljava/lang/String;"
