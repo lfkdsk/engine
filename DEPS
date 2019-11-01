@@ -20,8 +20,11 @@
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_git': 'https://dart.googlesource.com',
-  # BD ADD:
+  # BD ADD: START
   'tt_dart_git': 'ssh://git@code.byted.org/tech_client/dart',
+  'tt_icu_git': 'ssh://git@code.byted.org/tech_client/icu',
+  'tt_icu_revision': '30575a9bba5fa88157c11d451f476b7973207839',
+  # END
   'fuchsia_git': 'https://fuchsia.googlesource.com',
   'github_git': 'https://github.com',
   # BD MOD: START
@@ -173,7 +176,9 @@ deps = {
    Var('chromium_git') + '/chromium/src/ios.git' + '@' + Var('ios_tools_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + 'c56c671998902fcc4fc9ace88c83daa99f980793',
+   # BD MOD:
+   # Var('chromium_git') + '/chromium/deps/icu.git' + '@' + 'c56c671998902fcc4fc9ace88c83daa99f980793',
+   Var('tt_icu_git') + '@' + Var('tt_icu_revision'),
 
   'src/third_party/dart':
    # BD MOD:
