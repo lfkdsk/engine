@@ -6,6 +6,8 @@
 
 #include "flutter/fml/trace_event.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 namespace flutter {
 
@@ -156,6 +158,11 @@ void Animator::BeginFrame(fml::TimePoint frame_start_time,
           if (notify_idle_task_id == self->notify_idle_task_id_ &&
               !self->frame_scheduled_) {
             TRACE_EVENT0("flutter", "BeginFrame idle callback");
+            // BD ADD: START
+            if (Boost::Current()->IsGCDisabled()) {
+              Boost::Current()->Finish(Boost::Flags::kDisableGC);
+            }
+            // END
             self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
                                                  100000);
           }
