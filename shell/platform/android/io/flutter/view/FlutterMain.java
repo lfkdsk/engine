@@ -5,29 +5,21 @@
 package io.flutter.view;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.Log;
-
-import org.json.JSONObject;
 
 import io.flutter.util.PathUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 
 /**
  * A class to intialize the Flutter engine.
@@ -150,9 +142,10 @@ public class FlutterMain {
 
     public static class Settings {
         private String logTag;
-        private String nativeLibraryDir;
-        private SoLoader soLoader;
         //BD ADD: START
+        private String nativeLibraryDir;
+        private String aotSnapshotsDir;
+        private SoLoader soLoader;
         private Runnable onInitResources;
         private boolean disableLeakVM = false;
         // END
@@ -161,6 +154,15 @@ public class FlutterMain {
             return logTag;
         }
 
+        /**
+         * Set the tag associated with Flutter app log messages.
+         * @param tag Log tag.
+         */
+        public void setLogTag(String tag) {
+            logTag = tag;
+        }
+
+        //BD ADD: START
         public String getNativeLibraryDir() {
             return nativeLibraryDir;
         }
@@ -169,22 +171,12 @@ public class FlutterMain {
             return soLoader;
         }
 
-        //BD ADD: START
         public Runnable getOnInitResourcesCallback() {
             return onInitResources;
         }
 
         public boolean isDisableLeakVM() {
             return disableLeakVM;
-        }
-        //END
-
-        /**
-         * Set the tag associated with Flutter app log messages.
-         * @param tag Log tag.
-         */
-        public void setLogTag(String tag) {
-            logTag = tag;
         }
 
         public void setNativeLibraryDir(String dir) {
@@ -195,7 +187,6 @@ public class FlutterMain {
             soLoader = loader;
         }
 
-        //BD ADD: START
         public void setOnInitResourcesCallback(Runnable callback) {
             onInitResources = callback;
         }
@@ -203,6 +194,17 @@ public class FlutterMain {
         // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
         public void disableLeakVM() {
             disableLeakVM = true;
+        }
+
+        public String getAotSnapshotsDir() {
+            return aotSnapshotsDir;
+        }
+
+        /**
+         * 如果是插件接入，Snapshots可以通过插件目录获取，减少磁盘空间占用
+         */
+        public void setAotSnapshotsDir(String aotSnapshotsDir) {
+            this.aotSnapshotsDir = aotSnapshotsDir;
         }
         //END
     }
@@ -279,9 +281,15 @@ public class FlutterMain {
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_PATH + "=" +
                     new File(PathUtils.getDataDirectory(applicationContext), sAotSharedLibraryPath));
             } else {
+                //BD MOD:
                 if (sIsPrecompiledAsBlobs) {
-                    shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
-                        PathUtils.getDataDirectory(applicationContext));
+                    if (!TextUtils.isEmpty(sSettings.getAotSnapshotsDir())) {
+                        shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" + sSettings.getAotSnapshotsDir());
+                    } else {
+                        shellArgs.add("--" + AOT_SNAPSHOT_PATH_KEY + "=" +
+                                PathUtils.getDataDirectory(applicationContext));
+                    }
+                // END
                 } else {
                     shellArgs.add("--cache-dir-path=" +
                         PathUtils.getCacheDirectory(applicationContext));
@@ -382,11 +390,16 @@ public class FlutterMain {
             .addResource(sAotSharedLibraryPath);
 
         } else {
-          sResourceExtractor
-            .addResource(sAotVmSnapshotData)
-            .addResource(sAotVmSnapshotInstr)
-            .addResource(sAotIsolateSnapshotData)
-            .addResource(sAotIsolateSnapshotInstr);
+            // BD MOD:
+            // 如果插件接入且传入了目录，就不用复制这四个东西了，直接用插件目录的
+            if (TextUtils.isEmpty(sSettings.getAotSnapshotsDir())) {
+                sResourceExtractor
+                        .addResource(sAotVmSnapshotData)
+                        .addResource(sAotVmSnapshotInstr)
+                        .addResource(sAotIsolateSnapshotData)
+                        .addResource(sAotIsolateSnapshotInstr);
+            }
+            // END
         }
 
         if (sResourceUpdater != null) {
