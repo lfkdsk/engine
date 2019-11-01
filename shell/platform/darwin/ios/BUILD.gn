@@ -242,12 +242,22 @@ action("copy_framework_headers") {
 copy("copy_framework_icu") {
   visibility = [ ":*" ]
   set_sources_assignment_filter([])
+  # BD ADD: START
+  icu_data_name = "icudtl.dat"
+  if (icu_use_lite_data_file) {
+    icu_data_name = "icudtl_lite.dat"
+  }
+  # END
   sources = [
-    "//third_party/icu/flutter/icudtl.dat",
+    # BD MOD:
+    # "//third_party/icu/flutter/icudtl.dat",
+    "//third_party/icu/flutter/${icu_data_name}",
   ]
   set_sources_assignment_filter(sources_assignment_filter)
   outputs = [
-    "$_flutter_framework_dir/{{source_file_part}}",
+    # BD MOD:
+    # "$_flutter_framework_dir/{{source_file_part}}",
+    "$_flutter_framework_dir/icudtl.dat",
   ]
 }
 
