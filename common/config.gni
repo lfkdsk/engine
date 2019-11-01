@@ -13,6 +13,10 @@ if (target_cpu == "arm" || target_cpu == "arm64") {
 declare_args() {
   # The runtime mode ("debug", "profile", "release", "dynamic_profile", or "dynamic_release")
   flutter_runtime_mode = "debug"
+  # BD ADD: START
+  # Whether to use a cropped icudtl.dat
+  icu_use_lite_data_file = false
+  # END
 }
 
 # feature_defines_list ---------------------------------------------------------
