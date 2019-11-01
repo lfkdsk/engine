@@ -98,9 +98,6 @@ void Boost::CheckFinished() {
   uint16_t finish_flags = 0;
   if (gc_deadline_ > 0 && gc_deadline_ < current_micros) {
     finish_flags |= kDisableGC;
-#if defined(DART_PERFORMANCE_EXTENSION)
-    Dart_SkipGCFromNow(0);
-#endif
   }
   if (aa_deadline_ > 0 && aa_deadline_ < current_micros) {
     finish_flags |= kDisableAA;
@@ -134,6 +131,9 @@ void Boost::Finish(uint16_t flags) {
 
   if (flags & kDisableGC) {
     gc_deadline_ = 0;
+#if defined(DART_PERFORMANCE_EXTENSION)
+    Dart_SkipGCFromNow(0);
+#endif
   }
   if (flags & kDisableAA) {
     aa_deadline_ = 0;
