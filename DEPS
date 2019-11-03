@@ -24,6 +24,8 @@ vars = {
   'tt_dart_git': 'ssh://git@code.byted.org/tech_client/dart',
   'tt_icu_git': 'ssh://git@code.byted.org/tech_client/icu',
   'tt_icu_revision': '30575a9bba5fa88157c11d451f476b7973207839',
+  'tt_harfbuzz_git': 'ssh://git@code.byted.org/tech_client/harfbuzz',
+  'tt_harfbuzz_revision': 'b979f84322d4f9b988497945b0cfbce3fceb7ae2',
   # END
   'fuchsia_git': 'https://fuchsia.googlesource.com',
   'github_git': 'https://github.com',
@@ -153,7 +155,9 @@ deps = {
    Var('fuchsia_git') + '/third_party/rapidjson' + '@' + '32d07c55db1bb6c2ae17cba4033491a667647753',
 
   'src/third_party/harfbuzz':
-   Var('fuchsia_git') + '/third_party/harfbuzz' + '@' + '02caec6c1c6ad996666788b8e920ccaec8b385e5',
+   # BD MOD:
+   # Var('fuchsia_git') + '/third_party/harfbuzz' + '@' + '02caec6c1c6ad996666788b8e920ccaec8b385e5',
+   Var('tt_harfbuzz_git') + '@' + Var('tt_harfbuzz_revision'),
 
   'src/third_party/libcxx':
    Var('fuchsia_git') + '/third_party/libcxx' + '@' + 'c5a5fa59789213c7dae68d2e51cb28ef681d8257',
