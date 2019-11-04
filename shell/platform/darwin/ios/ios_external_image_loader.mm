@@ -41,12 +41,12 @@ namespace flutter {
                     cache_ref_.Reset(cache);
                 } else {
                     FML_LOG(WARNING) << "Failed to create GLES texture cache: " << err;
-                    return;
+//                    return;
                 }
             }
             fml::CFRef<CVPixelBufferRef> bufferRef;
             CVOpenGLESTextureRef texture = nullptr;
-            if (true) {
+            if (cache_ref_) {
                 bufferRef.Reset(imageInfo.pixelBufferRef);
                 if (bufferRef != nullptr) {
                     CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(
@@ -56,7 +56,7 @@ namespace flutter {
                         &texture);
                     if (err != noErr) {
                         FML_LOG(WARNING) << "Could not create texture from pixel buffer: " << err;
-                        return;
+//                        return;
                     }
                 }
             }
