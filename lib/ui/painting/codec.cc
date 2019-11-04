@@ -613,9 +613,13 @@ void GetNativeImage(Dart_NativeArguments args) {
        queue = UIDartState::Current()->GetSkiaUnrefQueue(),
        callback = std::make_unique<DartPersistentValue>(tonic::DartState::Current(), callback_handle),
        trace_id](sk_sp<SkImage> skimage) mutable {
-         auto image = CanvasImage::Create();
-         image->set_image({skimage, queue});
-
+         fml::RefPtr<CanvasImage> image;
+         if (skimage) {
+           image = CanvasImage::Create();
+           image->set_image({skimage, queue});
+         } else {
+           image = nullptr;
+         }
          ui_task_runner->PostTask(fml::MakeCopyable(
              [callback = std::move(callback),
               image = std::move(image),

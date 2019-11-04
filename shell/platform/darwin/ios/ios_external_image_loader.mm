@@ -60,33 +60,38 @@ namespace flutter {
                     }
                 }
             }
-            if (!texture) {
-                return;
-            }
-            GrGLTextureInfo textureInfo = {CVOpenGLESTextureGetTarget(texture),
-                                           CVOpenGLESTextureGetName(texture), GL_RGBA8_OES};
-            GrBackendTexture backendTexture(
-                static_cast<int>(CVPixelBufferGetWidth(bufferRef)),
-                static_cast<int>(CVPixelBufferGetHeight(bufferRef)),
-                GrMipMapped::kNo,
-                textureInfo);
+          
             UIDartState* dartState = static_cast<UIDartState*>(contextPtr);
             fml::WeakPtr<GrContext> context = dartState->GetResourceContext();
             auto io_task_runner = dartState->GetTaskRunners().GetIOTaskRunner();
-            io_task_runner->PostTask(fml::MakeCopyable(
-                [context = std::move(context),
-                 texture = std::move(texture),
-                 callback = std::move(callback),
-                 backendTexture = std::move(backendTexture)]() mutable {
-                  SkImage::TextureReleaseProc releaseP = &releaseCVOpenGLESTextureRef;
-                  SkImage::ReleaseContext releaseC = texture;
-                  sk_sp<SkImage> image =
-                      SkImage::MakeFromTexture(context.get(), backendTexture,
-                                               kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType,
-                                               kPremul_SkAlphaType, nullptr, releaseP, releaseC);
-                  FML_DCHECK(image) << "Failed to create SkImage from Texture.";
-                  callback(std::move(image));
-                }));
+            if (!texture) {
+                io_task_runner->PostTask(fml::MakeCopyable(
+                    [callback = std::move(callback)]() mutable {
+                      callback(nullptr);
+                    }));
+            } else {
+                GrGLTextureInfo textureInfo = {CVOpenGLESTextureGetTarget(texture),
+                                               CVOpenGLESTextureGetName(texture), GL_RGBA8_OES};
+                GrBackendTexture backendTexture(
+                    static_cast<int>(CVPixelBufferGetWidth(bufferRef)),
+                    static_cast<int>(CVPixelBufferGetHeight(bufferRef)),
+                    GrMipMapped::kNo,
+                    textureInfo);
+                io_task_runner->PostTask(fml::MakeCopyable(
+                    [context = std::move(context),
+                     texture = std::move(texture),
+                     callback = std::move(callback),
+                     backendTexture = std::move(backendTexture)]() mutable {
+                      SkImage::TextureReleaseProc releaseP = &releaseCVOpenGLESTextureRef;
+                      SkImage::ReleaseContext releaseC = texture;
+                      sk_sp<SkImage> image =
+                          SkImage::MakeFromTexture(context.get(), backendTexture,
+                                                   kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType,
+                                                   kPremul_SkAlphaType, nullptr, releaseP, releaseC);
+                      FML_DCHECK(image) << "Failed to create SkImage from Texture.";
+                      callback(std::move(image));
+                    }));
+            }
         }];
     }
     
