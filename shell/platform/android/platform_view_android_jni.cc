@@ -297,6 +297,10 @@ public:
     }
 
     void onLoadFail(JNIEnv* env, std::string cKey) {
+      auto dartState = static_cast<UIDartState *>(contextPtr);
+      dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([callback = std::move(callback)](){
+        callback(nullptr);
+      });
     }
 private:
     jobject androidImageLoader;
