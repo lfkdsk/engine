@@ -20,6 +20,7 @@ static NSString* const kDecompressedDataCacheDirectory = @"com.bytedance.flutter
 static NSString* const kCompressedAssetsFilePath =
     @"Frameworks/App.framework/flutter_compress_assets.zip";
 static NSErrorDomain const kFlutterCompressSizeModeErrorDomain = @"FlutterCompressSizeModeError";
+static NSString* kFlutterAssets;
 
 static uintptr_t FirstLoadCommandPtr(const struct mach_header* mh) {
   switch (mh->magic) {
@@ -91,6 +92,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 @implementation FlutterCompressSizeModeManager
 
 + (void)initialize {
+  kFlutterAssets = [[FlutterDartProject flutterAssetsPath] retain];
   _dyld_register_func_for_add_image(&ImageAdded);
 }
 
@@ -141,8 +143,8 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
       stringByAppendingPathComponent:FlutterVMDataFileName] retain];
   self.icudtlDataPath = [[self.cacheDirectoryForCurrentUUID
       stringByAppendingPathComponent:FlutterIcudtlDataFileName] retain];
-  self.flutterAssetsPath = [[self.cacheDirectoryForCurrentUUID
-      stringByAppendingPathComponent:[FlutterDartProject flutterAssetsPath]] retain];
+  self.flutterAssetsPath =
+      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kFlutterAssets] retain];
 }
 
 - (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion {
