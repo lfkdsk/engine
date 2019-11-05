@@ -160,9 +160,13 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     needDecompress = YES;
     succeeded = [self decompressData:&error];
   }
-  if (completion) {
-    completion(needDecompress, isAsync, succeeded, error);
-  }
+  [error retain];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (completion) {
+      completion(needDecompress, isAsync, succeeded, [error autorelease]);
+    }
+  });
+
   return succeeded ? self.cacheDirectoryForCurrentUUID : nil;
 }
 
