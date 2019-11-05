@@ -626,9 +626,13 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
                              userInfo:userInfo];
   }
 
+  if (unzippingError) {
+    [unzippingError autorelease];
+  }
+
   if (error) {
     if (unzippingError) {
-      *error = [unzippingError autorelease];
+      *error = unzippingError;
     } else {
       *error = retErr;
     }
