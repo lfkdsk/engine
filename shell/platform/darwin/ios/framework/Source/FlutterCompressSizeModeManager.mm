@@ -92,7 +92,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 @implementation FlutterCompressSizeModeManager
 
 + (void)initialize {
-  kFlutterAssets = [[FlutterDartProject flutterAssetsPath] retain];
+  kFlutterAssets = [[FlutterDartProject flutterAssetsPath] copy];
   _dyld_register_func_for_add_image(&ImageAdded);
 }
 
@@ -122,7 +122,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
         NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString* path = [paths objectAtIndex:0];
     self.cacheDirectoryForDecompressedData =
-        [[path stringByAppendingPathComponent:kDecompressedDataCacheDirectory] retain];
+        [[path stringByAppendingPathComponent:kDecompressedDataCacheDirectory] copy];
     self.isCompressSizeMode = NO;
   }
 
@@ -131,20 +131,20 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
 - (void)configAppMH:(flutter_mach_header*)mh appUUIDString:(NSString*)appUUIDString {
   self.appMachHeader = mh;
-  self.appUUIDString = [appUUIDString retain];
+  self.appUUIDString = [appUUIDString copy];
   self.isCompressSizeMode = YES;
 
   self.cacheDirectoryForCurrentUUID = [[self.cacheDirectoryForDecompressedData
-      stringByAppendingPathComponent:self.appUUIDString] retain];
+      stringByAppendingPathComponent:self.appUUIDString] copy];
 
   self.isolateDataPath = [[self.cacheDirectoryForCurrentUUID
-      stringByAppendingPathComponent:FlutterIsolateDataFileName] retain];
+      stringByAppendingPathComponent:FlutterIsolateDataFileName] copy];
   self.vmDataPath = [[self.cacheDirectoryForCurrentUUID
-      stringByAppendingPathComponent:FlutterVMDataFileName] retain];
+      stringByAppendingPathComponent:FlutterVMDataFileName] copy];
   self.icudtlDataPath = [[self.cacheDirectoryForCurrentUUID
-      stringByAppendingPathComponent:FlutterIcudtlDataFileName] retain];
+      stringByAppendingPathComponent:FlutterIcudtlDataFileName] copy];
   self.flutterAssetsPath =
-      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kFlutterAssets] retain];
+      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kFlutterAssets] copy];
 }
 
 - (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion {
