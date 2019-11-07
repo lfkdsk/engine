@@ -337,6 +337,24 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   }
   return flutterAssetsPath;
 }
+
++ (BOOL)isCompressSizeMode {
+    return [FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode;
+}
+
++ (BOOL)decompressData {
+    if ([self isCompressSizeMode]) {
+        NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance] getDecompressedDataPath:kFlutterCompressSizeModeMonitor];
+           return decompressedDataPath.length > 0;
+    } else {
+        return YES;
+    }
+}
+
++ (BOOL)needDecompressData {
+    return [[FlutterCompressSizeModeManager sharedInstance] needDecompressData];
+}
+
 // END
 
 @end

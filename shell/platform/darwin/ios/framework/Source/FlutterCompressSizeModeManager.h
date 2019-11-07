@@ -36,6 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removePreviousDecompressedData;
 
+- (BOOL)needDecompressData;
+
 @end
 
 NS_ASSUME_NONNULL_END
