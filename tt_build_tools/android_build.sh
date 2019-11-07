@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+source $(cd "$(dirname "$0")";pwd)/utils.sh
+
 cd ..
 
 jcount=$1
@@ -49,16 +51,14 @@ cd out/host_debug
 zip -rq ../../$cacheDir/flutter_patched_sdk.zip flutter_patched_sdk
 cd ..
 cd ..
-node ./flutter/tt_build_tools/tosUpload.js $cacheDir/flutter_patched_sdk.zip flutter/framework/$tosDir/flutter_patched_sdk.zip
-echo uploaded flutter/framework/$tosDir/flutter_patched_sdk.zip
+bd_upload $cacheDir/flutter_patched_sdk.zip flutter/framework/$tosDir/flutter_patched_sdk.zip
 
 # dart-sdk-darwin-x64.zip
 cd out/host_debug
 zip -rq ../../$cacheDir/dart-sdk-darwin-x64.zip dart-sdk
 cd ..
 cd ..
-node ./flutter/tt_build_tools/tosUpload.js $cacheDir/dart-sdk-darwin-x64.zip flutter_infra/flutter/$tosDir/dart-sdk-darwin-x64.zip
-echo uploaded flutter_infra/flutter/$tosDir/dart-sdk-darwin-x64.zip
+bd_upload $cacheDir/dart-sdk-darwin-x64.zip flutter_infra/flutter/$tosDir/dart-sdk-darwin-x64.zip
 
 ./flutter/tools/gn --runtime-mode=release --no-lto
 ninja -C out/host_release -j $jcount
@@ -72,8 +72,7 @@ cd $cacheDir
 zip -rq flutter_patched_sdk_product.zip flutter_patched_sdk_product
 cd ..
 cd ..
-node ./flutter/tt_build_tools/tosUpload.js $cacheDir/flutter_patched_sdk_product.zip flutter/framework/$tosDir/flutter_patched_sdk_product.zip
-echo uploaded flutter/framework/$tosDir/flutter_patched_sdk_product.zip
+bd_upload $cacheDir/flutter_patched_sdk_product.zip flutter/framework/$tosDir/flutter_patched_sdk_product.zip
 
 for liteMode in ${liteModes[@]}; do
   liteModeComdSuffix=''
@@ -136,8 +135,7 @@ for liteMode in ${liteModes[@]}; do
                   else
                       zip -rjq $cacheDir/$modeDir/darwin-x64.zip $androidDir/clang_x64/gen_snapshot
                   fi
-                  node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/darwin-x64.zip flutter/framework/$tosDir/$modeDir/darwin-x64.zip
-                  echo uploaded flutter/framework/$tosDir/$modeDir/darwin-x64.zip
+                  bd_upload $cacheDir/$modeDir/darwin-x64.zip flutter/framework/$tosDir/$modeDir/darwin-x64.zip
               fi
 
               # x86和x64要带上libflutter.so
@@ -146,9 +144,8 @@ for liteMode in ${liteModes[@]}; do
               else
                   zip -rjq $cacheDir/$modeDir/artifacts.zip $androidDir/flutter.jar
               fi
-              node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
-              echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
-              node ./flutter/tt_build_tools/tosUpload.js $androidDir/libflutter.so flutter/framework/$tosDir/$modeDir/libflutter_symtab.so
+              bd_upload $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
+              bd_upload $androidDir/libflutter.so flutter/framework/$tosDir/$modeDir/libflutter_symtab.so
           done
       done
   done
@@ -164,8 +161,7 @@ zip -rjq $cacheDir/$modeDir/artifacts.zip out/host_debug/flutter_tester out/host
 third_party/icu/flutter/icudtl.dat out/host_debug/gen/flutter/lib/snapshot/isolate_snapshot.bin \
 out/host_debug/gen/flutter/lib/snapshot/vm_isolate_snapshot.bin $cacheDir/$modeDir/product_isolate_snapshot.bin \
 $cacheDir/$modeDir/product_vm_isolate_snapshot.bin out/host_debug/gen_snapshot
-node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
-echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
+bd_upload $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 
 rm -rf $cacheDir/pkg
 mkdir $cacheDir/pkg
@@ -176,5 +172,4 @@ zip -rq ../../../$cacheDir/pkg/sky_engine.zip sky_engine
 cd ..
 cd ..
 cd ..
-node ./flutter/tt_build_tools/tosUpload.js $cacheDir/pkg/sky_engine.zip flutter/framework/$tosDir/sky_engine.zip
-echo uploaded $cacheDir/pkg/sky_engine.zip flutter/framework/$tosDir/sky_engine.zip
+bd_upload $cacheDir/pkg/sky_engine.zip flutter/framework/$tosDir/sky_engine.zip

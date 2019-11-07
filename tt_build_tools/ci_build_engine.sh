@@ -54,6 +54,11 @@ gclient sync -D -f
 
 cd tt_build_tools
 
+[ -e upload.zip ] && rm -rf upload.zip
+download_status=$(curl -o upload.zip "http://tosv.byted.org/obj/toutiao.ios.arch/flutter/upload.zip" -w %{http_code})
+echo "上传脚本更新结果: ${download_status}"
+unzip -oq upload.zip -d upload
+
 LITEMODE='normal,lite'
 
 bash android_build.sh $JCOUNT $MODE $LITEMODE
