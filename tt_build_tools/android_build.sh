@@ -148,6 +148,7 @@ for liteMode in ${liteModes[@]}; do
               fi
               node ./flutter/tt_build_tools/tosUpload.js $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
               echo uploaded $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
+              node ./flutter/tt_build_tools/tosUpload.js $androidDir/libflutter.so flutter/framework/$tosDir/$modeDir/libflutter_symtab.so
           done
       done
   done

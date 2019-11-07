@@ -73,12 +73,15 @@ liteModes=(${LITEMODE//,/ })
 if [ ${#liteModes[@]} == 0 ];then
     liteModes=('normal')
 fi
-for liteMode in ${liteModes[@]}; do
-  if [ "${liteMode}" != 'normal' ]; then
-    liteModeSuffix=_${liteMode}
-  fi
-  curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
-  curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_arm64${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
-  curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_dynamicart${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
-  curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_arm64_dynamicart${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+RUNTIME_MODE="debug profile release"
+for runtime_mode in ${RUNTIME_MODE}; do
+  for liteMode in ${liteModes[@]}; do
+    if [ "${liteMode}" != 'normal' ]; then
+      liteModeSuffix=_${liteMode}
+    fi
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}_arm64${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}_dynamicart${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}_arm64_dynamicart${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+  done
 done
