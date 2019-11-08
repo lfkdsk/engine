@@ -156,6 +156,9 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   NSError* error = nil;
   BOOL succeeded = YES;
   BOOL needDecompress = NO;
+
+  [self removePreviousDecompressedData];
+
   if ([self needDecompressData]) {
     needDecompress = YES;
     succeeded = [self decompressData:&error];

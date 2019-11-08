@@ -202,7 +202,6 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     _settings = DefaultSettingsForProcess(bundle);
 
     // BD ADD: START
-    [[FlutterCompressSizeModeManager sharedInstance] removePreviousDecompressedData];
     if ([FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode) {
       NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance]
           getDecompressedDataPath:kFlutterCompressSizeModeMonitor];
@@ -339,20 +338,21 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 }
 
 + (BOOL)isCompressSizeMode {
-    return [FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode;
+  return [FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode;
 }
 
 + (BOOL)decompressData {
-    if ([self isCompressSizeMode]) {
-        NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance] getDecompressedDataPath:kFlutterCompressSizeModeMonitor];
-           return decompressedDataPath.length > 0;
-    } else {
-        return YES;
-    }
+  if ([self isCompressSizeMode]) {
+    NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance]
+        getDecompressedDataPath:kFlutterCompressSizeModeMonitor];
+    return decompressedDataPath.length > 0;
+  } else {
+    return YES;
+  }
 }
 
 + (BOOL)needDecompressData {
-    return [[FlutterCompressSizeModeManager sharedInstance] needDecompressData];
+  return [[FlutterCompressSizeModeManager sharedInstance] needDecompressData];
 }
 
 // END
