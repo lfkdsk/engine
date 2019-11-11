@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $(cd "$(dirname "$0")";pwd)/utils.sh
+
 upload_dsym_to_slardar() {
 	echo "Start upload dSYM to HMD server"
 	STATUS=$(curl "http://symbolicate.byted.org/slardar_ios_upload" -F "file=@${1}" -F "aid=13" -H "Content-Type: multipart/form-data" -w %{http_code} -v)
@@ -134,12 +136,11 @@ for liteMode in ${liteModes[@]}; do
         modeDir=${modeDir}-${liteMode}
     fi
 
-		node ./flutter/tt_build_tools/tosUpload.js $cacheDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
+		bd_upload $cacheDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 
 		if [ "$mode" == "release" ]
 		then
-			node ./flutter/tt_build_tools/tosUpload.js $cacheDir/Flutter.dSYM.zip flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
-            echo uploaded flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
+			bd_upload $cacheDir/Flutter.dSYM.zip flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
 			upload_dsym_to_slardar "${cacheDir}/Flutter.dSYM.zip"
 		fi
 	done

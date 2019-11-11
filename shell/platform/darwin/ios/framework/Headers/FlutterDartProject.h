@@ -107,7 +107,28 @@ FLUTTER_EXPORT
 // BD ADD: START
 + (void)setCompressSizeModeMonitor:(FlutterCompressSizeModeMonitor)flutterCompressSizeModeMonitor;
 
+/**
+ * 是否内置压缩模式
+ */
++ (BOOL)isCompressSizeMode;
+
+/**
+ * 当前是否需要解压资源
+ */
++ (BOOL)needDecompressData;
+
+/**
+ * 压缩模式解压资源，返回是否解压成功
+ * 如果之前已经解压过，则返回YES，error是nil
+ * 如果之前没有解压过，则返回当次解压结果
+ */
++ (BOOL)decompressData:(NSError**)error;
+
+/**
+ * 预解压资源
+ */
 + (void)predecompressData;
+
 // END
 
 @end
