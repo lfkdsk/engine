@@ -119,10 +119,10 @@ FLUTTER_EXPORT
 
 /**
  * 压缩模式解压资源，返回是否解压成功
- * 如果之前已经解压过，则返回YES
+ * 如果之前已经解压过，则返回YES，error是nil
  * 如果之前没有解压过，则返回当次解压结果
  */
-+ (BOOL)decompressData;
++ (BOOL)decompressData:(NSError**)error;
 
 /**
  * 预解压资源

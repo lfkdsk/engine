@@ -147,13 +147,15 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
       [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kFlutterAssets] copy];
 }
 
-- (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion {
-  return [self getDecompressedDataPath:completion isAsync:NO];
+- (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion
+                               error:(NSError**)error {
+  return [self getDecompressedDataPath:completion isAsync:NO error:error];
 }
 
 - (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion
-                             isAsync:(BOOL)isAsync {
-  NSError* error = nil;
+                             isAsync:(BOOL)isAsync
+                               error:(NSError**)error {
+  NSError* internalError = nil;
   BOOL succeeded = YES;
   BOOL needDecompress = NO;
 
@@ -161,21 +163,27 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
   if ([self needDecompressData]) {
     needDecompress = YES;
-    succeeded = [self decompressData:&error];
+    succeeded = [self decompressData:&internalError];
   }
-  [error retain];
+
+  [internalError retain];
   dispatch_async(dispatch_get_main_queue(), ^{
+    [internalError autorelease];
     if (completion) {
-      completion(needDecompress, isAsync, succeeded, [error autorelease]);
+      completion(needDecompress, isAsync, succeeded, internalError);
     }
   });
+
+  if (error) {
+    *error = internalError;
+  }
 
   return succeeded ? self.cacheDirectoryForCurrentUUID : nil;
 }
 
 - (void)decompressDataAsync:(FlutterCompressSizeModeMonitor)completion {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-    [self getDecompressedDataPath:completion isAsync:YES];
+    [self getDecompressedDataPath:completion isAsync:YES error:nil];
   });
 }
 
