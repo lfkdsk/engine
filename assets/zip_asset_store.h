@@ -27,6 +27,12 @@ class ZipAssetStore final : public AssetResolver {
 
   ~ZipAssetStore() override;
 
+  // BD ADD: START
+  // |AssetResolver|
+  std::unique_ptr<fml::Mapping> GetAsMapping(
+      const std::string& asset_name) const override;
+  // END
+
  private:
   struct CacheEntry {
     unz_file_pos file_pos;
@@ -43,9 +49,11 @@ class ZipAssetStore final : public AssetResolver {
   // |AssetResolver|
   bool IsValid() const override;
 
+  // BD DEL: START
   // |AssetResolver|
-  std::unique_ptr<fml::Mapping> GetAsMapping(
-      const std::string& asset_name) const override;
+  //  std::unique_ptr<fml::Mapping> GetAsMapping(
+  //      const std::string& asset_name) const override;
+  // END
 
   void BuildStatCache();
 

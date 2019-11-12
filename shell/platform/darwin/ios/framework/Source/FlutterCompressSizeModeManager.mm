@@ -10,17 +10,57 @@
 #import <dlfcn.h>
 #import <mach-o/dyld.h>
 #import <mach-o/getsect.h>
+#import <pthread.h>
 #import "FlutterZipArchive.h"
 #import "NSData+FlutterGzip.h"
+#import "flutter/assets/zip_asset_store.h"
+#import "flutter/fml/platform/darwin/scoped_nsobject.h"
+
+typedef void (^ext_cleanupBlock_t)(void);
+
+#if defined(DEBUG) && !defined(NDEBUG)
+#define ext_keywordify \
+  autoreleasepool {}
+#else
+#define ext_keywordify \
+  try {                \
+  } @catch (...) {     \
+  }
+#endif
+
+#define metamacro_concat(A, B) metamacro_concat_(A, B)
+
+#define metamacro_concat_(A, B) A##B
+
+#define onExit                                                                          \
+  ext_keywordify __strong ext_cleanupBlock_t metamacro_concat(ext_exitBlock_, __LINE__) \
+      __attribute__((cleanup(ext_executeCleanupBlock), unused)) = ^
+
+#define FlutterCompressSizeModeManagerLock(lock) \
+  pthread_mutex_lock(&lock);                     \
+  @onExit {                                      \
+    pthread_mutex_unlock(&lock);                 \
+  }
+
+void ext_executeCleanupBlock(__strong ext_cleanupBlock_t* block) {
+  (*block)();
+}
 
 static const char* kSegmentName = "__BD_DATA";
 static const char* kIsolateDataSectionName = "__isolate_data";
 static const char* kVMDataSectionName = "__vm_data";
 static NSString* const kDecompressedDataCacheDirectory = @"com.bytedance.flutter/decompressed_data";
-static NSString* const kCompressedAssetsFilePath =
-    @"Frameworks/App.framework/flutter_compress_assets.zip";
-static NSErrorDomain const kFlutterCompressSizeModeErrorDomain = @"FlutterCompressSizeModeError";
+static NSString* const kVMDataFileName = @"vm_snapshot_data";
+static NSString* const kIsolateDataFileName = @"isolate_snapshot_data";
+static NSString* const kIcudtlDataFileName = @"icudtl.dat";
+static NSString* const kAssetsFlagFileName = @"flutter_assets_flag";
+static NSString* const kIcudtlFlagFileName = @"flutter_icudtl_flag";
+
 static NSString* kFlutterAssets;
+static NSString* kZipIcudtlFilePath;
+static NSString* kZipAssetsFilePath;
+
+#pragma mark - MachHeader
 
 static uintptr_t FirstLoadCommandPtr(const struct mach_header* mh) {
   switch (mh->magic) {
@@ -78,21 +118,34 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
 @interface FlutterCompressSizeModeManager ()
 
-@property(nonatomic, assign) flutter_mach_header* appMachHeader;
-@property(nonatomic, copy) NSString* appUUIDString;
-@property(nonatomic, copy) NSString* cacheDirectoryForDecompressedData;
-@property(nonatomic, copy) NSString* cacheDirectoryForCurrentUUID;
-@property(nonatomic, copy) NSString* isolateDataPath;
-@property(nonatomic, copy) NSString* vmDataPath;
-@property(nonatomic, copy) NSString* icudtlDataPath;
-@property(nonatomic, copy) NSString* flutterAssetsPath;
+@property(nonatomic) flutter_mach_header* appMachHeader;
+@property(nonatomic) NSString* appUUIDString;
+@property(nonatomic) NSString* cacheDirectoryForDecompressedData;
+@property(nonatomic) NSString* cacheDirectoryForCurrentUUID;
+@property(nonatomic) NSString* vmDataPath;
+@property(nonatomic) NSString* isolateDataPath;
+@property(nonatomic) NSString* icudtlDataPath;
+@property(nonatomic) NSString* assetsPath;
+@property(nonatomic) NSString* assetsFlagPath;
+@property(nonatomic) NSString* icudtlFlagPath;
 
 @end
 
-@implementation FlutterCompressSizeModeManager
+@implementation FlutterCompressSizeModeManager {
+  pthread_mutex_t _mutexLock;
+  fml::scoped_nsobject<NSData> _vmData;
+  fml::scoped_nsobject<NSData> _isolateData;
+  dispatch_queue_t _serialDecompressQueue;
+}
 
 + (void)initialize {
   kFlutterAssets = [[FlutterDartProject flutterAssetsPath] copy];
+  kZipIcudtlFilePath = [[[[NSBundle mainBundle] pathForResource:@"Frameworks/App.framework"
+                                                         ofType:@""]
+      stringByAppendingPathComponent:@"flutter_compress_icudtl.zip"] copy];
+  kZipAssetsFilePath = [[[[NSBundle mainBundle] pathForResource:@"Frameworks/App.framework"
+                                                         ofType:@""]
+      stringByAppendingPathComponent:@"flutter_compress_assets.zip"] copy];
   _dyld_register_func_for_add_image(&ImageAdded);
 }
 
@@ -109,10 +162,16 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   [_appUUIDString release];
   [_cacheDirectoryForDecompressedData release];
   [_cacheDirectoryForCurrentUUID release];
-  [_isolateDataPath release];
   [_vmDataPath release];
+  [_isolateDataPath release];
   [_icudtlDataPath release];
-  [_flutterAssetsPath release];
+  [_assetsPath release];
+  [_assetsFlagPath release];
+  [_icudtlFlagPath release];
+  pthread_mutex_destroy(&_mutexLock);
+  dispatch_release(_serialDecompressQueue);
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
+
   [super dealloc];
 }
 
@@ -124,6 +183,22 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     self.cacheDirectoryForDecompressedData =
         [[path stringByAppendingPathComponent:kDecompressedDataCacheDirectory] copy];
     self.isCompressSizeMode = NO;
+
+    NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self
+               selector:@selector(onMemoryWarning:)
+                   name:UIApplicationDidReceiveMemoryWarningNotification
+                 object:nil];
+
+    // init lock
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&_mutexLock, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
+
+    _serialDecompressQueue =
+        dispatch_queue_create("com.bytedance.flutter.decompress", DISPATCH_QUEUE_SERIAL);
   }
 
   return self;
@@ -137,40 +212,51 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   self.cacheDirectoryForCurrentUUID = [[self.cacheDirectoryForDecompressedData
       stringByAppendingPathComponent:self.appUUIDString] copy];
 
+  self.vmDataPath =
+      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kVMDataFileName] copy];
   self.isolateDataPath = [[self.cacheDirectoryForCurrentUUID
-      stringByAppendingPathComponent:FlutterIsolateDataFileName] copy];
-  self.vmDataPath = [[self.cacheDirectoryForCurrentUUID
-      stringByAppendingPathComponent:FlutterVMDataFileName] copy];
-  self.icudtlDataPath = [[self.cacheDirectoryForCurrentUUID
-      stringByAppendingPathComponent:FlutterIcudtlDataFileName] copy];
-  self.flutterAssetsPath =
+      stringByAppendingPathComponent:kIsolateDataFileName] copy];
+  self.icudtlDataPath =
+      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kIcudtlDataFileName] copy];
+  self.assetsPath =
       [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kFlutterAssets] copy];
+  self.assetsFlagPath =
+      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kAssetsFlagFileName] copy];
+  self.icudtlFlagPath =
+      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kIcudtlFlagFileName] copy];
 }
 
-- (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion
-                               error:(NSError**)error {
-  return [self getDecompressedDataPath:completion isAsync:NO error:error];
+#pragma mark - 解压Data和Assets
+
+- (BOOL)decompressDataIfNeeded:(NSError**)error monitor:(FlutterCompressSizeModeMonitor)monitor {
+  return [self decompressDataIfNeeded:NO error:error monitor:monitor];
 }
 
-- (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor)completion
-                             isAsync:(BOOL)isAsync
-                               error:(NSError**)error {
+- (void)decompressDataAsyncIfNeeded:(FlutterCompressSizeModeMonitor)monitor {
+  dispatch_async(self->_serialDecompressQueue, ^{
+    [self decompressDataIfNeeded:YES error:nil monitor:monitor];
+  });
+}
+
+- (BOOL)decompressDataIfNeeded:(BOOL)isAsync
+                         error:(NSError**)error
+                       monitor:(FlutterCompressSizeModeMonitor)monitor {
   NSError* internalError = nil;
   BOOL succeeded = YES;
   BOOL needDecompress = NO;
 
-  [self removePreviousDecompressedData];
-
-  if ([self needDecompressData]) {
-    needDecompress = YES;
-    succeeded = [self decompressData:&internalError];
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    [self removePreviousDecompressedData];
+    if ([self needDecompressData]) {
+      needDecompress = YES;
+      succeeded = [self decompressData:&internalError];
+    }
   }
 
-  [internalError retain];
   dispatch_async(dispatch_get_main_queue(), ^{
-    [internalError autorelease];
-    if (completion) {
-      completion(needDecompress, isAsync, succeeded, internalError);
+    if (monitor) {
+      monitor(needDecompress, isAsync, succeeded, internalError);
     }
   });
 
@@ -178,13 +264,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     *error = internalError;
   }
 
-  return succeeded ? self.cacheDirectoryForCurrentUUID : nil;
-}
-
-- (void)decompressDataAsync:(FlutterCompressSizeModeMonitor)completion {
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-    [self getDecompressedDataPath:completion isAsync:YES error:nil];
-  });
+  return succeeded;
 }
 
 - (void)removePreviousDecompressedData {
@@ -220,42 +300,50 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     return NO;
   }
 
-  // 解压缩isolate_data
-  succeeded = [self decompressIsolateData:error];
-  if (!succeeded) {
-    return NO;
+  // 解压缩vm_data
+  if (![self isVMDataDecompressedFileValid]) {
+    succeeded = [self decompressVMData:error];
+    if (!succeeded) {
+      return NO;
+    }
   }
 
-  // 解压缩vm_data
-  succeeded = [self decompressVMData:error];
-  if (!succeeded) {
-    return NO;
+  // 解压缩isolate_data
+  if (![self isIsolateDataDecompressedFileValid]) {
+    succeeded = [self decompressIsolateData:error];
+    if (!succeeded) {
+      return NO;
+    }
+  }
+
+  // 解压缩icudtl
+  if (![self isIcudtlDecompressedFileValid]) {
+    succeeded = [self decompressIcudtlData:error];
+    if (!succeeded) {
+      return NO;
+    }
   }
 
   // 解压缩assets
-  succeeded = [self decompressAssetsData:error];
-  if (!succeeded) {
-    return NO;
+  if (![self isAssetsDecompressedFileValid]) {
+    succeeded = [self decompressAssetsData:error];
+    if (!succeeded) {
+      return NO;
+    }
   }
 
   return YES;
 }
 
-- (BOOL)decompressIsolateData:(NSError**)error {
-  unsigned long size = 0;
-  uint8_t* sectiondata =
-      getsectiondata(self.appMachHeader, kSegmentName, kIsolateDataSectionName, &size);
-  NSData* zippedData = [[[NSData alloc] initWithBytes:sectiondata length:size] autorelease];
-  NSData* gunzippedData = [zippedData flutter_gunzippedData];
-  BOOL succeeded = [[NSFileManager defaultManager] createFileAtPath:self.isolateDataPath
-                                                           contents:gunzippedData
+- (BOOL)decompressVMData:(NSError**)error {
+  BOOL succeeded = [[NSFileManager defaultManager] createFileAtPath:self.vmDataPath
+                                                           contents:[self vmData]
                                                          attributes:nil];
   if (!succeeded) {
     if (error) {
-      *error = [NSError
-          errorWithDomain:kFlutterCompressSizeModeErrorDomain
-                     code:-1001
-                 userInfo:@{NSLocalizedDescriptionKey : @"解压缩并存储isolate data数据失败"}];
+      *error = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                   code:FlutterCompressSizeModeErrorCodeFailedToWriteVMData
+                               userInfo:@{NSLocalizedDescriptionKey : @"存储vm data数据失败"}];
     }
     return NO;
   } else {
@@ -263,21 +351,42 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   }
 }
 
-- (BOOL)decompressVMData:(NSError**)error {
-  unsigned long size = 0;
-  uint8_t* sectiondata =
-      getsectiondata(self.appMachHeader, kSegmentName, kVMDataSectionName, &size);
-  NSData* zippedData = [[[NSData alloc] initWithBytes:sectiondata length:size] autorelease];
-  NSData* gunzippedData = [zippedData flutter_gunzippedData];
-  BOOL succeeded = [[NSFileManager defaultManager] createFileAtPath:self.vmDataPath
-                                                           contents:gunzippedData
+- (BOOL)decompressIsolateData:(NSError**)error {
+  BOOL succeeded = [[NSFileManager defaultManager] createFileAtPath:self.isolateDataPath
+                                                           contents:[self isolateData]
                                                          attributes:nil];
   if (!succeeded) {
     if (error) {
-      *error =
-          [NSError errorWithDomain:kFlutterCompressSizeModeErrorDomain
-                              code:-1002
-                          userInfo:@{NSLocalizedDescriptionKey : @"解压缩并存储vm data数据失败"}];
+      *error = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                   code:FlutterCompressSizeModeErrorCodeFailedToWriteIsolateData
+                               userInfo:@{NSLocalizedDescriptionKey : @"存储isolate data数据失败"}];
+    }
+    return NO;
+  } else {
+    return YES;
+  }
+}
+
+- (BOOL)decompressIcudtlData:(NSError**)error {
+  BOOL succeeded = [FlutterZipArchive unzipFileAtPath:kZipIcudtlFilePath
+                                        toDestination:self.cacheDirectoryForCurrentUUID
+                                            overwrite:YES
+                                             password:nil
+                                                error:error];
+  if (!succeeded) {
+    return NO;
+  }
+
+  succeeded = [[NSFileManager defaultManager]
+      createFileAtPath:self.icudtlFlagPath
+              contents:[@"YES" dataUsingEncoding:NSUTF8StringEncoding]
+            attributes:nil];
+
+  if (!succeeded) {
+    if (error) {
+      *error = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                   code:FlutterCompressSizeModeErrorCodeFailedToWriteIcudtlData
+                               userInfo:@{NSLocalizedDescriptionKey : @"存储解压后的Icudtl失败"}];
     }
     return NO;
   } else {
@@ -286,38 +395,180 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 }
 
 - (BOOL)decompressAssetsData:(NSError**)error {
-  return [FlutterZipArchive
-      unzipFileAtPath:[[[NSBundle mainBundle] bundlePath]
-                          stringByAppendingPathComponent:kCompressedAssetsFilePath]
-        toDestination:self.cacheDirectoryForCurrentUUID
-            overwrite:YES
-             password:nil
-                error:error];
+  BOOL succeeded = [FlutterZipArchive unzipFileAtPath:kZipAssetsFilePath
+                                        toDestination:self.cacheDirectoryForCurrentUUID
+                                            overwrite:YES
+                                             password:nil
+                                                error:error];
+  if (!succeeded) {
+    return NO;
+  }
+
+  succeeded = [[NSFileManager defaultManager]
+      createFileAtPath:self.assetsFlagPath
+              contents:[@"YES" dataUsingEncoding:NSUTF8StringEncoding]
+            attributes:nil];
+
+  if (!succeeded) {
+    if (error) {
+      *error = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                   code:FlutterCompressSizeModeErrorCodeFailedToWriteAssetsData
+                               userInfo:@{NSLocalizedDescriptionKey : @"存储解压后的Assets失败"}];
+    }
+    return NO;
+  } else {
+    return YES;
+  }
 }
+
+#pragma mark - Memory Warning
+
+- (void)onMemoryWarning:(NSNotification*)notification {
+  [self setVMData:nil];
+  [self setIsolateData:nil];
+}
+
+#pragma mark - vm data & isolate data
+
+- (NSData*)vmData {
+  FlutterCompressSizeModeManagerLock(self->_mutexLock);
+  if (!_vmData.get()) {
+    unsigned long size = 0;
+    uint8_t* sectionData =
+        getsectiondata(self.appMachHeader, kSegmentName, kVMDataSectionName, &size);
+    NSData* zippedData = [[[NSData alloc] initWithBytes:sectionData length:size] autorelease];
+    _vmData.reset([[zippedData flutter_gunzippedData] retain]);
+  }
+
+  return _vmData.get();
+}
+
+- (NSData*)isolateData {
+  FlutterCompressSizeModeManagerLock(self->_mutexLock);
+  if (!_isolateData.get()) {
+    unsigned long size = 0;
+    uint8_t* sectionData =
+        getsectiondata(self.appMachHeader, kSegmentName, kIsolateDataSectionName, &size);
+    NSData* zippedData = [[[NSData alloc] initWithBytes:sectionData length:size] autorelease];
+    _isolateData.reset([[zippedData flutter_gunzippedData] retain]);
+  }
+
+  return _isolateData.get();
+}
+
+- (void)setVMData:(NSData*)data {
+  FlutterCompressSizeModeManagerLock(self->_mutexLock);
+  _vmData.reset([data retain]);
+}
+
+- (void)setIsolateData:(NSData*)data {
+  FlutterCompressSizeModeManagerLock(self->_mutexLock);
+  _isolateData.reset([data retain]);
+}
+
+#pragma mark - 判断各项压缩数据是否需要解压到磁盘
 
 - (BOOL)needDecompressData {
   if (self.isCompressSizeMode) {
-    return !([self isIsolateDataValid] && [self isVMDataValid] && [self isIcudtlDataValid] &&
-             [self isFlutterAssetsDataValid]);
+    return !([self isVMDataDecompressedFileValid] && [self isIsolateDataDecompressedFileValid] &&
+             [self isIcudtlDecompressedFileValid] && [self isAssetsDecompressedFileValid]);
   } else {
     return NO;
   }
 }
 
-- (BOOL)isIsolateDataValid {
-  return [[NSFileManager defaultManager] fileExistsAtPath:self.isolateDataPath];
-}
-
-- (BOOL)isVMDataValid {
+- (BOOL)isVMDataDecompressedFileValid {
   return [[NSFileManager defaultManager] fileExistsAtPath:self.vmDataPath];
 }
 
-- (BOOL)isIcudtlDataValid {
-  return [[NSFileManager defaultManager] fileExistsAtPath:self.icudtlDataPath];
+- (BOOL)isIsolateDataDecompressedFileValid {
+  return [[NSFileManager defaultManager] fileExistsAtPath:self.isolateDataPath];
 }
 
-- (BOOL)isFlutterAssetsDataValid {
-  return [[NSFileManager defaultManager] fileExistsAtPath:self.flutterAssetsPath];
+- (BOOL)isIcudtlDecompressedFileValid {
+  return [[NSFileManager defaultManager] fileExistsAtPath:self.icudtlDataPath] &&
+         [[NSFileManager defaultManager] fileExistsAtPath:self.icudtlFlagPath];
+}
+
+- (BOOL)isAssetsDecompressedFileValid {
+  return [[NSFileManager defaultManager] fileExistsAtPath:self.assetsPath] &&
+         [[NSFileManager defaultManager] fileExistsAtPath:self.assetsFlagPath];
+}
+
+#pragma mark - 更新FlutterDartProject Settings
+
+- (void)updateSettingsIfNeeded:(flutter::Settings&)settings
+                       monitor:(FlutterCompressSizeModeMonitor _Nullable)monitor {
+  [self decompressDataIfNeeded:nil monitor:monitor];
+
+  if (self.isCompressSizeMode) {
+    settings.vm_snapshot_data = [self vmSnapshotDataCallback];
+    settings.isolate_snapshot_data = [self isolateSnapshotDataCallback];
+    settings.icu_mapper = [self icuMapperCallback];
+
+    if ([self isAssetsDecompressedFileValid] && self.assetsPath.length > 0) {
+      settings.assets_path = self.assetsPath.UTF8String;
+    } else {
+      settings.zip_assets_file_path = kZipAssetsFilePath.UTF8String;
+      settings.zip_assets_directory = kFlutterAssets.UTF8String;
+    }
+  }
+}
+
+- (flutter::MappingCallback)vmSnapshotDataCallback {
+  if ([self isVMDataDecompressedFileValid]) {
+    return [scoped_manager =
+                fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
+      return std::make_unique<fml::FileMapping>(
+          fml::OpenFile(scoped_manager.get().vmDataPath.UTF8String, false,
+                        fml::FilePermission::kRead),
+          std::initializer_list<fml::FileMapping::Protection>{fml::FileMapping::Protection::kRead});
+    };
+  } else {
+    return [scoped_manager =
+                fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
+      NSData* vmData = [scoped_manager.get() vmData];
+      const uint8_t* bytes = (const uint8_t*)vmData.bytes;
+      return std::make_unique<fml::DataMapping>(std::vector<uint8_t>{bytes, bytes + vmData.length});
+    };
+  }
+}
+
+- (flutter::MappingCallback)isolateSnapshotDataCallback {
+  if ([self isIsolateDataDecompressedFileValid]) {
+    return [scoped_manager =
+                fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
+      return std::make_unique<fml::FileMapping>(
+          fml::OpenFile(scoped_manager.get().isolateDataPath.UTF8String, false,
+                        fml::FilePermission::kRead),
+          std::initializer_list<fml::FileMapping::Protection>{fml::FileMapping::Protection::kRead});
+    };
+  } else {
+    return
+        [scoped_manager = fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
+          NSData* isolateData = [scoped_manager.get() isolateData];
+          const uint8_t* bytes = (const uint8_t*)isolateData.bytes;
+          return std::make_unique<fml::DataMapping>(
+              std::vector<uint8_t>{bytes, bytes + isolateData.length});
+        };
+  }
+}
+
+- (flutter::MappingCallback)icuMapperCallback {
+  if ([self isIcudtlDecompressedFileValid]) {
+    return [scoped_manager =
+                fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
+      return std::make_unique<fml::FileMapping>(
+          fml::OpenFile(scoped_manager.get().icudtlDataPath.UTF8String, false,
+                        fml::FilePermission::kRead),
+          std::initializer_list<fml::FileMapping::Protection>{fml::FileMapping::Protection::kRead});
+    };
+  } else {
+    return []() {
+      flutter::ZipAssetStore zipAssetStore(kZipIcudtlFilePath.UTF8String, "");
+      return zipAssetStore.GetAsMapping(kIcudtlDataFileName.UTF8String);
+    };
+  }
 }
 
 @end

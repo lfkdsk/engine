@@ -15,16 +15,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-extern NSString* const FlutterZipArchiveErrorDomain;
-typedef NS_ENUM(NSInteger, FlutterZipArchiveErrorCode) {
-  FlutterZipArchiveErrorCodeFailedOpenZipFile = -1,
-  FlutterZipArchiveErrorCodeFailedOpenFileInZip = -2,
-  FlutterZipArchiveErrorCodeFileInfoNotLoadable = -3,
-  FlutterZipArchiveErrorCodeFileContentNotReadable = -4,
-  FlutterZipArchiveErrorCodeFailedToWriteFile = -5,
-  FlutterZipArchiveErrorCodeInvalidArguments = -6,
-};
-
 @protocol FlutterZipArchiveDelegate;
 
 @interface FlutterZipArchive : NSObject

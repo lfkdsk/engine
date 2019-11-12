@@ -14,8 +14,11 @@
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/platform/darwin/common/command_line.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
-// BD ADD:
+// BD ADD: START
+#include "flutter/fml/file.h"
+#include "flutter/fml/mapping.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterCompressSizeModeManager.h"
+// END
 
 extern "C" {
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
@@ -28,9 +31,7 @@ extern const intptr_t kPlatformStrongDillSize;
 static id<DynamicFlutterDelegate> dynamicDelegate;
 static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
 // BD ADD: START
-NSString* const FlutterIsolateDataFileName = @"isolate_snapshot_data";
-NSString* const FlutterVMDataFileName = @"vm_snapshot_data";
-NSString* const FlutterIcudtlDataFileName = @"icudtl.dat";
+NSString* const FlutterCompressSizeModeErrorDomain = @"FlutterCompressSizeModeErrorDomain";
 static NSString* const kFLTAssetsPath = @"FLTAssetsPath";
 static NSString* const kFlutterAssets = @"flutter_assets";
 static FlutterCompressSizeModeMonitor kFlutterCompressSizeModeMonitor = nil;
@@ -202,16 +203,9 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     _settings = DefaultSettingsForProcess(bundle);
 
     // BD ADD: START
-    if ([FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode) {
-      NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance]
-          getDecompressedDataPath:kFlutterCompressSizeModeMonitor
-                            error:nil];
-      [self setDecompressedDataPath:decompressedDataPath];
-      self.isValid = (decompressedDataPath.length > 0);
-    } else {
-      [[FlutterCompressSizeModeManager sharedInstance] removePreviousDecompressedData];
-      self.isValid = YES;
-    }
+    [[FlutterCompressSizeModeManager sharedInstance]
+        updateSettingsIfNeeded:_settings
+                       monitor:kFlutterCompressSizeModeMonitor];
     // END
   }
 
@@ -221,22 +215,6 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 // BD ADD: START
 - (void)setLeakDartVMEnabled:(BOOL)enabled {
   _settings.leak_vm = enabled;
-}
-// END
-
-// BD ADD: START
-- (void)setDecompressedDataPath:(NSString*)path {
-  if (path.length == 0) {
-    return;
-  }
-  _settings.icu_data_path =
-      [path stringByAppendingPathComponent:FlutterIcudtlDataFileName].UTF8String;
-  _settings.assets_path =
-      [path stringByAppendingPathComponent:[FlutterDartProject flutterAssetsPath]].UTF8String;
-  _settings.isolate_snapshot_data_path =
-      [path stringByAppendingPathComponent:FlutterIsolateDataFileName].UTF8String;
-  _settings.vm_snapshot_data_path =
-      [path stringByAppendingPathComponent:FlutterVMDataFileName].UTF8String;
 }
 // END
 
@@ -324,7 +302,7 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 
 + (void)predecompressData {
   [[FlutterCompressSizeModeManager sharedInstance]
-      decompressDataAsync:kFlutterCompressSizeModeMonitor];
+      decompressDataAsyncIfNeeded:kFlutterCompressSizeModeMonitor];
 }
 
 + (NSString*)flutterAssetsPath {
@@ -344,14 +322,9 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 }
 
 + (BOOL)decompressData:(NSError**)error {
-  if ([self isCompressSizeMode]) {
-    NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance]
-        getDecompressedDataPath:kFlutterCompressSizeModeMonitor
-                          error:error];
-    return decompressedDataPath.length > 0;
-  } else {
-    return YES;
-  }
+  return [[FlutterCompressSizeModeManager sharedInstance]
+      decompressDataIfNeeded:error
+                     monitor:kFlutterCompressSizeModeMonitor];
 }
 
 + (BOOL)needDecompressData {
