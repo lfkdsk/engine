@@ -167,6 +167,12 @@ static void RecordStartupTimestamp() {
   }
 }
 
+// BD ADD:
+int64_t Shell::GetEngineMainEnterMicros() {
+  return engine_main_enter_ts;
+}
+// END
+
 // Though there can be multiple shells, some settings apply to all components in
 // the process. These have to be setup before the shell or any of its
 // sub-components can be initialized. In a perfect world, this would be empty.

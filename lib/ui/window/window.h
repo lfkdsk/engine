@@ -48,11 +48,12 @@ class WindowClient {
   virtual FontCollection& GetFontCollection() = 0;
   virtual void UpdateIsolateDescription(const std::string isolate_name,
                                         int64_t isolate_port) = 0;
-  // BD ADD:
+  // BD ADD: START
   virtual std::vector<double> GetFps(int thread_type,
                                      int fps_type,
                                      bool do_clear) = 0;
-
+  virtual int64_t GetEngineMainEnterMicros() = 0;
+  // END
  protected:
   virtual ~WindowClient();
 };

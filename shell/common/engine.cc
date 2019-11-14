@@ -477,6 +477,10 @@ std::vector<double> Engine::GetFps(int thread_type,
                                    bool do_clear) {
   return delegate_.GetFps(thread_type, fps_type, do_clear);
 }
+
+int64_t Engine::GetEngineMainEnterMicros() {
+  return Shell::GetEngineMainEnterMicros();
+}
 // END
 
 }  // namespace flutter
