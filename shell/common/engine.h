@@ -246,6 +246,9 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
     virtual std::unique_ptr<std::vector<std::string>>
     ComputePlatformResolvedLocale(
         const std::vector<std::string>& supported_locale_data) = 0;
+
+    // BD ADD:
+    virtual int64_t GetEngineMainEnterMicros() = 0;
   };
 
   //----------------------------------------------------------------------------
@@ -819,6 +822,9 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
   RunStatus PrepareAndLaunchIsolate(RunConfiguration configuration);
 
   friend class testing::ShellTest;
+  
+  // BD ADD: 
+  int64_t GetEngineMainEnterMicros() override;
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

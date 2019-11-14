@@ -61,6 +61,9 @@ class WindowClient {
   ComputePlatformResolvedLocale(
       const std::vector<std::string>& supported_locale_data) = 0;
 
+  // BD ADD: START
+  virtual int64_t GetEngineMainEnterMicros() = 0;
+  // END
  protected:
   virtual ~WindowClient();
 };

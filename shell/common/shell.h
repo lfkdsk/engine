@@ -530,6 +530,11 @@ class Shell final : public PlatformView::Delegate,
   std::unique_ptr<std::vector<std::string>> ComputePlatformResolvedLocale(
       const std::vector<std::string>& supported_locale_data) override;
 
+  // BD ADD: START
+  // |Engine::Delegate|
+  int64_t GetEngineMainEnterMicros() override;
+  // END
+
   // |Rasterizer::Delegate|
   void OnFrameRasterized(const FrameTiming&) override;
 
