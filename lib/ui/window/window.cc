@@ -165,6 +165,12 @@ void GetPersistentIsolateData(Dart_NativeArguments args) {
       args, tonic::DartByteData::Create(persistent_isolate_data->GetMapping(),
                                         persistent_isolate_data->GetSize()));
 }
+// BD ADD: START
+void GetEngineMainEnterMicros(Dart_NativeArguments args) {
+  Dart_SetIntegerReturnValue(args,
+    UIDartState::Current()->window()->client()->GetEngineMainEnterMicros());
+}
+// END
 
 Dart_Handle ToByteData(const std::vector<uint8_t>& buffer) {
   return tonic::DartByteData::Create(buffer.data(), buffer.size());
@@ -434,6 +440,8 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_getPersistentIsolateData", GetPersistentIsolateData, 1, true},
       {"Window_computePlatformResolvedLocale", _ComputePlatformResolvedLocale,
        2, true},
+      // BD ADD: 
+      {"Window_getEngineMainEnterMicros", GetEngineMainEnterMicros, 1, true},
   });
 }
 

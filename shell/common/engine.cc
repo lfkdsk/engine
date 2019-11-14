@@ -534,4 +534,10 @@ const std::string& Engine::GetLastEntrypointLibrary() const {
   return last_entry_point_library_;
 }
 
+// BD ADD: START
+int64_t Engine::GetEngineMainEnterMicros() {
+  return delegate_.GetEngineMainEnterMicros();
+}
+// END
+
 }  // namespace flutter
