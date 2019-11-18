@@ -3,11 +3,11 @@
 //
 
 #include <flutter/fml/logging.h>
-#include <flutter/flow/instrumentation.h>
 #include "fps_recorder.h"
 
 namespace flutter {
     static const std::string kAvg = "ApplicationAverage";
+    static const double kFrameCountOneSecond = 60.0;
 
     FpsRecorder::FpsRecorder() : is_drawn(false) {
         fps_data_[kAvg] = std::pair<size_t, size_t>(0, 0);
@@ -64,9 +64,9 @@ namespace flutter {
 
     void FpsRecorder::StartRecordFps(const std::string &key) {
         draw_lock.lock();
-        fps_data_[key] = std::pair<size_t, size_t>(0, 0);
-        ui_time_[key] = std::pair<size_t, int64_t>(0, 0);
-        gpu_time_[key] = std::pair<size_t, int64_t>(0, 0);
+        fps_data_[key] = std::make_pair(0, 0);
+        ui_time_[key] = std::make_pair(0, 0);
+        gpu_time_[key] = std::make_pair(0, 0);
         draw_lock.unlock();
     }
 
