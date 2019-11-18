@@ -18,6 +18,7 @@ namespace flutter {
 // The frame per second FPS could be different than 60 (e.g., 120).
 static const double kOneFrameMS = 1e3 / 60.0;
 // BD ADD: START
+static const double kFrameCountOneSecond = 60.0;
 static const int kAvgFpsType = 1;
 static const int kWorstFpsType = 2;
 // END

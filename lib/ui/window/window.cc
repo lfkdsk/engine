@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// BD ADD:
 #include <flutter/common/fps_recorder.h>
 #include "flutter/lib/ui/window/window.h"
 
@@ -455,11 +456,12 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_setIsolateDebugName", SetIsolateDebugName, 2, true},
       {"Window_reportUnhandledException", ReportUnhandledException, 2, true},
       {"Window_addNextFrameCallback", _AddNextFrameCallback, 2, true},
-      // BD ADD:
+      // BD ADD: START
       {"Window_getFps", GetFps, 4, true},
       {"Window_getFpsMaxSamples", GetMaxSamples, 1, true},
       {"Window_startRecordFps", StartRecordFps, 2, true},
       {"Window_obtainFps", ObtainFps, 3, true},
+      // END
   });
 }
 

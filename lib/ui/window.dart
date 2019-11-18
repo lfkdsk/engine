@@ -924,9 +924,8 @@ class Window {
     };
   }
 
+  // BD ADD: START
   /**
-   *  BD ADD:
-   *
    *  [threadType]
    *     kUiThreadType = 1, get fps in ui thread
    *     kGpuThreadType = 2, get fps in gpu thread
@@ -947,14 +946,12 @@ class Window {
    */
   List getFps(int threadType, int fpsType, bool doClear) native 'Window_getFps';
 
-  /**
-   *  BD ADD:
-   */
   int getFpsMaxSamples() native 'Window_getFpsMaxSamples';
 
   void startRecordFps(String key) native 'Window_startRecordFps';
 
   List obtainFps(String key, bool stopRecord) native 'Window_obtainFps';
+  // END
 }
 
 /// Additional accessibility features that may be enabled by the platform.

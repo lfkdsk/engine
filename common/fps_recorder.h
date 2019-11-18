@@ -1,4 +1,4 @@
-//
+// BD ADD:
 // Created by sunkun01 on 2019-11-06.
 //
 
@@ -34,9 +34,12 @@ namespace flutter {
 
         bool is_drawn;
         std::mutex draw_lock;
+        /// key:FpsKey for record, Value is pair,fist is frameCount, second is DrawCount
         std::map<std::string, std::pair<size_t, size_t >> fps_data_;
-        std::map<std::string, std::pair<size_t, size_t >> ui_time_;
-        std::map<std::string, std::pair<size_t, size_t >> gpu_time_;
+        /// key:FpsKey for record, Value is pair,fist is count, second is total Time
+        std::map<std::string, std::pair<size_t, int64_t >> ui_time_;
+        /// key:FpsKey for record, Value is pair,fist is count, second is total Time
+        std::map<std::string, std::pair<size_t, int64_t >> gpu_time_;
     };
 }
 #endif //FLUTTER_FPS_RECORDER_H

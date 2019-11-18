@@ -6,7 +6,6 @@
 
 #include "flutter/fml/trace_event.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
-#include "flutter/common/fps_recorder.h"
 
 namespace flutter {
 

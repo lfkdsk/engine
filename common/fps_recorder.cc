@@ -1,37 +1,45 @@
-//
+// BD ADD:
 // Created by sunkun01 on 2019-11-06.
 //
 
 #include <flutter/fml/logging.h>
+#include <flutter/flow/instrumentation.h>
 #include "fps_recorder.h"
 
-/**
- * 各线程繁忙情况，参见老方案
- */
 namespace flutter {
     static const std::string kAvg = "ApplicationAverage";
 
     FpsRecorder::FpsRecorder() : is_drawn(false) {
         fps_data_[kAvg] = std::pair<size_t, size_t>(0, 0);
-        ui_time_[kAvg] = std::pair<size_t, size_t>(0, 0);
-        gpu_time_[kAvg] = std::pair<size_t, size_t>(0, 0);
+        ui_time_[kAvg] = std::pair<size_t, int64_t>(0, 0);
+        gpu_time_[kAvg] = std::pair<size_t, int64_t>(0, 0);
     }
 
     FpsRecorder::~FpsRecorder() = default;
 
+    /**
+     * frame count++ when vsync arrive
+     * add missing count and cost time when UI Thread finished
+     * @param count: value is 1 when vsync arrive,value is missCount when UI Thread finished
+     * @param timeDelta: has data when UI Thread finished
+     */
     void FpsRecorder::AddFrameCount(int count, const fml::TimeDelta &timeDelta) {
         draw_lock.lock();
         if (count > 0) {
             for (auto &it : fps_data_) {
-                it.second.first += count;
+                it.second.first += count; // add FrameCount
             }
         }
         if (timeDelta == fml::TimeDelta::Zero()) {
+            FML_LOG(ERROR) << "===========================AddFrameCount";
             is_drawn = false;
-        } else {
+        } else { // add CostTime
+            if (count > 0) {
+                FML_LOG(ERROR) << "===========================UI MissingCount:" << count;
+            }
             for (auto &it : ui_time_) {
                 it.second.first += 1;
-                it.second.second += timeDelta.ToMilliseconds();
+                it.second.second += timeDelta.ToMicroseconds();
             }
         }
         draw_lock.unlock();
@@ -39,16 +47,22 @@ namespace flutter {
 
     void FpsRecorder::AddDrawCount(const fml::TimeDelta &timeDelta) {
         draw_lock.lock();
-//        FML_LOG(ERROR) << "=============AddDrawCount" << is_drawn;
-        if (!is_drawn) {
+        FML_LOG(ERROR) << "=============AddDrawCount:" << is_drawn;
+        if (!is_drawn) { // is valid draw, so drawCount++
             for (auto &it : fps_data_) {
+                if (it.second.first == 0) { // has no frameCount,abandon this drawCount
+                    continue;
+                }
                 it.second.second += 1;
             }
             is_drawn = true;
         }
-        for (auto &it : gpu_time_) {
+        for (auto &it : gpu_time_) { // add costTime
+            if (ui_time_[it.first].first == 0) { // has no frameCost,abandon this
+                continue;
+            }
             it.second.first += 1;
-            it.second.second += timeDelta.ToMilliseconds();
+            it.second.second += timeDelta.ToMicroseconds();
         }
         draw_lock.unlock();
     }
@@ -57,11 +71,17 @@ namespace flutter {
         draw_lock.lock();
         FML_LOG(ERROR) << "=============StartRecordFps:" << key;
         fps_data_[key] = std::pair<size_t, size_t>(0, 0);
-        ui_time_[key] = std::pair<size_t, size_t>(0, 0);
-        gpu_time_[key] = std::pair<size_t, size_t>(0, 0);
+        ui_time_[key] = std::pair<size_t, int64_t>(0, 0);
+        gpu_time_[key] = std::pair<size_t, int64_t>(0, 0);
         draw_lock.unlock();
     }
 
+    /**
+     *
+     * @param key
+     * @param stopRecord :true :Clear Data
+     * @return
+     */
     std::vector<double> FpsRecorder::ObtainFpsData(const std::string &key, bool stopRecord) {
         draw_lock.lock();
         std::vector<double> result;
@@ -69,22 +89,33 @@ namespace flutter {
         auto it = fps_data_.find(key);
         if (it != fps_data_.end()) {
             auto fps_value = it->second;
-            FML_LOG(ERROR) << "=============GetFps:" << fps_value.first << "===drawCount:" << fps_value.second << key;
-            if (fps_value.first == 0) {
+            FML_LOG(ERROR)
+            << "==StopRecordFps frameCount:" << fps_value.first << " drawCount:" << fps_value.second << "+"
+            << (is_drawn ? 0 : 1) << " key:" << key;
+            if (fps_value.first == 0) { // frame count is 0
                 result[0] = -1;
                 result[1] = 0;
                 result[2] = 0;
             } else {
-                result[0] = (fps_value.second + (is_drawn ? 0 : 1)) * 60.0 / fps_value.first;
-                result[1] = ui_time_[key].second * 1.0 / ui_time_[key].first;
-                result[2] = gpu_time_[key].second * 1.0 / gpu_time_[key].first;
+                result[0] =
+                        (fps_value.second + (is_drawn ? 0 : 1)) * kFrameCountOneSecond / fps_value.first; // Fps value
+                if (ui_time_[key].first == 0) { // count == 0
+                    result[1] = 0;
+                } else {
+                    result[1] = ui_time_[key].second * 1.0 / ui_time_[key].first / 1000.0; // convert to millSeconds
+                }
+                if (gpu_time_[key].first == 0) { // count == 0
+                    result[2] = 0;
+                } else {
+                    result[2] = gpu_time_[key].second * 1.0 / gpu_time_[key].first / 1000.0; // convert to millSeconds
+                }
             }
             if (stopRecord) {
                 fps_data_.erase(key);
                 ui_time_.erase(key);
                 gpu_time_.erase(key);
             }
-        } else {
+        } else { // do not find the data for this key
             result[0] = -2;
             result[1] = 0;
             result[2] = 0;

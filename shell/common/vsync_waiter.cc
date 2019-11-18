@@ -6,9 +6,10 @@
 
 #include "flutter/fml/task_runner.h"
 #include "flutter/fml/trace_event.h"
-// BD ADD:
+// BD ADD: START
 #include "flutter/lib/ui/boost.h"
 #include "flutter/common/fps_recorder.h"
+// END
 
 namespace flutter {
 
