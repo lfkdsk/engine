@@ -206,8 +206,9 @@ bool Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
   // for instrumentation.
   compositor_context_->engine_time().SetLapTime(layer_tree.construction_time());
   // BD ADD: START
-  int miss_count = layer_tree.construction_time().ToMilliseconds() / flutter::kOneFrameMS;
-  FpsRecorder::Current()->AddFrameCount(miss_count, layer_tree.construction_time());
+  fml::TimeDelta construction_time = layer_tree.construction_time();
+  int miss_count = (int) (construction_time.ToMillisecondsF() / flutter::kOneFrameMS);
+  FpsRecorder::Current()->AddFrameCount(miss_count, construction_time);
   // END
 
   auto* canvas = frame->SkiaCanvas();

@@ -217,7 +217,7 @@ void ObtainFps(Dart_NativeArguments args) {
   std::vector<double> fpsInfo = FpsRecorder::Current()->ObtainFpsData(key, stop_record);
   int size = 3;
   Dart_Handle data_handle = Dart_NewList(size);
-  for (int i = 0; i != size; i++) {
+  for (int i = 0; i < size; i++) {
       Dart_Handle value = Dart_NewDouble(fpsInfo[i]);
       Dart_ListSetAt(data_handle, i, value);
   }

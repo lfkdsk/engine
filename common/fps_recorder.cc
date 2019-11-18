@@ -78,27 +78,20 @@ namespace flutter {
      */
     std::vector<double> FpsRecorder::ObtainFpsData(const std::string &key, bool stopRecord) {
         draw_lock.lock();
-        std::vector<double> result;
-        result.resize(3);
+        std::vector<double> result(3, 0.0);
         auto it = fps_data_.find(key);
         if (it != fps_data_.end()) {
             auto fps_value = it->second;
             if (fps_value.first == 0) { // frame count is 0
                 result[0] = -1;
-                result[1] = 0;
-                result[2] = 0;
             } else {
                 result[0] =
                         (fps_value.second + (is_drawn ? 0 : 1)) * kFrameCountOneSecond / fps_value.first; // Fps value
-                if (ui_time_[key].first == 0) { // count == 0
-                    result[1] = 0;
-                } else {
-                    result[1] = ui_time_[key].second * 1.0 / ui_time_[key].first / 1000.0; // convert to millSeconds
+                if (ui_time_[key].first != 0) {
+                    result[1] = ui_time_[key].second / 1000.0 / ui_time_[key].first; // convert to millSeconds
                 }
-                if (gpu_time_[key].first == 0) { // count == 0
-                    result[2] = 0;
-                } else {
-                    result[2] = gpu_time_[key].second * 1.0 / gpu_time_[key].first / 1000.0; // convert to millSeconds
+                if (gpu_time_[key].first != 0) {
+                    result[2] = gpu_time_[key].second / 1000.0 / gpu_time_[key].first; // convert to millSeconds
                 }
             }
             if (stopRecord) {
@@ -108,8 +101,6 @@ namespace flutter {
             }
         } else { // do not find the data for this key
             result[0] = -2;
-            result[1] = 0;
-            result[2] = 0;
         }
         draw_lock.unlock();
         return result;
