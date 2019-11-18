@@ -405,6 +405,10 @@ void Engine::ScheduleBackgroundFrame() {
 void Engine::ExitApp() {
   runtime_controller_->ExitApp();
 }
+
+void Engine::NotifyLowMemoryWarning() {
+  runtime_controller_->NotifyLowMemoryWarning();
+}
 // END
 
 void Engine::Render(std::unique_ptr<flutter::LayerTree> layer_tree) {
@@ -472,6 +476,10 @@ std::vector<double> Engine::GetFps(int thread_type,
                                    int fps_type,
                                    bool do_clear) {
   return delegate_.GetFps(thread_type, fps_type, do_clear);
+}
+
+int64_t Engine::GetEngineMainEnterMicros() {
+  return Shell::GetEngineMainEnterMicros();
 }
 // END
 

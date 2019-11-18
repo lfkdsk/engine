@@ -28,13 +28,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedInstance;
 
-- (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor _Nullable)completion;
+- (NSString*)getDecompressedDataPath:(FlutterCompressSizeModeMonitor _Nullable)completion
+                               error:(NSError**)error;
 
 - (void)configAppMH:(flutter_mach_header*)mh appUUIDString:(NSString*)appUUIDString;
 
 - (void)decompressDataAsync:(FlutterCompressSizeModeMonitor _Nullable)completion;
 
 - (void)removePreviousDecompressedData;
+
+- (BOOL)needDecompressData;
 
 @end
 

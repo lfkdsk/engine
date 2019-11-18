@@ -297,6 +297,10 @@ public:
     }
 
     void onLoadFail(JNIEnv* env, std::string cKey) {
+      auto dartState = static_cast<UIDartState *>(contextPtr);
+      dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([callback = std::move(callback)](){
+        callback(nullptr);
+      });
     }
 private:
     jobject androidImageLoader;
@@ -346,6 +350,13 @@ static void DestroyJNI(JNIEnv *env, jobject jcaller, jlong shell_holder) {
     // BD MOD
     // delete ANDROID_SHELL_HOLDER;
     ANDROID_SHELL_HOLDER->ExitApp([holder = ANDROID_SHELL_HOLDER]() { delete holder; });
+}
+
+/**
+ * BD ADD
+ */
+static void NotifyLowMemory(JNIEnv *env, jobject jcaller, jlong shell_holder) {
+    ANDROID_SHELL_HOLDER->NotifyLowMemory();
 }
 
 static jstring GetObservatoryUri(JNIEnv* env, jclass clazz) {
@@ -785,6 +796,13 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(J)V",
           .fnPtr = reinterpret_cast<void*>(&DestroyJNI),
       },
+      // BD ADD:START
+      {
+          .name = "nativeNotifyLowMemory",
+          .signature = "(J)V",
+          .fnPtr = reinterpret_cast<void*>(&NotifyLowMemory),
+      },
+      // END
       {
           .name = "nativeRunBundleAndSnapshotFromLibrary",
           .signature = "(J[Ljava/lang/String;Ljava/lang/String;"

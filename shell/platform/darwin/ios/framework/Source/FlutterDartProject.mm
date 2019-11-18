@@ -202,13 +202,14 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     _settings = DefaultSettingsForProcess(bundle);
 
     // BD ADD: START
-    [[FlutterCompressSizeModeManager sharedInstance] removePreviousDecompressedData];
     if ([FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode) {
       NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance]
-          getDecompressedDataPath:kFlutterCompressSizeModeMonitor];
+          getDecompressedDataPath:kFlutterCompressSizeModeMonitor
+                            error:nil];
       [self setDecompressedDataPath:decompressedDataPath];
       self.isValid = (decompressedDataPath.length > 0);
     } else {
+      [[FlutterCompressSizeModeManager sharedInstance] removePreviousDecompressedData];
       self.isValid = YES;
     }
     // END
@@ -337,6 +338,26 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   }
   return flutterAssetsPath;
 }
+
++ (BOOL)isCompressSizeMode {
+  return [FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode;
+}
+
++ (BOOL)decompressData:(NSError**)error {
+  if ([self isCompressSizeMode]) {
+    NSString* decompressedDataPath = [[FlutterCompressSizeModeManager sharedInstance]
+        getDecompressedDataPath:kFlutterCompressSizeModeMonitor
+                          error:error];
+    return decompressedDataPath.length > 0;
+  } else {
+    return YES;
+  }
+}
+
++ (BOOL)needDecompressData {
+  return [[FlutterCompressSizeModeManager sharedInstance] needDecompressData];
+}
+
 // END
 
 @end

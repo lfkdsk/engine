@@ -6,6 +6,8 @@
 
 #include "flutter/fml/trace_event.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 namespace flutter {
 
@@ -253,8 +255,12 @@ void Animator::AwaitVSync() {
           }
         }
       });
-
-  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+  // BD: MOD START
+  // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+  if (!Boost::Current()->IsGCDisabled()) {
+    delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+  }
+  // END
 }
 
 void Animator::RequestBackgroundFrame() {

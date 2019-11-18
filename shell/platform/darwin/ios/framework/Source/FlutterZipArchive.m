@@ -274,10 +274,11 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
       }
 
       if (ret != UNZ_OK) {
-        unzippingError = [NSError
+        unzippingError = [[NSError
             errorWithDomain:@"FlutterZipArchiveErrorDomain"
                        code:FlutterZipArchiveErrorCodeFailedOpenFileInZip
-                   userInfo:@{NSLocalizedDescriptionKey : @"failed to open file in zip file"}];
+                   userInfo:@{NSLocalizedDescriptionKey : @"failed to open file in zip file"}]
+            retain];
         success = NO;
         break;
       }
@@ -288,10 +289,11 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
 
       ret = unzGetCurrentFileInfo(zip, &fileInfo, NULL, 0, NULL, 0, NULL, 0);
       if (ret != UNZ_OK) {
-        unzippingError = [NSError
+        unzippingError = [[NSError
             errorWithDomain:@"FlutterZipArchiveErrorDomain"
                        code:FlutterZipArchiveErrorCodeFileInfoNotLoadable
-                   userInfo:@{NSLocalizedDescriptionKey : @"failed to retrieve info for file"}];
+                   userInfo:@{NSLocalizedDescriptionKey : @"failed to retrieve info for file"}]
+            retain];
         success = NO;
         unzCloseCurrentFile(zip);
         break;
@@ -381,7 +383,7 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
       }
       if (err != nil) {
         if ([err.domain isEqualToString:NSCocoaErrorDomain] && err.code == 640) {
-          unzippingError = err;
+          unzippingError = [err retain];
           unzCloseCurrentFile(zip);
           success = NO;
           break;
@@ -412,9 +414,9 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
                   NSLog(@"[FlutterZipArchive] %@", message);
                   success = NO;
                   unzippingError =
-                      [NSError errorWithDomain:@"FlutterZipArchiveErrorDomain"
-                                          code:FlutterZipArchiveErrorCodeFailedToWriteFile
-                                      userInfo:@{NSLocalizedDescriptionKey : message}];
+                      [[NSError errorWithDomain:@"FlutterZipArchiveErrorDomain"
+                                           code:FlutterZipArchiveErrorCodeFailedToWriteFile
+                                       userInfo:@{NSLocalizedDescriptionKey : message}] retain];
                   break;
                 }
               }
@@ -488,7 +490,7 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
               NSError* enospcError = [NSError errorWithDomain:NSPOSIXErrorDomain
                                                          code:ENOSPC
                                                      userInfo:nil];
-              unzippingError = enospcError;
+              unzippingError = [enospcError retain];
               unzCloseCurrentFile(zip);
               success = NO;
               break;
@@ -526,9 +528,10 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
                                              error.localizedDescription];
               NSLog(@"[FlutterZipArchive] %@", message);
               success = NO;
-              unzippingError = [NSError errorWithDomain:FlutterZipArchiveErrorDomain
-                                                   code:error.code
-                                               userInfo:@{NSLocalizedDescriptionKey : message}];
+              unzippingError =
+                  [[NSError errorWithDomain:FlutterZipArchiveErrorDomain
+                                       code:error.code
+                                   userInfo:@{NSLocalizedDescriptionKey : message}] retain];
             }
           }
         }
@@ -545,9 +548,10 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
                   fullPath, destinationPath, errno];
           NSLog(@"[FlutterZipArchive] %@", message);
           success = NO;
-          unzippingError = [NSError errorWithDomain:NSPOSIXErrorDomain
-                                               code:symlinkError
-                                           userInfo:@{NSLocalizedDescriptionKey : message}];
+          unzippingError =
+              [[NSError errorWithDomain:NSPOSIXErrorDomain
+                                   code:symlinkError
+                               userInfo:@{NSLocalizedDescriptionKey : message}] retain];
         }
       }
 
@@ -620,6 +624,10 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
     retErr = [NSError errorWithDomain:FlutterZipArchiveErrorDomain
                                  code:FlutterZipArchiveErrorCodeFileInfoNotLoadable
                              userInfo:userInfo];
+  }
+
+  if (unzippingError) {
+    [unzippingError autorelease];
   }
 
   if (error) {

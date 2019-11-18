@@ -223,6 +223,11 @@ void ObtainFps(Dart_NativeArguments args) {
   }
   Dart_SetReturnValue(args, data_handle);
 }
+
+void GetEngineMainEnterMicros(Dart_NativeArguments args) {
+  Dart_SetIntegerReturnValue(args,
+    UIDartState::Current()->window()->client()->GetEngineMainEnterMicros());
+}
 // END
 }  // namespace
 
@@ -461,6 +466,7 @@ void Window::RegisterNatives(tonic::DartLibraryNatives* natives) {
       {"Window_getFpsMaxSamples", GetMaxSamples, 1, true},
       {"Window_startRecordFps", StartRecordFps, 2, true},
       {"Window_obtainFps", ObtainFps, 3, true},
+      {"Window_getEngineMainEnterMicros", GetEngineMainEnterMicros, 1, true},
       // END
   });
 }

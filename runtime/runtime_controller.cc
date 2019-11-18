@@ -216,12 +216,12 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   tonic::DartState::Scope scope(root_isolate);
 
-  // BD MOD: START
-  // Dart_NotifyIdle(deadline);
-  if (!Boost::Current()->IsGCDisabled()) {
-    Dart_NotifyIdle(deadline);
+  // BD ADD: START
+  if (Boost::Current()->IsGCDisabled()) {
+    Boost::Current()->Finish(Boost::kDisableGC);
   }
   // END
+  Dart_NotifyIdle(deadline);
 
   // Idle notifications being in isolate scope are part of the contract.
   if (idle_notification_callback_) {
@@ -344,6 +344,10 @@ void RuntimeController::ExitApp() {
     window->ExitApp();
   }
 }
+
+void RuntimeController::NotifyLowMemoryWarning() {
+  Dart_NotifyLowMemory();
+}
 // END
 
 RuntimeController::Locale::Locale(std::string language_code_,
@@ -368,6 +372,10 @@ std::vector<double> RuntimeController::GetFps(int thread_type,
                                               int fps_type,
                                               bool do_clear) {
   return client_.GetFps(thread_type, fps_type, do_clear);
+}
+
+int64_t RuntimeController::GetEngineMainEnterMicros() {
+  return client_.GetEngineMainEnterMicros();
 }
 // END
 

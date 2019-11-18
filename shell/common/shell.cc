@@ -167,6 +167,12 @@ static void RecordStartupTimestamp() {
   }
 }
 
+// BD ADD:
+int64_t Shell::GetEngineMainEnterMicros() {
+  return engine_main_enter_ts;
+}
+// END
+
 // Though there can be multiple shells, some settings apply to all components in
 // the process. These have to be setup before the shell or any of its
 // sub-components can be initialized. In a perfect world, this would be empty.
@@ -347,6 +353,28 @@ void Shell::NotifyLowMemoryWarning() const {
       });
   // The IO Manager uses resource cache limits of 0, so it is not necessary
   // to purge them.
+
+  // BD ADD: START
+  if (engine_) {
+    engine_->NotifyLowMemoryWarning();
+  }
+
+  auto io_task = [io_manager = io_manager_.get()]() {
+    io_manager->GetSkiaUnrefQueue()->Drain();
+    io_manager->GetResourceContext()->freeGpuResources();
+  };
+  // Dart VM对象的释放：
+  // 1.Dart_NotifyLowMemory()->Isolate::NotifyLowMemory()->Isolate::KillAllIsolates(LibMsgId
+  // msg_id)->Isolate::KillLocked(LibMsgId msg_id)
+  // 2.通过Isolate的Port，将kLowMemoryMsg加入消息队列
+  // 3.在UI线程中执行IsolateMessageHandler::HandleLibMessage(const Array&
+  // message)
+  // 4.对于图片内存的释放需要确保图片sk_sp<SkImage>外面包裹的Codec、FrameInfo、CanvasImage先销毁
+  task_runners_.GetUITaskRunner()->PostTask(
+      [io_task_runner = task_runners_.GetIOTaskRunner(), io_task] {
+        io_task_runner->PostTask(io_task);
+      });
+  // END
 }
 
 bool Shell::IsSetup() const {
@@ -744,19 +772,20 @@ void Shell::OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) {
  * BD ADD:
  */
 // |PlatformView::Delegate|
-void Shell::OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) {
-    FML_DCHECK(is_setup_);
-    FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
+void Shell::OnPlatformViewRegisterImageLoader(
+    std::shared_ptr<flutter::ImageLoader> imageLoader) {
+  FML_DCHECK(is_setup_);
+  FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
-    task_runners_.GetIOTaskRunner()->PostTask(
+  task_runners_.GetIOTaskRunner()->PostTask(
       [io_manager = io_manager_->GetWeakPtr(),
        imageLoader = std::move(imageLoader)] {
         if (io_manager) {
           io_manager->RegisterImageLoader(imageLoader);
-      }
-    });
+        }
+      });
 }
-    
+
 // |PlatformView::Delegate|
 void Shell::OnPlatformViewSetNextFrameCallback(fml::closure closure) {
   FML_DCHECK(is_setup_);
@@ -846,9 +875,10 @@ void Shell::OnEngineHandlePlatformMessage(
         if (view) {
           view->HandlePlatformMessage(std::move(message));
         }
-      // BD MOD:
-      // });
-      }, Boost::Current()->IsDelayPlatformMessage());
+        // BD MOD:
+        // });
+      },
+      Boost::Current()->IsDelayPlatformMessage());
 }
 
 void Shell::HandleEngineSkiaMessage(fml::RefPtr<PlatformMessage> message) {

@@ -128,8 +128,10 @@ class Engine final : public RuntimeDelegate {
   FontCollection& GetFontCollection() override;
   void ScheduleBackgroundFrame();
 
-  // BD ADD:
+  // BD ADD: START
   void ExitApp();
+  void NotifyLowMemoryWarning();
+  // END
 
  private:
   Engine::Delegate& delegate_;
@@ -182,10 +184,13 @@ class Engine final : public RuntimeDelegate {
 
   RunStatus PrepareAndLaunchIsolate(RunConfiguration configuration);
 
-  // BD ADD:
+  // BD ADD: Start
   std::vector<double> GetFps(int thread_type,
                              int fps_type,
                              bool do_clear) override;
+  int64_t GetEngineMainEnterMicros() override;
+  // END
+
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

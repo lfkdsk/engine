@@ -230,6 +230,13 @@ void AndroidShellHolder::ExitApp(fml::closure closure) {
     }
     shell_->ExitApp(std::move(closure));
 }
+
+void AndroidShellHolder::NotifyLowMemory() {
+    if (!IsValid()) {
+        return;
+    }
+    shell_->NotifyLowMemoryWarning();
+}
 // END
 
 }  // namespace flutter
