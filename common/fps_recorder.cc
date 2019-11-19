@@ -6,13 +6,13 @@
 #include "fps_recorder.h"
 
 namespace flutter {
-    static const std::string kAvg = "ApplicationAverage";
+    static const std::string kFpsKeyOfAppAvg = "ApplicationAverage";
     static const double kFrameCountOneSecond = 60.0;
 
     FpsRecorder::FpsRecorder() : is_drawn(false) {
-        fps_data_[kAvg] = std::pair<size_t, size_t>(0, 0);
-        ui_time_[kAvg] = std::pair<size_t, int64_t>(0, 0);
-        gpu_time_[kAvg] = std::pair<size_t, int64_t>(0, 0);
+        fps_data_[kFpsKeyOfAppAvg] = std::pair<size_t, size_t>(0, 0);
+        ui_time_[kFpsKeyOfAppAvg] = std::pair<size_t, int64_t>(0, 0);
+        gpu_time_[kFpsKeyOfAppAvg] = std::pair<size_t, int64_t>(0, 0);
     }
 
     FpsRecorder::~FpsRecorder() = default;
