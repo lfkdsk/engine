@@ -25,6 +25,9 @@ typedef PlatformMessageResponseCallback = void Function(ByteData data);
 /// Signature for [Window.onPlatformMessage].
 typedef PlatformMessageCallback = void Function(String name, ByteData data, PlatformMessageResponseCallback callback);
 
+// BD ADD:
+typedef TimeToFirstFrameMicrosCallback = void Function(int frameworkInitTime, int firstFrameTime);
+
 /// States that an application can be in.
 ///
 /// The values below describe notifications from the operating system.
@@ -924,9 +927,8 @@ class Window {
     };
   }
 
+  // BD ADD: START
   /**
-   *  BD ADD:
-   *
    *  [threadType]
    *     kUiThreadType = 1, get fps in ui thread
    *     kGpuThreadType = 2, get fps in gpu thread
@@ -947,10 +949,32 @@ class Window {
    */
   List getFps(int threadType, int fpsType, bool doClear) native 'Window_getFps';
 
-  /**
-   *  BD ADD:
-   */
   int getFpsMaxSamples() native 'Window_getFpsMaxSamples';
+
+  void startRecordFps(String key) native 'Window_startRecordFps';
+
+  List obtainFps(String key, bool stopRecord) native 'Window_obtainFps';
+
+  int getEngineMainEnterMicros() native 'Window_getEngineMainEnterMicros';
+
+  TimeToFirstFrameMicrosCallback get onTimeToFirstFrameMicros => _onTimeToFirstFrameMicros;
+  TimeToFirstFrameMicrosCallback _onTimeToFirstFrameMicros;
+  set onTimeToFirstFrameMicros(TimeToFirstFrameMicrosCallback callback) {
+    _onTimeToFirstFrameMicros = callback;
+  }
+
+  int get timeToFrameworkInitMicros => _timeToFrameworkInitMicros;
+  int _timeToFrameworkInitMicros = 0;
+  set timeToFrameworkInitMicros(int time) {
+    _timeToFrameworkInitMicros = time;
+  }
+
+  int get timeToFirstFrameMicros => _timeToFirstFrameMicros;
+  int _timeToFirstFrameMicros = 0;
+  set timeToFirstFrameMicros(int time) {
+    _timeToFirstFrameMicros = time;
+  }
+  // END
 }
 
 /// Additional accessibility features that may be enabled by the platform.

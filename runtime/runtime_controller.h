@@ -179,10 +179,12 @@ class RuntimeController final : public WindowClient {
   void UpdateIsolateDescription(const std::string isolate_name,
                                 int64_t isolate_port) override;
 
-  // BD ADD:
+  // BD ADD: START
   std::vector<double> GetFps(int thread_type,
                              int fps_type,
                              bool do_clear) override;
+  int64_t GetEngineMainEnterMicros() override;
+  // END
 
   FML_DISALLOW_COPY_AND_ASSIGN(RuntimeController);
 };

@@ -15,6 +15,8 @@
 #include "third_party/skia/include/core/SkSurface.h"
 #include "third_party/skia/include/core/SkSurfaceCharacterization.h"
 #include "third_party/skia/include/utils/SkBase64.h"
+// BD ADD:
+#include "flutter/common/fps_recorder.h"
 
 namespace flutter {
 
@@ -203,6 +205,11 @@ bool Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
   // construction took. Fortunately, the layer tree does. Grab that time
   // for instrumentation.
   compositor_context_->engine_time().SetLapTime(layer_tree.construction_time());
+  // BD ADD: START
+  fml::TimeDelta construction_time = layer_tree.construction_time();
+  int miss_count = (int) (construction_time.ToMillisecondsF() / flutter::kOneFrameMS);
+  FpsRecorder::Current()->AddFrameCount(miss_count, construction_time);
+  // END
 
   auto* canvas = frame->SkiaCanvas();
 

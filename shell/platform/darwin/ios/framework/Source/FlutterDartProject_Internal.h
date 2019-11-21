@@ -9,16 +9,7 @@
 #include "flutter/shell/common/engine.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterDartProject.h"
 
-// BD ADD: START
-FOUNDATION_EXTERN NSString* const FlutterIsolateDataFileName;
-FOUNDATION_EXTERN NSString* const FlutterVMDataFileName;
-FOUNDATION_EXTERN NSString* const FlutterIcudtlDataFileName;
-// END
-
 @interface FlutterDartProject ()
-
-// BD ADD:
-@property(nonatomic, assign) BOOL isValid;
 
 - (const flutter::Settings&)settings;
 

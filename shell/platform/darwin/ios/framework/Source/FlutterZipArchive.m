@@ -8,11 +8,9 @@
 
 // BD ADD: START
 #import "FlutterZipArchive.h"
-#include "third_party/zlib/contrib/minizip/zip.h"
-
 #include <sys/stat.h>
-
-NSString* const FlutterZipArchiveErrorDomain = @"FlutterZipArchiveErrorDomain";
+#include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterDartProject.h"
+#include "third_party/zlib/contrib/minizip/zip.h"
 
 BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
 
@@ -188,8 +186,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
   // Guard against empty strings
   if (path.length == 0 || destination.length == 0) {
     NSDictionary* userInfo = @{NSLocalizedDescriptionKey : @"received invalid argument(s)"};
-    NSError* err = [NSError errorWithDomain:FlutterZipArchiveErrorDomain
-                                       code:FlutterZipArchiveErrorCodeInvalidArguments
+    NSError* err = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                       code:FlutterCompressSizeModeErrorCodeInvalidArguments
                                    userInfo:userInfo];
     if (error) {
       *error = err;
@@ -204,8 +202,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
   zipFile zip = unzOpen(path.fileSystemRepresentation);
   if (zip == NULL) {
     NSDictionary* userInfo = @{NSLocalizedDescriptionKey : @"failed to open zip file"};
-    NSError* err = [NSError errorWithDomain:FlutterZipArchiveErrorDomain
-                                       code:FlutterZipArchiveErrorCodeFailedOpenZipFile
+    NSError* err = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                       code:FlutterCompressSizeModeErrorCodeFailedOpenZipFile
                                    userInfo:userInfo];
     if (error) {
       *error = err;
@@ -230,8 +228,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
   if (ret != UNZ_OK && ret != UNZ_END_OF_LIST_OF_FILE) {
     NSDictionary* userInfo =
         @{NSLocalizedDescriptionKey : @"failed to open first file in zip file"};
-    NSError* err = [NSError errorWithDomain:FlutterZipArchiveErrorDomain
-                                       code:FlutterZipArchiveErrorCodeFailedOpenFileInZip
+    NSError* err = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                       code:FlutterCompressSizeModeErrorCodeFailedOpenFileInZip
                                    userInfo:userInfo];
     if (error) {
       *error = err;
@@ -275,8 +273,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
 
       if (ret != UNZ_OK) {
         unzippingError = [[NSError
-            errorWithDomain:@"FlutterZipArchiveErrorDomain"
-                       code:FlutterZipArchiveErrorCodeFailedOpenFileInZip
+            errorWithDomain:FlutterCompressSizeModeErrorDomain
+                       code:FlutterCompressSizeModeErrorCodeFailedOpenFileInZip
                    userInfo:@{NSLocalizedDescriptionKey : @"failed to open file in zip file"}]
             retain];
         success = NO;
@@ -290,8 +288,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
       ret = unzGetCurrentFileInfo(zip, &fileInfo, NULL, 0, NULL, 0, NULL, 0);
       if (ret != UNZ_OK) {
         unzippingError = [[NSError
-            errorWithDomain:@"FlutterZipArchiveErrorDomain"
-                       code:FlutterZipArchiveErrorCodeFileInfoNotLoadable
+            errorWithDomain:FlutterCompressSizeModeErrorDomain
+                       code:FlutterCompressSizeModeErrorCodeFileInfoNotLoadable
                    userInfo:@{NSLocalizedDescriptionKey : @"failed to retrieve info for file"}]
             retain];
         success = NO;
@@ -414,8 +412,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
                   NSLog(@"[FlutterZipArchive] %@", message);
                   success = NO;
                   unzippingError =
-                      [[NSError errorWithDomain:@"FlutterZipArchiveErrorDomain"
-                                           code:FlutterZipArchiveErrorCodeFailedToWriteFile
+                      [[NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                           code:FlutterCompressSizeModeErrorCodeFailedToWriteFile
                                        userInfo:@{NSLocalizedDescriptionKey : message}] retain];
                   break;
                 }
@@ -529,7 +527,7 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
               NSLog(@"[FlutterZipArchive] %@", message);
               success = NO;
               unzippingError =
-                  [[NSError errorWithDomain:FlutterZipArchiveErrorDomain
+                  [[NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
                                        code:error.code
                                    userInfo:@{NSLocalizedDescriptionKey : message}] retain];
             }
@@ -621,8 +619,8 @@ BOOL _fileIsSymbolicLink(const unz_file_info* fileInfo);
   NSError* retErr = nil;
   if (crc_ret == UNZ_CRCERROR) {
     NSDictionary* userInfo = @{NSLocalizedDescriptionKey : @"crc check failed for file"};
-    retErr = [NSError errorWithDomain:FlutterZipArchiveErrorDomain
-                                 code:FlutterZipArchiveErrorCodeFileInfoNotLoadable
+    retErr = [NSError errorWithDomain:FlutterCompressSizeModeErrorDomain
+                                 code:FlutterCompressSizeModeErrorCodeFileInfoNotLoadable
                              userInfo:userInfo];
   }
 

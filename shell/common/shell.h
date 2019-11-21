@@ -81,6 +81,9 @@ class Shell final : public PlatformView::Delegate,
    */
   void ExitApp(fml::closure closure);
 
+  // BD ADD:
+  static int64_t GetEngineMainEnterMicros();
+
  private:
   using ServiceProtocolHandler =
       std::function<bool(const ServiceProtocol::Handler::ServiceProtocolMap&,

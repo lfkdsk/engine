@@ -129,6 +129,7 @@ shared_library("create_flutter_framework_dylib") {
     "$flutter_root/shell/platform/darwin/common",
     "//third_party/skia",
     # BD ADD: START
+    "$flutter_root/assets",
     "//third_party/zlib",
     "//third_party/zlib:minizip",
     # END

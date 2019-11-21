@@ -6,8 +6,10 @@
 
 #include "flutter/fml/task_runner.h"
 #include "flutter/fml/trace_event.h"
-// BD ADD:
+// BD ADD: START
 #include "flutter/lib/ui/boost.h"
+#include "flutter/common/fps_recorder.h"
+// END
 
 namespace flutter {
 
@@ -95,6 +97,7 @@ void VsyncWaiter::FireCallback(fml::TimePoint frame_start_time,
   //       TRACE_FLOW_END("flutter", kVsyncFlowName, flow_identifier);
   //     },
   //     frame_start_time);
+  FpsRecorder::Current()->AddFrameCount(1);
   auto frame_task = [callback, flow_identifier, frame_start_time,
                      frame_target_time]() {
     FML_TRACE_EVENT("flutter", kVsyncTraceName, "StartTime", frame_start_time,

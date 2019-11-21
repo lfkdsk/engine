@@ -373,6 +373,10 @@ std::vector<double> RuntimeController::GetFps(int thread_type,
                                               bool do_clear) {
   return client_.GetFps(thread_type, fps_type, do_clear);
 }
+
+int64_t RuntimeController::GetEngineMainEnterMicros() {
+  return client_.GetEngineMainEnterMicros();
+}
 // END
 
 }  // namespace flutter
