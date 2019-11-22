@@ -71,6 +71,7 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
   auto io_task_runner = shell->GetTaskRunners().GetIOTaskRunner();
   fml::TaskRunner::RunNowOrPostTask(
       io_task_runner,
+<<<<<<< HEAD
       [&io_latch,           //
        &io_manager,         //
        &platform_view,      //
@@ -103,6 +104,22 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
           snapshot_delegate = rasterizer->GetSnapshotDelegate();
         }
         gpu_latch.Signal();
+=======
+      [&io_manager_promise,                                               //
+       &weak_io_manager_promise,                                          //
+       &unref_queue_promise,                                              //
+       platform_view = platform_view->GetWeakPtr(),                       //
+       io_task_runner,                                                    //
+       is_backgrounded_sync_switch = shell->GetIsGpuDisabledSyncSwitch()  //
+  ]() {
+        TRACE_EVENT0("flutter", "ShellSetupIOSubsystem");
+        auto io_manager = std::make_unique<ShellIOManager>(
+            platform_view.getUnsafe()->CreateResourceContext(),
+            is_backgrounded_sync_switch, io_task_runner);
+        weak_io_manager_promise.set_value(io_manager->GetWeakPtr());
+        unref_queue_promise.set_value(io_manager->GetSkiaUnrefQueue());
+        io_manager_promise.set_value(std::move(io_manager));
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
       });
 
   gpu_latch.Wait();
@@ -252,7 +269,15 @@ std::unique_ptr<Shell> Shell::Create(
 Shell::Shell(TaskRunners task_runners, Settings settings)
     : task_runners_(std::move(task_runners)),
       settings_(std::move(settings)),
+<<<<<<< HEAD
       engine_created_(false) {
+=======
+      vm_(std::move(vm)),
+      is_gpu_disabled_sync_switch_(new fml::SyncSwitch()),
+      weak_factory_(this),
+      weak_factory_gpu_(nullptr) {
+  FML_CHECK(vm_) << "Must have access to VM to create a shell.";
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
   FML_DCHECK(task_runners_.IsValid());
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
@@ -550,7 +575,9 @@ void Shell::OnPlatformViewDestroyed() {
   auto io_task = [io_manager = io_manager_.get(), &latch]() {
     // Execute any pending Skia object deletions while GPU access is still
     // allowed.
-    io_manager->GetSkiaUnrefQueue()->Drain();
+    io_manager->GetIsGpuDisabledSyncSwitch()->Execute(
+        fml::SyncSwitch::Handlers().SetIfFalse(
+            [&] { io_manager->GetSkiaUnrefQueue()->Drain(); }));
     // Step 3: All done. Signal the latch that the platform thread is waiting
     // on.
     latch.Signal();
@@ -1255,5 +1282,9 @@ void Shell::ExitApp(fml::closure closure) {
           }));
 }
 // END
+
+std::shared_ptr<fml::SyncSwitch> Shell::GetIsGpuDisabledSyncSwitch() const {
+  return is_gpu_disabled_sync_switch_;
+}
 
 }  // namespace flutter

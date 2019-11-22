@@ -105,6 +105,16 @@
                  name:UIApplicationDidReceiveMemoryWarningNotification
                object:nil];
 
+  [center addObserver:self
+             selector:@selector(applicationBecameActive:)
+                 name:UIApplicationDidBecomeActiveNotification
+               object:nil];
+
+  [center addObserver:self
+             selector:@selector(applicationWillResignActive:)
+                 name:UIApplicationWillResignActiveNotification
+               object:nil];
+
   return self;
 }
 
@@ -112,7 +122,15 @@
   [_pluginPublications release];
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+<<<<<<< HEAD
   [center removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+=======
+  if (_flutterViewControllerWillDeallocObserver) {
+    [center removeObserver:_flutterViewControllerWillDeallocObserver];
+    [_flutterViewControllerWillDeallocObserver release];
+  }
+  [center removeObserver:self];
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 
   [super dealloc];
 }
@@ -494,6 +512,7 @@
     }
     _publisher.reset([[FlutterObservatoryPublisher alloc] init]);
     [self maybeSetupPlatformViewChannels];
+    _shell->GetIsGpuDisabledSyncSwitch()->SetSwitch(_isGpuDisabled ? true : false);
   }
 
   return _shell != nullptr;
@@ -712,6 +731,7 @@
   return _pluginPublications[pluginKey];
 }
 
+<<<<<<< HEAD
 // BD ADD: START
 #pragma mark - FlutterBinaryMessengerProvider
 
@@ -721,6 +741,17 @@
 // END
 
 #pragma mark - Memory Notifications
+=======
+#pragma mark - Notifications
+
+- (void)applicationBecameActive:(NSNotification*)notification {
+  [self setIsGpuDisabled:NO];
+}
+
+- (void)applicationWillResignActive:(NSNotification*)notification {
+  [self setIsGpuDisabled:YES];
+}
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 
 - (void)onMemoryWarning:(NSNotification*)notification {
   // BD MOD: START
@@ -737,6 +768,13 @@
                           }
                         }];
   // END
+}
+
+- (void)setIsGpuDisabled:(BOOL)value {
+  if (_shell) {
+    _shell->GetIsGpuDisabledSyncSwitch()->SetSwitch(value ? true : false);
+  }
+  _isGpuDisabled = value;
 }
 
 @end

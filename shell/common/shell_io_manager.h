@@ -25,8 +25,13 @@ class ShellIOManager final : public IOManager {
       sk_sp<const GrGLInterface> gl_interface);
 
   ShellIOManager(sk_sp<GrContext> resource_context,
+<<<<<<< HEAD
                  fml::RefPtr<fml::TaskRunner> unref_queue_task_runner,
                  bool should_defer_decode_image_when_platform_view_invalid);
+=======
+                 std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch,
+                 fml::RefPtr<fml::TaskRunner> unref_queue_task_runner);
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 
   ~ShellIOManager() override;
 
@@ -56,6 +61,9 @@ class ShellIOManager final : public IOManager {
   // BD ADD:
   std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override;
 
+  // |IOManager|
+  std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() override;
+
  private:
   // Resource context management.
   sk_sp<GrContext> resource_context_;
@@ -72,6 +80,8 @@ class ShellIOManager final : public IOManager {
    *
    */ 
   std::shared_ptr<flutter::ImageLoader> imageLoader_;
+
+  std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(ShellIOManager);
 

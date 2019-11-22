@@ -44,8 +44,13 @@ sk_sp<GrContext> ShellIOManager::CreateCompatibleResourceLoadingContext(
 
 ShellIOManager::ShellIOManager(
     sk_sp<GrContext> resource_context,
+<<<<<<< HEAD
     fml::RefPtr<fml::TaskRunner> unref_queue_task_runner,
     bool should_defer_decode_image_when_platform_view_invalid)
+=======
+    std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch,
+    fml::RefPtr<fml::TaskRunner> unref_queue_task_runner)
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
     : resource_context_(std::move(resource_context)),
       resource_context_weak_factory_(
           resource_context_ ? std::make_unique<fml::WeakPtrFactory<GrContext>>(
@@ -53,11 +58,17 @@ ShellIOManager::ShellIOManager(
                             : nullptr),
       unref_queue_(fml::MakeRefCounted<flutter::SkiaUnrefQueue>(
           std::move(unref_queue_task_runner),
+<<<<<<< HEAD
           fml::TimeDelta::FromMilliseconds(250))),
       weak_factory_(this),
       is_platform_view_valid_(false),
       should_defer_decode_image_when_platform_view_invalid_(
           should_defer_decode_image_when_platform_view_invalid) {
+=======
+          fml::TimeDelta::FromMilliseconds(8))),
+      weak_factory_(this),
+      is_gpu_disabled_sync_switch_(is_gpu_disabled_sync_switch) {
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
   if (!resource_context_) {
 #ifndef OS_FUCHSIA
     FML_DLOG(WARNING) << "The IO manager was initialized without a resource "
@@ -70,7 +81,8 @@ ShellIOManager::ShellIOManager(
 ShellIOManager::~ShellIOManager() {
   // Last chance to drain the IO queue as the platform side reference to the
   // underlying OpenGL context may be going away.
-  unref_queue_->Drain();
+  is_gpu_disabled_sync_switch_->Execute(
+      fml::SyncSwitch::Handlers().SetIfFalse([&] { unref_queue_->Drain(); }));
 }
 
 fml::WeakPtr<GrContext> ShellIOManager::GetResourceContext() const {
@@ -130,4 +142,13 @@ void ShellIOManager::RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> i
 std::shared_ptr<flutter::ImageLoader> ShellIOManager::GetImageLoader() const {
   return imageLoader_;
 }
+<<<<<<< HEAD
+=======
+
+// |IOManager|
+std::shared_ptr<fml::SyncSwitch> ShellIOManager::GetIsGpuDisabledSyncSwitch() {
+  return is_gpu_disabled_sync_switch_;
+}
+
+>>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 }  // namespace flutter
