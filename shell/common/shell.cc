@@ -81,9 +81,7 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
         TRACE_EVENT0("flutter", "ShellSetupIOSubsystem");
         io_manager = std::make_unique<ShellIOManager>(
             platform_view->CreateResourceContext(), is_backgrounded_sync_switch,
-            io_task_runner,
-            shell->settings_
-                .should_defer_decode_image_when_platform_view_invalid);
+            io_task_runner);
         io_latch.Signal();
       });
   io_latch.Wait();
@@ -256,7 +254,6 @@ Shell::Shell(TaskRunners task_runners, Settings settings)
       settings_(std::move(settings)),
       engine_created_(false),
       is_gpu_disabled_sync_switch_(new fml::SyncSwitch()) {
-  FML_CHECK(vm_) << "Must have access to VM to create a shell.";
   FML_DCHECK(task_runners_.IsValid());
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
@@ -505,10 +502,6 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
           platform_view->CreateResourceContext());
     }
 
-    if (io_manager) {
-      io_manager->UpdatePlatformViewValid(true);
-    }
-
     // Step 1: Tell the GPU thread that it should create a surface for its
     // rasterizer.
     if (should_post_gpu_task) {
@@ -536,13 +529,6 @@ void Shell::OnPlatformViewDestroyed() {
   TRACE_EVENT0("flutter", "Shell::OnPlatformViewDestroyed");
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
-
-  // BD ADD: START
-  fml::TaskRunner::RunNowOrPostTask(
-      task_runners_.GetIOTaskRunner(), [io_manager = io_manager_.get()] {
-        io_manager->UpdatePlatformViewValid(false);
-      });
-  // END
 
   // Note:
   // This is a synchronous operation because certain platforms depend on

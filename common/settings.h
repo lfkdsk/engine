@@ -151,8 +151,6 @@ struct Settings {
   // END
 
   std::string ToString() const;
-
-  bool should_defer_decode_image_when_platform_view_invalid = false;
 };
 
 }  // namespace flutter

@@ -428,10 +428,6 @@
     settings.advisory_script_uri = std::string("main.dart");
   }
 
-  settings.should_defer_decode_image_when_platform_view_invalid =
-      [[NSUserDefaults standardUserDefaults]
-          boolForKey:@"flutter_defer_decode_image_when_platform_view_invalid"];
-
   const auto threadLabel = [NSString stringWithFormat:@"%@.%zu", _labelPrefix, shellCount++];
   FML_DLOG(INFO) << "Creating threadHost for " << threadLabel.UTF8String;
   // The current thread will be used as the platform thread. Ensure that the message loop is
@@ -741,7 +737,6 @@
   [self setIsGpuDisabled:YES];
 }
 
-#pragma mark - Memory Notifications
 - (void)onMemoryWarning:(NSNotification*)notification {
   // BD MOD: START
   // if (_shell) {

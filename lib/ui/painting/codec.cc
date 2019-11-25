@@ -58,11 +58,9 @@ static void InvokeCodecCallback(fml::RefPtr<Codec> codec,
   TRACE_FLOW_END("flutter", kInitCodecTraceTag, trace_id);
 }
 
-// BD MOD: START
+// BD MOD:
 // static sk_sp<SkImage> DecodeImage(fml::WeakPtr<GrContext> context,
 static sk_sp<SkImage> DecodeImage(fml::WeakPtr<IOManager> io_manager,
-                                  fml::WeakPtr<GrContext> context,
-                                  // END
                                   sk_sp<SkData> buffer,
                                   size_t trace_id) {
   TRACE_FLOW_STEP("flutter", kInitCodecTraceTag, trace_id);
@@ -83,27 +81,28 @@ static sk_sp<SkImage> DecodeImage(fml::WeakPtr<IOManager> io_manager,
   //   // on iOS.
   //   return SkImage::MakeFromEncoded(std::move(buffer));
   // }
+  if (!io_manager) {
+    return nullptr;
+  }
   sk_sp<SkImage> result;
   io_manager->GetIsGpuDisabledSyncSwitch()->Execute(
       fml::SyncSwitch::Handlers()
           .SetIfTrue([&result, &buffer] {
             result = SkImage::MakeFromEncoded(std::move(buffer));
           })
-          .SetIfFalse([&result, &context, &buffer] {
+          .SetIfFalse([&result, &io_manager, &buffer] {
             sk_sp<SkColorSpace> dstColorSpace = nullptr;
             result = SkImage::MakeCrossContextFromEncoded(
-                context.get(), std::move(buffer), true, dstColorSpace.get(),
-                true);
+                io_manager->GetResourceContext().get(), std::move(buffer), true,
+                dstColorSpace.get(), true);
           }));
   return result;
   // END
 }  // namespace
 
-// BD MOD: START
+// BD MOD:
 // fml::RefPtr<Codec> InitCodec(fml::WeakPtr<GrContext> context,
 fml::RefPtr<Codec> InitCodec(fml::WeakPtr<IOManager> io_manager,
-                             fml::WeakPtr<GrContext> context,
-                             // END
                              sk_sp<SkData> buffer,
                              fml::RefPtr<flutter::SkiaUnrefQueue> unref_queue,
                              const float decodedCacheRatioCap,
@@ -128,7 +127,7 @@ fml::RefPtr<Codec> InitCodec(fml::WeakPtr<IOManager> io_manager,
   }
   // BD MOD:
   // auto skImage = DecodeImage(context, buffer, trace_id);
-  auto skImage = DecodeImage(io_manager, context, buffer, trace_id);
+  auto skImage = DecodeImage(io_manager, buffer, trace_id);
   if (!skImage) {
     FML_LOG(ERROR) << "DecodeImage failed";
     return nullptr;
@@ -139,8 +138,10 @@ fml::RefPtr<Codec> InitCodec(fml::WeakPtr<IOManager> io_manager,
   return fml::MakeRefCounted<SingleFrameCodec>(std::move(frameInfo));
 }
 
+// BD MOD:
+// fml::RefPtr<Codec> InitCodecUncompressed(fml::WeakPtr<GrContext> context,
 fml::RefPtr<Codec> InitCodecUncompressed(
-    fml::WeakPtr<GrContext> context,
+    fml::WeakPtr<IOManager> io_manager,
     sk_sp<SkData> buffer,
     ImageInfo image_info,
     fml::RefPtr<flutter::SkiaUnrefQueue> unref_queue,
@@ -154,15 +155,36 @@ fml::RefPtr<Codec> InitCodecUncompressed(
     return nullptr;
   }
 
-  sk_sp<SkImage> skImage;
-  if (context) {
-    SkPixmap pixmap(image_info.sk_info, buffer->data(), image_info.row_bytes);
-    skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixmap, true,
-                                                  nullptr, true);
-  } else {
-    skImage = SkImage::MakeRasterData(image_info.sk_info, std::move(buffer),
-                                      image_info.row_bytes);
+  // BD MOD: START
+  // if (context) {
+  //   SkPixmap pixmap(image_info.sk_info, buffer->data(),
+  //   image_info.row_bytes); skImage =
+  //   SkImage::MakeCrossContextFromPixmap(context.get(), pixmap, true,
+  //                                                 nullptr, true);
+  // } else {
+  //   skImage = SkImage::MakeRasterData(image_info.sk_info,
+  //   std::move(buffer),
+  //                                     image_info.row_bytes);
+  // }
+  if (!io_manager) {
+    return nullptr;
   }
+
+  sk_sp<SkImage> skImage;
+  io_manager->GetIsGpuDisabledSyncSwitch()->Execute(
+      fml::SyncSwitch::Handlers()
+          .SetIfTrue([&skImage, &image_info, &buffer] {
+            skImage = SkImage::MakeRasterData(
+                image_info.sk_info, std::move(buffer), image_info.row_bytes);
+          })
+          .SetIfFalse([&skImage, &image_info, &buffer, &io_manager] {
+            SkPixmap pixmap(image_info.sk_info, buffer->data(),
+                            image_info.row_bytes);
+            skImage = SkImage::MakeCrossContextFromPixmap(
+                io_manager->GetResourceContext().get(), pixmap, true, nullptr,
+                true);
+          }));
+  // END
 
   auto image = CanvasImage::Create();
   image->set_image({skImage, unref_queue});
@@ -172,9 +194,9 @@ fml::RefPtr<Codec> InitCodecUncompressed(
 
 void InitCodecAndInvokeCodecCallback(
     fml::RefPtr<fml::TaskRunner> ui_task_runner,
-    // BD ADD:
+    // BD MOD:
+    // fml::WeakPtr<GrContext> context,
     fml::WeakPtr<IOManager> io_manager,
-    fml::WeakPtr<GrContext> context,
     fml::RefPtr<flutter::SkiaUnrefQueue> unref_queue,
     std::unique_ptr<DartPersistentValue> callback,
     sk_sp<SkData> buffer,
@@ -183,12 +205,12 @@ void InitCodecAndInvokeCodecCallback(
     size_t trace_id) {
   fml::RefPtr<Codec> codec;
   if (image_info) {
-    codec = InitCodecUncompressed(context, std::move(buffer), *image_info,
+    codec = InitCodecUncompressed(io_manager, std::move(buffer), *image_info,
                                   std::move(unref_queue), decodedCacheRatioCap,
                                   trace_id);
   } else {
-    codec = InitCodec(io_manager, context, std::move(buffer),
-                      std::move(unref_queue), decodedCacheRatioCap, trace_id);
+    codec = InitCodec(io_manager, std::move(buffer), std::move(unref_queue),
+                      decodedCacheRatioCap, trace_id);
   }
   ui_task_runner->PostTask(
       fml::MakeCopyable([callback = std::move(callback),
@@ -322,12 +344,8 @@ void InstantiateImageCodec(Dart_NativeArguments args) {
        io_manager = dart_state->GetIOManager(),
        queue = UIDartState::Current()->GetSkiaUnrefQueue(),
        decodedCacheRatioCap]() mutable {
-        fml::WeakPtr<GrContext> context = fml::WeakPtr<GrContext>();
-        if (io_manager && io_manager->IsResourceContextValidForDecodeImage()) {
-          context = io_manager->GetResourceContext();
-        }
         InitCodecAndInvokeCodecCallback(
-            std::move(ui_task_runner), io_manager, context, std::move(queue),
+            std::move(ui_task_runner), io_manager, std::move(queue),
             std::move(callback), std::move(buffer), std::move(image_info),
             decodedCacheRatioCap, trace_id);
       }));

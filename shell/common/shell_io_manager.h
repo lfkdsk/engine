@@ -26,8 +26,7 @@ class ShellIOManager final : public IOManager {
 
   ShellIOManager(sk_sp<GrContext> resource_context,
                  std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch,
-                 fml::RefPtr<fml::TaskRunner> unref_queue_task_runner,
-                 bool should_defer_decode_image_when_platform_view_invalid);
+                 fml::RefPtr<fml::TaskRunner> unref_queue_task_runner);
 
   ~ShellIOManager() override;
 
@@ -47,9 +46,6 @@ class ShellIOManager final : public IOManager {
   fml::RefPtr<flutter::SkiaUnrefQueue> GetSkiaUnrefQueue() const override;
 
   fml::WeakPtr<ShellIOManager> GetWeakPtr();
-
-  void UpdatePlatformViewValid(bool valid);
-  bool IsResourceContextValidForDecodeImage() const override;
 
   // BD ADD:
   void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
@@ -80,9 +76,6 @@ class ShellIOManager final : public IOManager {
   std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(ShellIOManager);
-
-  bool is_platform_view_valid_ = false;
-  bool should_defer_decode_image_when_platform_view_invalid_ = false;
 };
 
 }  // namespace flutter

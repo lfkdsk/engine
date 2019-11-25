@@ -24,8 +24,6 @@ class IOManager {
 
   virtual fml::RefPtr<flutter::SkiaUnrefQueue> GetSkiaUnrefQueue() const = 0;
 
-  virtual bool IsResourceContextValidForDecodeImage() const = 0;
-
   // BD ADD:
   virtual std::shared_ptr<flutter::ImageLoader> GetImageLoader() const = 0;
 
