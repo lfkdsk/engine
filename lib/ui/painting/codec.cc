@@ -58,7 +58,11 @@ static void InvokeCodecCallback(fml::RefPtr<Codec> codec,
   TRACE_FLOW_END("flutter", kInitCodecTraceTag, trace_id);
 }
 
-static sk_sp<SkImage> DecodeImage(fml::WeakPtr<GrContext> context,
+// BD MOD: START
+// static sk_sp<SkImage> DecodeImage(fml::WeakPtr<GrContext> context,
+static sk_sp<SkImage> DecodeImage(fml::WeakPtr<IOManager> io_manager,
+                                  fml::WeakPtr<GrContext> context,
+                                  // END
                                   sk_sp<SkData> buffer,
                                   size_t trace_id) {
   TRACE_FLOW_STEP("flutter", kInitCodecTraceTag, trace_id);
@@ -67,21 +71,39 @@ static sk_sp<SkImage> DecodeImage(fml::WeakPtr<GrContext> context,
   if (buffer == nullptr || buffer->isEmpty()) {
     return nullptr;
   }
+  // BD MOD: START
+  // if (context) {
+  //   // This indicates that we do not want a "linear blending" decode.
+  //   sk_sp<SkColorSpace> dstColorSpace = nullptr;
+  //   return SkImage::MakeCrossContextFromEncoded(
+  //       context.get(), std::move(buffer), true, dstColorSpace.get(), true);
+  // } else {
+  //   // Defer decoding until time of draw later on the GPU thread. Can happen
+  //   // when GL operations are currently forbidden such as in the background
+  //   // on iOS.
+  //   return SkImage::MakeFromEncoded(std::move(buffer));
+  // }
+  sk_sp<SkImage> result;
+  io_manager->GetIsGpuDisabledSyncSwitch()->Execute(
+      fml::SyncSwitch::Handlers()
+          .SetIfTrue([&result, &buffer] {
+            result = SkImage::MakeFromEncoded(std::move(buffer));
+          })
+          .SetIfFalse([&result, &context, &buffer] {
+            sk_sp<SkColorSpace> dstColorSpace = nullptr;
+            result = SkImage::MakeCrossContextFromEncoded(
+                context.get(), std::move(buffer), true, dstColorSpace.get(),
+                true);
+          }));
+  return result;
+  // END
+}  // namespace
 
-  if (context) {
-    // This indicates that we do not want a "linear blending" decode.
-    sk_sp<SkColorSpace> dstColorSpace = nullptr;
-    return SkImage::MakeCrossContextFromEncoded(
-        context.get(), std::move(buffer), true, dstColorSpace.get(), true);
-  } else {
-    // Defer decoding until time of draw later on the GPU thread. Can happen
-    // when GL operations are currently forbidden such as in the background
-    // on iOS.
-    return SkImage::MakeFromEncoded(std::move(buffer));
-  }
-}
-
-fml::RefPtr<Codec> InitCodec(fml::WeakPtr<GrContext> context,
+// BD MOD: START
+// fml::RefPtr<Codec> InitCodec(fml::WeakPtr<GrContext> context,
+fml::RefPtr<Codec> InitCodec(fml::WeakPtr<IOManager> io_manager,
+                             fml::WeakPtr<GrContext> context,
+                             // END
                              sk_sp<SkData> buffer,
                              fml::RefPtr<flutter::SkiaUnrefQueue> unref_queue,
                              const float decodedCacheRatioCap,
@@ -104,7 +126,9 @@ fml::RefPtr<Codec> InitCodec(fml::WeakPtr<GrContext> context,
     return fml::MakeRefCounted<MultiFrameCodec>(std::move(skCodec),
                                                 decodedCacheRatioCap);
   }
-  auto skImage = DecodeImage(context, buffer, trace_id);
+  // BD MOD:
+  // auto skImage = DecodeImage(context, buffer, trace_id);
+  auto skImage = DecodeImage(io_manager, context, buffer, trace_id);
   if (!skImage) {
     FML_LOG(ERROR) << "DecodeImage failed";
     return nullptr;
@@ -148,6 +172,8 @@ fml::RefPtr<Codec> InitCodecUncompressed(
 
 void InitCodecAndInvokeCodecCallback(
     fml::RefPtr<fml::TaskRunner> ui_task_runner,
+    // BD ADD:
+    fml::WeakPtr<IOManager> io_manager,
     fml::WeakPtr<GrContext> context,
     fml::RefPtr<flutter::SkiaUnrefQueue> unref_queue,
     std::unique_ptr<DartPersistentValue> callback,
@@ -161,8 +187,8 @@ void InitCodecAndInvokeCodecCallback(
                                   std::move(unref_queue), decodedCacheRatioCap,
                                   trace_id);
   } else {
-    codec = InitCodec(context, std::move(buffer), std::move(unref_queue),
-                      decodedCacheRatioCap, trace_id);
+    codec = InitCodec(io_manager, context, std::move(buffer),
+                      std::move(unref_queue), decodedCacheRatioCap, trace_id);
   }
   ui_task_runner->PostTask(
       fml::MakeCopyable([callback = std::move(callback),
@@ -301,7 +327,7 @@ void InstantiateImageCodec(Dart_NativeArguments args) {
           context = io_manager->GetResourceContext();
         }
         InitCodecAndInvokeCodecCallback(
-            std::move(ui_task_runner), context, std::move(queue),
+            std::move(ui_task_runner), io_manager, context, std::move(queue),
             std::move(callback), std::move(buffer), std::move(image_info),
             decodedCacheRatioCap, trace_id);
       }));
@@ -556,23 +582,24 @@ Dart_Handle SingleFrameCodec::getNextFrame(Dart_Handle callback_handle) {
  * BD ADD:
  *
  */
-static void InvokeGetNativeImageCallback(fml::RefPtr<CanvasImage> image,
-                                         std::unique_ptr<DartPersistentValue> callback,
-                                         size_t trace_id) {
-    std::shared_ptr<tonic::DartState> dart_state = callback->dart_state().lock();
-    if (!dart_state) {
-        TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
-        return;
-    }
-    tonic::DartState::Scope scope(dart_state);
-    if (!image) {
-        DartInvoke(callback->value(), {Dart_Null()});
-    } else {
-        DartInvoke(callback->value(), {ToDart(image)});
-    }
+static void InvokeGetNativeImageCallback(
+    fml::RefPtr<CanvasImage> image,
+    std::unique_ptr<DartPersistentValue> callback,
+    size_t trace_id) {
+  std::shared_ptr<tonic::DartState> dart_state = callback->dart_state().lock();
+  if (!dart_state) {
     TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+    return;
+  }
+  tonic::DartState::Scope scope(dart_state);
+  if (!image) {
+    DartInvoke(callback->value(), {Dart_Null()});
+  } else {
+    DartInvoke(callback->value(), {ToDart(image)});
+  }
+  TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
 }
-  
+
 /**
  * BD ADD:
  *
@@ -581,51 +608,58 @@ void GetNativeImage(Dart_NativeArguments args) {
   static size_t trace_counter = 1;
   const size_t trace_id = trace_counter++;
   TRACE_FLOW_BEGIN("flutter", kGetNativeImageTraceTag, trace_id);
-    
+
   Dart_Handle callback_handle = Dart_GetNativeArgument(args, 1);
   if (!Dart_IsClosure(callback_handle)) {
     TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
     Dart_SetReturnValue(args, ToDart("Callback must be a function"));
     return;
   }
-    
+
   Dart_Handle exception = nullptr;
-  const std::string url = tonic::DartConverter<std::string>::FromArguments(args, 0, exception);
+  const std::string url =
+      tonic::DartConverter<std::string>::FromArguments(args, 0, exception);
   if (exception) {
     TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
     Dart_SetReturnValue(args, exception);
     return;
   }
-  
-  const int width = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 2));
-  const int height = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 3));
-  const float scale = tonic::DartConverter<float>::FromDart(Dart_GetNativeArgument(args, 4));
-    
+
+  const int width =
+      tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 2));
+  const int height =
+      tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 3));
+  const float scale =
+      tonic::DartConverter<float>::FromDart(Dart_GetNativeArgument(args, 4));
+
   auto* dart_state = UIDartState::Current();
 
   const auto& task_runners = dart_state->GetTaskRunners();
   fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
-  std::shared_ptr<flutter::ImageLoader> imageLoader = io_manager.get()->GetImageLoader();
-  imageLoader->Load(url, width, height, scale, dart_state, fml::MakeCopyable(
-      [context = dart_state->GetResourceContext(),
-       ui_task_runner = task_runners.GetUITaskRunner(),
-       io_task_runner = task_runners.GetIOTaskRunner(),
-       queue = UIDartState::Current()->GetSkiaUnrefQueue(),
-       callback = std::make_unique<DartPersistentValue>(tonic::DartState::Current(), callback_handle),
-       trace_id](sk_sp<SkImage> skimage) mutable {
-         fml::RefPtr<CanvasImage> image;
-         if (skimage) {
-           image = CanvasImage::Create();
-           image->set_image({skimage, queue});
-         } else {
-           image = nullptr;
-         }
-         ui_task_runner->PostTask(fml::MakeCopyable(
-             [callback = std::move(callback),
-              image = std::move(image),
-              trace_id]() mutable {
-                InvokeGetNativeImageCallback(image, std::move(callback), trace_id);
-             }));
+  std::shared_ptr<flutter::ImageLoader> imageLoader =
+      io_manager.get()->GetImageLoader();
+  imageLoader->Load(
+      url, width, height, scale, dart_state,
+      fml::MakeCopyable([context = dart_state->GetResourceContext(),
+                         ui_task_runner = task_runners.GetUITaskRunner(),
+                         io_task_runner = task_runners.GetIOTaskRunner(),
+                         queue = UIDartState::Current()->GetSkiaUnrefQueue(),
+                         callback = std::make_unique<DartPersistentValue>(
+                             tonic::DartState::Current(), callback_handle),
+                         trace_id](sk_sp<SkImage> skimage) mutable {
+        fml::RefPtr<CanvasImage> image;
+        if (skimage) {
+          image = CanvasImage::Create();
+          image->set_image({skimage, queue});
+        } else {
+          image = nullptr;
+        }
+        ui_task_runner->PostTask(
+            fml::MakeCopyable([callback = std::move(callback),
+                               image = std::move(image), trace_id]() mutable {
+              InvokeGetNativeImageCallback(image, std::move(callback),
+                                           trace_id);
+            }));
       }));
 }
 

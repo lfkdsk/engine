@@ -122,15 +122,7 @@
   [_pluginPublications release];
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
-<<<<<<< HEAD
-  [center removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
-=======
-  if (_flutterViewControllerWillDeallocObserver) {
-    [center removeObserver:_flutterViewControllerWillDeallocObserver];
-    [_flutterViewControllerWillDeallocObserver release];
-  }
   [center removeObserver:self];
->>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 
   [super dealloc];
 }
@@ -731,7 +723,6 @@
   return _pluginPublications[pluginKey];
 }
 
-<<<<<<< HEAD
 // BD ADD: START
 #pragma mark - FlutterBinaryMessengerProvider
 
@@ -740,8 +731,6 @@
 }
 // END
 
-#pragma mark - Memory Notifications
-=======
 #pragma mark - Notifications
 
 - (void)applicationBecameActive:(NSNotification*)notification {
@@ -751,8 +740,8 @@
 - (void)applicationWillResignActive:(NSNotification*)notification {
   [self setIsGpuDisabled:YES];
 }
->>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 
+#pragma mark - Memory Notifications
 - (void)onMemoryWarning:(NSNotification*)notification {
   // BD MOD: START
   // if (_shell) {

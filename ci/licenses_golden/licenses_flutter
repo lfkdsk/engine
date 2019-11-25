@@ -224,14 +224,11 @@ FILE: ../../../flutter/fml/synchronization/semaphore_unittest.cc
 FILE: ../../../flutter/fml/synchronization/shared_mutex.h
 FILE: ../../../flutter/fml/synchronization/shared_mutex_std.cc
 FILE: ../../../flutter/fml/synchronization/shared_mutex_std.h
-<<<<<<< HEAD
 FILE: ../../../flutter/fml/synchronization/thread_annotations.h
 FILE: ../../../flutter/fml/synchronization/thread_annotations_unittest.cc
-=======
 FILE: ../../../flutter/fml/synchronization/sync_switch.cc
 FILE: ../../../flutter/fml/synchronization/sync_switch.h
 FILE: ../../../flutter/fml/synchronization/sync_switch_unittest.cc
->>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 FILE: ../../../flutter/fml/synchronization/waitable_event.cc
 FILE: ../../../flutter/fml/synchronization/waitable_event.h
 FILE: ../../../flutter/fml/synchronization/waitable_event_unittest.cc

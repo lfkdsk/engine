@@ -53,12 +53,9 @@ source_set("fml") {
     "synchronization/semaphore.cc",
     "synchronization/semaphore.h",
     "synchronization/shared_mutex.h",
-<<<<<<< HEAD
     "synchronization/thread_annotations.h",
-=======
     "synchronization/sync_switch.cc",
     "synchronization/sync_switch.h",
->>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
     "synchronization/waitable_event.cc",
     "synchronization/waitable_event.h",
     "task_runner.cc",
@@ -196,11 +193,8 @@ executable("fml_unittests") {
     "string_view_unittest.cc",
     "synchronization/count_down_latch_unittests.cc",
     "synchronization/semaphore_unittest.cc",
-<<<<<<< HEAD
     "synchronization/thread_annotations_unittest.cc",
-=======
     "synchronization/sync_switch_unittest.cc",
->>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
     "synchronization/waitable_event_unittest.cc",
     "thread_local_unittests.cc",
     "thread_unittests.cc",

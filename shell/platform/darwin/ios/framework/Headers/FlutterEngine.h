@@ -41,8 +41,11 @@
  */
 FLUTTER_EXPORT
 @interface FlutterEngine
-// BD MOD: add FlutterImageLoaderRegistry
-    : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterImageLoaderRegistry, FlutterPluginRegistry>
+    // BD MOD: add FlutterImageLoaderRegistry
+    : NSObject <FlutterBinaryMessenger,
+                FlutterTextureRegistry,
+                FlutterImageLoaderRegistry,
+                FlutterPluginRegistry>
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
@@ -231,30 +234,6 @@ FLUTTER_EXPORT
  */
 @property(nonatomic, readonly) FlutterBasicMessageChannel* settingsChannel;
 
-<<<<<<< HEAD
-=======
-/**
- * The `NSURL` of the observatory for the service isolate.
- *
- * This is only set in debug and profile runtime modes, and only after the
- * observatory service is ready. In release mode or before the observatory has
- * started, it returns `nil`.
- */
-@property(nonatomic, readonly, nullable) NSURL* observatoryUrl;
-
-/**
- * The `FlutterBinaryMessenger` associated with this FlutterEngine (used for communicating with
- * channels).
- */
-@property(nonatomic, readonly) NSObject<FlutterBinaryMessenger>* binaryMessenger;
-
-/**
- * The UI Isolate ID of of the engine.
- *
- * This property will be nil if the engine is not running.
- */
-@property(nonatomic, readonly, copy, nullable) NSString* isolateId;
-
 /**
  * Whether or not GPU calls are allowed.
  *
@@ -262,7 +241,6 @@ FLUTTER_EXPORT
  */
 @property(nonatomic, assign) BOOL isGpuDisabled;
 
->>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
 @end
 
 #endif  // FLUTTER_FLUTTERENGINE_H_

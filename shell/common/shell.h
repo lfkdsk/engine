@@ -16,13 +16,9 @@
 #include "flutter/fml/memory/ref_ptr.h"
 #include "flutter/fml/memory/thread_checker.h"
 #include "flutter/fml/memory/weak_ptr.h"
-<<<<<<< HEAD
 #include "flutter/fml/string_view.h"
-#include "flutter/fml/synchronization/thread_annotations.h"
-=======
-#include "flutter/fml/status.h"
 #include "flutter/fml/synchronization/sync_switch.h"
->>>>>>> 97a23a80e... Made a way to turn off the OpenGL operations on the IO thread for backgrounded apps (#13908)
+#include "flutter/fml/synchronization/thread_annotations.h"
 #include "flutter/fml/synchronization/waitable_event.h"
 #include "flutter/fml/thread.h"
 #include "flutter/lib/ui/semantics/custom_accessibility_action.h"
@@ -171,13 +167,14 @@ class Shell final : public PlatformView::Delegate,
 
   // |PlatformView::Delegate|
   void OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) override;
-                
+
   /**
    * BD ADD:
    *
    */
   // |PlatformView::Delegate|
-  void OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) override;
+  void OnPlatformViewRegisterImageLoader(
+      std::shared_ptr<flutter::ImageLoader> imageLoader) override;
 
   // |PlatformView::Delegate|
   void OnPlatformViewSetNextFrameCallback(fml::closure closure) override;
