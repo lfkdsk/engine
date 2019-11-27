@@ -26,6 +26,11 @@ AndroidShellHolder::AndroidShellHolder(
     fml::jni::JavaObjectWeakGlobalRef java_object,
     bool is_background_view)
     : settings_(std::move(settings)), java_object_(java_object) {
+// BD ADD: START
+#if defined(SUPPORT_SYSTRACE)
+  fml::tracing::InitTraceSymbol();
+#endif
+// END
   static size_t shell_count = 1;
   auto thread_label = std::to_string(shell_count++);
 
