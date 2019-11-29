@@ -3,7 +3,7 @@ const {
 } = require('byted-tos-client');
 const fs = require('fs');
 
-process.env.CONSUL_HTTP_HOST = '10.10.24.103';
+process.env.CONSUL_HTTP_HOST = '10.224.28.10';
 let args = process.argv.splice(2);
 let filepath = args[0];
 let name = args[1];
