@@ -440,6 +440,18 @@ void Window::CompletePlatformMessageResponse(int response_id,
 }
 
 // BD ADD: START
+void Window::NotifyIdle(int64_t microseconds) {
+  std::shared_ptr<tonic::DartState> dart_state = library_.dart_state().lock();
+  if (!dart_state)
+    return;
+  tonic::DartState::Scope scope(dart_state);
+
+  tonic::LogIfError(tonic::DartInvokeField(library_.value(), "_notifyIdle",
+                                           {
+                                               Dart_NewInteger(microseconds),
+                                           }));
+}
+
 void Window::ExitApp() {
   std::shared_ptr<tonic::DartState> dart_state = library_.dart_state().lock();
   if (!dart_state)

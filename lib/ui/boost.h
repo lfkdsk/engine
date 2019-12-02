@@ -28,9 +28,14 @@ class Boost {
     kUiMessageAtHead = 1 << 4,
     kEnableWaitSwapBuffer = 1 << 5,
     kEnableExtendBuffer = 1 << 6,
+    kCanNotifyIdle = 1 << 7,
   };
-
-  static constexpr uint16_t kAllFlags = 0x7F;
+    
+  enum IdleTypes {
+    kForDartRuntime = 1 << 0,
+    kForWindow = 1 << 1,
+    kForALL = 3,
+  };
 
  public:
   static Boost* Current() {
@@ -59,6 +64,8 @@ class Boost {
 
   void PreloadFontFamilies(const std::vector<std::string>& font_families,
                            const std::string& locale);
+  
+  bool CanNotifyIdle();
 
   void ForceGC();
 
@@ -87,7 +94,9 @@ class Boost {
   int64_t extend_buffer_deadline_;
   atomic_char extend_count_;
   fml::Semaphore extend_semaphore_;
-
+  
+  int64_t notify_idle_deadline_;
+  
   FML_DISALLOW_COPY_AND_ASSIGN(Boost);
 };
 

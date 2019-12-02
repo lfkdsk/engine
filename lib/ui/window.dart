@@ -25,8 +25,11 @@ typedef PlatformMessageResponseCallback = void Function(ByteData data);
 /// Signature for [Window.onPlatformMessage].
 typedef PlatformMessageCallback = void Function(String name, ByteData data, PlatformMessageResponseCallback callback);
 
-// BD ADD:
+// BD ADD: START
 typedef TimeToFirstFrameMicrosCallback = void Function(int frameworkInitTime, int firstFrameTime);
+
+typedef NotifyIdleCallback = void Function(Duration duration);
+// END
 
 /// States that an application can be in.
 ///
@@ -706,6 +709,14 @@ class Window {
   set exitApp(VoidCallback callback) {
     _exitApp = callback;
     _exitAppZone = Zone.current;
+  }
+
+  NotifyIdleCallback get onNotifyIdle => _onNotifyIdle;
+  NotifyIdleCallback _onNotifyIdle;
+  Zone _onNotifyIdleZone;
+  set onNotifyIdle(NotifyIdleCallback callback) {
+    _onNotifyIdle = callback;
+    _onNotifyIdleZone = Zone.current;
   }
   // END
 

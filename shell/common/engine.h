@@ -90,8 +90,9 @@ class Engine final : public RuntimeDelegate {
   bool UpdateAssetManager(std::shared_ptr<AssetManager> asset_manager);
 
   void BeginFrame(fml::TimePoint frame_time);
-
-  void NotifyIdle(int64_t deadline);
+// BD MOD:
+//  void NotifyIdle(int64_t deadline);
+  void NotifyIdle(int64_t deadline, int type);
 
   Dart_Port GetUIIsolateMainPort();
 

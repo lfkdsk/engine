@@ -208,7 +208,9 @@ bool RuntimeController::BeginFrame(fml::TimePoint frame_time) {
   return false;
 }
 
-bool RuntimeController::NotifyIdle(int64_t deadline) {
+// BD MOD:
+// bool RuntimeController::NotifyIdle(int64_t deadline) {
+bool RuntimeController::NotifyIdle(int64_t deadline, int type) {
   std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
   if (!root_isolate) {
     return false;
@@ -216,12 +218,20 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   tonic::DartState::Scope scope(root_isolate);
 
-  // BD ADD: START
-  if (Boost::Current()->IsGCDisabled()) {
-    Boost::Current()->Finish(Boost::kDisableGC);
+  // BD MOD: START
+  //  Dart_NotifyIdle(deadline);
+  if (type & Boost::kForDartRuntime) {
+    if (Boost::Current()->IsGCDisabled()) {
+      Boost::Current()->Finish(Boost::kDisableGC);
+    }
+    Dart_NotifyIdle(deadline);
+  }
+  if (type & Boost::kForWindow) {
+    if (auto* window = GetWindowIfAvailable()) {
+      window->NotifyIdle(deadline - Dart_TimelineGetMicros());
+    }
   }
   // END
-  Dart_NotifyIdle(deadline);
 
   // Idle notifications being in isolate scope are part of the contract.
   if (idle_notification_callback_) {

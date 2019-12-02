@@ -88,8 +88,11 @@ class Window final {
 
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
 
-  // BD ADD:
+  // BD ADD: START
+  void NotifyIdle(int64_t microseconds);
+  
   void ExitApp();
+  // END
 
  private:
   WindowClient* client_;

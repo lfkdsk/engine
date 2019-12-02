@@ -160,6 +160,10 @@ void Animator::BeginFrame(fml::TimePoint frame_start_time,
             TRACE_EVENT0("flutter", "BeginFrame idle callback");
             self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
                                                  100000);
+            // BD ADD: START
+            self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
+                                                 500000, Boost::kForWindow);
+            // END
           }
         },
         kNotifyIdleTaskWaitTime);
@@ -257,9 +261,9 @@ void Animator::AwaitVSync() {
       });
   // BD: MOD START
   // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
-  if (!Boost::Current()->IsGCDisabled()) {
-    delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
-  }
+  int flags = Boost::Current()->IsGCDisabled() ? 0 : Boost::kForDartRuntime;
+  flags |= Boost::Current()->CanNotifyIdle() ? Boost::kForWindow : 0;
+  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, flags);
   // END
 }
 

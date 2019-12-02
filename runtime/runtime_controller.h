@@ -56,8 +56,9 @@ class RuntimeController final : public WindowClient {
   bool SetAccessibilityFeatures(int32_t flags);
 
   bool BeginFrame(fml::TimePoint frame_time);
-
-  bool NotifyIdle(int64_t deadline);
+// BD MOD:
+// bool NotifyIdle(int64_t deadline);
+  bool NotifyIdle(int64_t deadline, int type);
 
   bool IsRootIsolateRunning() const;
 

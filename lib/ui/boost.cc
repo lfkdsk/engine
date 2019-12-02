@@ -28,7 +28,8 @@ Boost::Boost()
       dart_frame_deadline_(TimePoint::Now()),
       extend_buffer_deadline_(0),
       extend_count_(0),
-      extend_semaphore_(4) {}
+      extend_semaphore_(4),
+      notify_idle_deadline_(0) {}
 
 Boost::~Boost() = default;
 
@@ -64,6 +65,9 @@ void Boost::StartUp(uint16_t flags, int millis) {
   }
   if (flags & Flags::kEnableExtendBuffer) {
     extend_buffer_deadline_ = deadline;
+  }
+  if (flags & Flags::kCanNotifyIdle) {
+    notify_idle_deadline_ = deadline;
   }
 
   boost_flags_ |= flags;
@@ -119,6 +123,9 @@ void Boost::CheckFinished() {
   if (ui_message_athead_deadline_ > 0 &&
       ui_message_athead_deadline_ < current_micros) {
     finish_flags |= kUiMessageAtHead;
+  }
+  if (notify_idle_deadline_ > 0 && notify_idle_deadline_ < current_micros) {
+    finish_flags |= kCanNotifyIdle;
   }
   Finish(finish_flags);
 }
@@ -233,6 +240,10 @@ void Boost::WaitSwapBufferIfNeed() {
   AutoResetWaitableEvent swap_buffer_wait;
   swap_buffer_wait.WaitWithTimeout(
       TimeDelta::FromMilliseconds(next_frame_time));
+}
+
+bool Boost::CanNotifyIdle() {
+  return boost_flags_ & Flags::kCanNotifyIdle;
 }
 
 void Boost::PreloadFontFamilies(const std::vector<std::string>& font_families,

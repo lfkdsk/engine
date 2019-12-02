@@ -196,11 +196,12 @@ void Engine::BeginFrame(fml::TimePoint frame_time) {
   TRACE_EVENT0("flutter", "Engine::BeginFrame");
   runtime_controller_->BeginFrame(frame_time);
 }
-
-void Engine::NotifyIdle(int64_t deadline) {
+// BD MOD
+// void Engine::NotifyIdle(int64_t deadline) {
+void Engine::NotifyIdle(int64_t deadline, int type) {
   TRACE_EVENT1("flutter", "Engine::NotifyIdle", "deadline_now_delta",
                std::to_string(deadline - Dart_TimelineGetMicros()).c_str());
-  runtime_controller_->NotifyIdle(deadline);
+  runtime_controller_->NotifyIdle(deadline, type);
 }
 
 std::pair<bool, uint32_t> Engine::GetUIIsolateReturnCode() {
