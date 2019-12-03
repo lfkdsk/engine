@@ -1083,7 +1083,10 @@ class Paint {
   List<dynamic> _objects;
   static const int _kShaderIndex = 0;
   static const int _kColorFilterMatrixIndex = 1;
-  static const int _kObjectCount = 2; // Must be one larger than the largest index.
+  // BD MOD: START
+  // static const int _kObjectCount = 2; // Must be one larger than the largest index.
+  static const int _kImageFilterIndex = 2;
+  static const int _kObjectCount = 3; // Must be one larger than the largest index.
 
   /// Whether to apply anti-aliasing to lines and images drawn on the
   /// canvas.
