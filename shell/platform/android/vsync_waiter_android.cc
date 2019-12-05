@@ -18,6 +18,8 @@ namespace flutter {
 
 static fml::jni::ScopedJavaGlobalRef<jclass>* g_vsync_waiter_class = nullptr;
 static jmethodID g_async_wait_for_vsync_method_ = nullptr;
+// BD ADD:
+static jmethodID g_loop_for_vsync_method_ = nullptr;
 
 VsyncWaiterAndroid::VsyncWaiterAndroid(flutter::TaskRunners task_runners)
     : VsyncWaiter(std::move(task_runners)) {}
@@ -48,6 +50,16 @@ float VsyncWaiterAndroid::GetDisplayRefreshRate() const {
   jfieldID fid = env->GetStaticFieldID(clazz, "refreshRateFPS", "F");
   return env->GetStaticFloatField(clazz, fid);
 }
+
+// BD ADD: START
+void VsyncWaiterAndroid::LoopForVsync(jboolean initLooper) {
+  JNIEnv* env = fml::jni::AttachCurrentThread();
+  env->CallStaticVoidMethod(g_vsync_waiter_class->obj(),  //
+                            g_loop_for_vsync_method_,     //
+                            initLooper                    //
+  );
+}
+// END
 
 // static
 void VsyncWaiterAndroid::OnNativeVsync(JNIEnv* env,
@@ -100,6 +112,12 @@ bool VsyncWaiterAndroid::Register(JNIEnv* env) {
 
   FML_CHECK(g_async_wait_for_vsync_method_ != nullptr);
 
+  // BD ADD: START
+  g_loop_for_vsync_method_ = env->GetStaticMethodID(g_vsync_waiter_class->obj(),
+                                                    "loopForVsync", "(Z)V");
+
+  FML_CHECK(g_loop_for_vsync_method_ != nullptr);
+  // END
   return env->RegisterNatives(clazz, methods, arraysize(methods)) == 0;
 }
 

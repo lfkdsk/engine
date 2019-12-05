@@ -7,6 +7,7 @@ package io.flutter.view;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.view.Choreographer;
+import android.os.Looper;
 
 public class VsyncWaiter {
     // This estimate will be updated by FlutterView when it is attached to a Display.
@@ -16,27 +17,21 @@ public class VsyncWaiter {
     // The initial value of 0.0 indicates unkonwn refresh rate.
     public static float refreshRateFPS = 0.0f;
 
-    private static HandlerThread handlerThread;
-    private static Handler handler;
-
-    static {
-        handlerThread = new HandlerThread("FlutterVsyncThread");
-        handlerThread.start();
+    public static void loopForVsync(boolean initLooper) {
+        if (initLooper) {
+            if (Looper.myLooper() == null) {
+                Looper.prepare();
+            }
+        } else {
+            Looper.loop();
+        }
     }
 
     public static void asyncWaitForVsync(final long cookie) {
-        if (handler == null) {
-            handler = new Handler(handlerThread.getLooper());
-        }
-        handler.post(new Runnable() {
+        Choreographer.getInstance().postFrameCallback(new Choreographer.FrameCallback() {
             @Override
-            public void run() {
-                Choreographer.getInstance().postFrameCallback(new Choreographer.FrameCallback() {
-                    @Override
-                    public void doFrame(long frameTimeNanos) {
-                        nativeOnVsync(frameTimeNanos, frameTimeNanos + refreshPeriodNanos, cookie);
-                    }
-                });
+            public void doFrame(long frameTimeNanos) {
+                nativeOnVsync(frameTimeNanos, frameTimeNanos + refreshPeriodNanos, cookie);
             }
         });
     }

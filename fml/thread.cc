@@ -14,6 +14,12 @@
 #include <pthread.h>
 #endif
 
+// BD ADD: START
+#if defined(OS_ANDROID)
+#include <flutter/shell/platform/android/vsync_waiter_android.h>
+#endif
+// END
+
 #include <memory>
 #include <string>
 
@@ -22,6 +28,33 @@
 
 namespace fml {
 
+// BD ADD: START
+#if OS_ANDROID
+Thread::Thread(const std::string& name, bool createAndroidLoop)
+    : joined_(false) {
+  fml::AutoResetWaitableEvent latch;
+  fml::RefPtr<fml::TaskRunner> runner;
+  thread_ = std::make_unique<std::thread>(
+      [&latch, &runner, name, createAndroidLoop]() -> void {
+        SetCurrentThreadName(name);
+        if (createAndroidLoop) {
+          flutter::VsyncWaiterAndroid::LoopForVsync(true);
+        }
+        fml::MessageLoop::EnsureInitializedForCurrentThread();
+        auto& loop = MessageLoop::GetCurrent();
+        runner = loop.GetTaskRunner();
+        latch.Signal();
+        if (createAndroidLoop) {
+          flutter::VsyncWaiterAndroid::LoopForVsync(false);
+        } else {
+          loop.Run();
+        }
+      });
+  latch.Wait();
+  task_runner_ = runner;
+}
+#else
+// END
 Thread::Thread(const std::string& name) : joined_(false) {
   fml::AutoResetWaitableEvent latch;
   fml::RefPtr<fml::TaskRunner> runner;
@@ -36,6 +69,8 @@ Thread::Thread(const std::string& name) : joined_(false) {
   latch.Wait();
   task_runner_ = runner;
 }
+// BD ADD:
+#endif
 
 Thread::~Thread() {
   Join();
