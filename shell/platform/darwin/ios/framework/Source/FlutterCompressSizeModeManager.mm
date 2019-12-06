@@ -94,6 +94,14 @@ static const uint8_t* ImageUUID(const struct mach_header* mh) {
 }
 
 static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
+  Dl_info info;
+  if (dladdr(mh, &info) == 0) {
+    return;
+  }
+  if (strstr(info.dli_fname, "App.framework") == NULL) {
+    return;
+  }
+
   const flutter_section* isolateDataSection = flutter_getsectbynamefromheader(
       (flutter_mach_header*)mh, kSegmentName, kIsolateDataSectionName);
   const flutter_section* vmDataSection =
