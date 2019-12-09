@@ -220,15 +220,25 @@ bool RuntimeController::NotifyIdle(int64_t deadline, int type) {
 
   // BD MOD: START
   //  Dart_NotifyIdle(deadline);
-  if (type & Boost::kForDartRuntime) {
+  if (type & Boost::kDartPageQuiet) {
     if (Boost::Current()->IsGCDisabled()) {
       Boost::Current()->Finish(Boost::kDisableGC);
     }
     Dart_NotifyIdle(deadline);
   }
-  if (type & Boost::kForWindow) {
-    if (auto* window = GetWindowIfAvailable()) {
-      window->NotifyIdle(deadline - Dart_TimelineGetMicros());
+  if (type & Boost::kDartVsyncIdle && !Boost::Current()->IsGCDisabled()) {
+    Dart_NotifyIdle(deadline);
+  }
+  if (type & Boost::kWindowPageQuiet) {
+     if (auto* window = GetWindowIfAvailable()) {
+       window->NotifyIdle(500000);
+     }
+  }
+  if (type & Boost::kWindowVsyncIdle && Boost::Current()->CanNotifyIdle()) {
+    int64_t micros = deadline - Dart_TimelineGetMicros();
+    auto* window = GetWindowIfAvailable();
+    if (window && micros > 3000) {
+      window->NotifyIdle(micros);
     }
   }
   // END

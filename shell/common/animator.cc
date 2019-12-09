@@ -158,11 +158,11 @@ void Animator::BeginFrame(fml::TimePoint frame_start_time,
           if (notify_idle_task_id == self->notify_idle_task_id_ &&
               !self->frame_scheduled_) {
             TRACE_EVENT0("flutter", "BeginFrame idle callback");
+            // BD MOD: START
+            // self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
+            //                                     100000, Boost::kDartPageQuiet);
             self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
-                                                 100000);
-            // BD ADD: START
-            self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
-                                                 500000, Boost::kForWindow);
+                                                 100000, Boost::kDartPageQuiet | Boost::kWindowPageQuiet);
             // END
           }
         },
@@ -261,9 +261,8 @@ void Animator::AwaitVSync() {
       });
   // BD: MOD START
   // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
-  int flags = Boost::Current()->IsGCDisabled() ? 0 : Boost::kForDartRuntime;
-  flags |= Boost::Current()->CanNotifyIdle() ? Boost::kForWindow : 0;
-  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, flags);
+  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_,
+                                 Boost::kDartVsyncIdle | Boost::kWindowVsyncIdle);
   // END
 }
 
@@ -295,8 +294,9 @@ void Animator::AwaitVSyncForBackground() {
           self->BeginFrame(frame_start_time, frame_target_time);
         }
       });
-
-  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+  // BD MOD:
+  // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kDartVsyncIdle);
 }
 
 }  // namespace flutter

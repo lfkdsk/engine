@@ -26,7 +26,7 @@ class Animator final {
     virtual void OnAnimatorBeginFrame(fml::TimePoint frame_time) = 0;
     // BD MOD:
     // virtual void OnAnimatorNotifyIdle(int64_t deadline) = 0;
-    virtual void OnAnimatorNotifyIdle(int64_t deadline, int type = Boost::kForDartRuntime) = 0;
+    virtual void OnAnimatorNotifyIdle(int64_t deadline, int type) = 0;
 
     virtual void OnAnimatorDraw(
         fml::RefPtr<Pipeline<flutter::LayerTree>> pipeline) = 0;
