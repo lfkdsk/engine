@@ -32,10 +32,8 @@ class Boost {
   };
     
   enum IdleTypes {
-    kDartPageQuiet = 1 << 0,
-    kDartVsyncIdle = 1 << 1,
-    kWindowPageQuiet = 1 << 2,
-    kWindowVsyncIdle = 1 << 3,
+    kPageQuiet = 1 << 0,
+    kVsyncIdle = 1 << 1,
   };
 
  public:

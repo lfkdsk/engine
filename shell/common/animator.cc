@@ -160,9 +160,9 @@ void Animator::BeginFrame(fml::TimePoint frame_start_time,
             TRACE_EVENT0("flutter", "BeginFrame idle callback");
             // BD MOD: START
             // self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
-            //                                     100000, Boost::kDartPageQuiet);
+            //                                     100000);
             self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
-                                                 100000, Boost::kDartPageQuiet | Boost::kWindowPageQuiet);
+                                                 100000, Boost::kPageQuiet);
             // END
           }
         },
@@ -261,8 +261,7 @@ void Animator::AwaitVSync() {
       });
   // BD: MOD START
   // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
-  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_,
-                                 Boost::kDartVsyncIdle | Boost::kWindowVsyncIdle);
+  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kVsyncIdle);
   // END
 }
 
@@ -296,7 +295,7 @@ void Animator::AwaitVSyncForBackground() {
       });
   // BD MOD:
   // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
-  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kDartVsyncIdle);
+  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kVsyncIdle);
 }
 
 }  // namespace flutter
