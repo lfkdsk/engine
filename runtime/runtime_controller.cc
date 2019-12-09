@@ -229,7 +229,7 @@ bool RuntimeController::NotifyIdle(int64_t deadline, int type) {
   if (type & Boost::kDartVsyncIdle && !Boost::Current()->IsGCDisabled()) {
     Dart_NotifyIdle(deadline);
   }
-  if (type & Boost::kWindowPageQuiet) {
+  if (type & Boost::kWindowPageQuiet && Boost::Current()->CanNotifyIdle()) {
      if (auto* window = GetWindowIfAvailable()) {
        window->NotifyIdle(500000);
      }
@@ -237,7 +237,7 @@ bool RuntimeController::NotifyIdle(int64_t deadline, int type) {
   if (type & Boost::kWindowVsyncIdle && Boost::Current()->CanNotifyIdle()) {
     int64_t micros = deadline - Dart_TimelineGetMicros();
     auto* window = GetWindowIfAvailable();
-    if (window && micros > 3000) {
+    if (window && micros > 2999) {
       window->NotifyIdle(micros);
     }
   }
