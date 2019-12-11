@@ -620,12 +620,19 @@
 }
 
 // BD ADD: START
-#pragma mark - FlutterPluginRegistry
-
 - (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
   return _weakBinaryMessengerFactory->GetWeakPtr();
 }
 // END
+
+#pragma mark - Memory Notifications
+
+- (void)onMemoryWarning:(NSNotification*)notification {
+  if (_shell) {
+    _shell->NotifyLowMemoryWarning();
+  }
+  [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
+}
 
 @end
 
