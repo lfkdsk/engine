@@ -42,6 +42,9 @@ class SkiaUnrefQueue : public fml::RefCountedThreadSafe<SkiaUnrefQueue> {
   // BD ADD:
   sk_sp<GrContext> resource_context_;
 
+  // The `GrContext* context` is only used for signaling Skia to
+  // performDeferredCleanup. It can be nullptr when such signaling is not needed
+  // (e.g., in unit tests).
   SkiaUnrefQueue(fml::RefPtr<fml::TaskRunner> task_runner,
                  fml::TimeDelta delay,
                  // BD ADD:
