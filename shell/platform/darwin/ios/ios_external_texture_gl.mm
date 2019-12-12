@@ -72,6 +72,11 @@ void IOSExternalTextureGL::Paint(SkCanvas& canvas,
       buffer_ref_.Reset(pixelBuffer);
     }
     CreateTextureFromPixelBuffer();
+    // BD ADD: START LinYiyi
+    if (buffer_ref_) {
+      buffer_ref_.Reset(nullptr);
+    }
+    // END
   }
   if (!texture_ref_) {
     return;
