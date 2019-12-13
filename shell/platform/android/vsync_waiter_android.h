@@ -24,6 +24,9 @@ class VsyncWaiterAndroid final : public VsyncWaiter {
 
   float GetDisplayRefreshRate() const override;
 
+  // BD ADD:
+  static void LoopForVsync(jboolean initLooper);
+
  private:
   // |VsyncWaiter|
   void AwaitVSync() override;

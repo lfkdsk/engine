@@ -30,7 +30,7 @@ AndroidShellHolder::AndroidShellHolder(
 #if defined(SUPPORT_SYSTRACE)
   fml::tracing::InitTraceSymbol();
 #endif
-// END
+  // END
   static size_t shell_count = 1;
   auto thread_label = std::to_string(shell_count++);
 
@@ -123,7 +123,9 @@ AndroidShellHolder::AndroidShellHolder(
       // Android describes -8 as "most important display threads, for
       // compositing the screen and retrieving input events". Conservatively
       // set the GPU thread to slightly lower priority than it.
-      if (::setpriority(PRIO_PROCESS, gettid(), -5) != 0) {
+      // BD MOD:
+      // if (::setpriority(PRIO_PROCESS, gettid(), -5) != 0) {
+      if (::setpriority(PRIO_PROCESS, gettid(), -10) != 0) {
         // Defensive fallback. Depending on the OEM, it may not be possible
         // to set priority to -5.
         if (::setpriority(PRIO_PROCESS, gettid(), -2) != 0) {
@@ -132,7 +134,9 @@ AndroidShellHolder::AndroidShellHolder(
       }
     });
     task_runners.GetUITaskRunner()->PostTask([]() {
-      if (::setpriority(PRIO_PROCESS, gettid(), -1) != 0) {
+      // BD MOD:
+      // if (::setpriority(PRIO_PROCESS, gettid(), -1) != 0) {
+      if (::setpriority(PRIO_PROCESS, gettid(), -10) != 0) {
         FML_LOG(ERROR) << "Failed to set UI task runner priority";
       }
     });
@@ -230,17 +234,17 @@ fml::WeakPtr<PlatformViewAndroid> AndroidShellHolder::GetPlatformView() {
 
 // BD ADD:START
 void AndroidShellHolder::ExitApp(fml::closure closure) {
-    if (!IsValid()) {
-        return;
-    }
-    shell_->ExitApp(std::move(closure));
+  if (!IsValid()) {
+    return;
+  }
+  shell_->ExitApp(std::move(closure));
 }
 
 void AndroidShellHolder::NotifyLowMemory() {
-    if (!IsValid()) {
-        return;
-    }
-    shell_->NotifyLowMemoryWarning();
+  if (!IsValid()) {
+    return;
+  }
+  shell_->NotifyLowMemoryWarning();
 }
 // END
 
