@@ -250,13 +250,10 @@ void Animator::AwaitVSync() {
       });
   // BD MOD: START
   // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
-  if (!Boost::Current()->IsGCDisabled()) {
-    task_runners_.GetUITaskRunner()->PostTask(
-        [this, dart_frame_deadline_ = std::move(dart_frame_deadline_)]() {
-          delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_,
-                                         Boost::kVsyncIdle);
-        });
-  }
+  task_runners_.GetUITaskRunner()->PostTask(
+      [this, dart_frame_deadline_ = std::move(dart_frame_deadline_)]() {
+        delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kVsyncIdle);
+      });
   // END
 }
 
