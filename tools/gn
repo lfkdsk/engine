@@ -85,16 +85,15 @@ def to_gn_args(args):
     if args.enable_lite:
         print("enable lite mode.")
         gn_args['dart_disable_boringssl'] = True
-        if (args.target_os == 'ios'):
-            gn_args['dart_enable_opt_oz'] = True
-            gn_args['skia_enable_ccpr'] = False
-            gn_args['skialite_disable_pathop_apis'] = True
-            gn_args['skialite_disable_sksl_interpreter_and_codegenerators'] = True
-            # Use crop icudtl.dat
-            gn_args['icu_use_lite_data_file'] = True
-            # Crop harfbuzz, remove support for complex text and apple advanced type.
-            gn_args['hb_disable_all_lang'] = True
-            gn_args['hb_disable_aat'] = True
+        gn_args['dart_enable_opt_oz'] = True
+        gn_args['skia_enable_ccpr'] = False
+        gn_args['skialite_disable_pathop_apis'] = True
+        gn_args['skialite_disable_sksl_interpreter_and_codegenerators'] = True
+        # Use crop icudtl.dat
+        gn_args['icu_use_lite_data_file'] = True
+        # Crop harfbuzz, remove support for complex text and apple advanced type.
+        gn_args['hb_disable_all_lang'] = True
+        gn_args['hb_disable_aat'] = True
     # END
 
     # Skia GN args.

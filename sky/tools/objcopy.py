@@ -30,10 +30,20 @@ def main():
   parser.add_argument('--input', type=str, required=True)
   parser.add_argument('--output', type=str, required=True)
   parser.add_argument('--arch', type=str, required=True)
+  # BD ADD:
+  parser.add_argument('--input_name', type=str, required=False)
 
   args = parser.parse_args()
 
   input_dir, input_file = os.path.split(args.input)
+  # BD ADD: START
+  # The result of objcopy contains the name of the original file
+  if args.input_name is not None and not args.input_name == input_file:
+    output_dir, output_file = os.path.split(args.output)
+    copy_file = os.path.join(output_dir, args.input_name)
+    os.system('cp -f %s %s' %(args.input, copy_file))
+    input_dir, input_file = os.path.split(copy_file)
+  # END
   output_path = os.path.abspath(args.output)
 
   subprocess.check_call([
