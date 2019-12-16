@@ -92,7 +92,14 @@ def to_gn_args(args):
         # Use crop icudtl.dat
         gn_args['icu_use_lite_data_file'] = True
         # Crop harfbuzz, remove support for complex text and apple advanced type.
-        gn_args['hb_disable_all_lang'] = True
+        gn_args['hb_disable_arabic'] = True
+        gn_args['hb_disable_hangul'] = True
+        gn_args['hb_disable_hebrew'] = True
+        gn_args['hb_disable_myanmar'] = True
+        gn_args['hb_disable_khmer'] = True
+        gn_args['hb_disable_thai'] = True
+        gn_args['hb_disable_use'] = True
+        gn_args['hb_disable_indic'] = False
         gn_args['hb_disable_aat'] = True
     # END
 
