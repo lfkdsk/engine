@@ -208,7 +208,7 @@ bool Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
   // BD ADD: START
   fml::TimeDelta construction_time = layer_tree.construction_time();
   int miss_count = (int) (construction_time.ToMillisecondsF() / flutter::kOneFrameMS);
-  FpsRecorder::Current()->AddFrameCount(miss_count, construction_time);
+  FpsRecorder::Current()->AddFrameCount(max(0, miss_count - 1), construction_time);
   // END
 
   auto* canvas = frame->SkiaCanvas();
