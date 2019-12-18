@@ -37,6 +37,9 @@ class ParagraphImplTxt : public ParagraphImpl {
   Dart_Handle getPositionForOffset(double dx, double dy) override;
   Dart_Handle getWordBoundary(unsigned offset) override;
 
+  // BD ADD:
+  void setAsyncMode(bool async) override;
+
  private:
   std::unique_ptr<txt::Paragraph> m_paragraph;
   double m_width = -1.0;

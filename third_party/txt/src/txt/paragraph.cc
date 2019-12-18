@@ -1527,4 +1527,10 @@ void Paragraph::SetDirty(bool dirty) {
   needs_layout_ = dirty;
 }
 
+// BD ADD: START
+void Paragraph::SetAsyncMode(bool async) {
+  font_collection_->SetAsyncMode(async);
+}
+// END
+
 }  // namespace txt

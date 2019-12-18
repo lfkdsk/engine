@@ -44,6 +44,9 @@ class ParagraphImpl {
   virtual Dart_Handle getPositionForOffset(double dx, double dy) = 0;
 
   virtual Dart_Handle getWordBoundary(unsigned offset) = 0;
+
+  // BD ADD:
+  virtual void setAsyncMode(bool async) = 0;
 };
 
 }  // namespace flutter

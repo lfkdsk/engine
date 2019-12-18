@@ -207,6 +207,9 @@ class Paragraph {
   // Layout from being calculated by setting to false.
   void SetDirty(bool dirty = true);
 
+  // BD ADD:
+  void SetAsyncMode(bool async);
+
  private:
   friend class ParagraphBuilder;
   FRIEND_TEST(ParagraphTest, SimpleParagraph);

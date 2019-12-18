@@ -96,4 +96,10 @@ Dart_Handle ParagraphImplTxt::getWordBoundary(unsigned offset) {
   return result;
 }
 
+// BD ADD: START
+void ParagraphImplTxt::setAsyncMode(bool async) {
+  m_paragraph->SetAsyncMode(async);
+}
+// END
+
 }  // namespace flutter

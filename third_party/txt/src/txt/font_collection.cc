@@ -30,6 +30,16 @@
 #include "txt/platform.h"
 #include "txt/text_style.h"
 
+// BD ADD: START
+#define TXT_FONTCOLLECTION_LOCK(func)         \
+  if (is_async_mode_) {                       \
+    std::lock_guard<std::mutex> lock(mutex_); \
+    func();                                   \
+  } else {                                    \
+    func();                                   \
+  }
+// END
+
 namespace txt {
 
 namespace {
@@ -80,7 +90,11 @@ class TxtFallbackFontProvider
   std::weak_ptr<FontCollection> font_collection_;
 };
 
-FontCollection::FontCollection() : enable_font_fallback_(true) {}
+// BD MOD: START
+// FontCollection::FontCollection() : enable_font_fallback_(true) {}
+FontCollection::FontCollection()
+    : is_async_mode_(false), enable_font_fallback_(true) {}
+// END
 
 FontCollection::~FontCollection() = default;
 
@@ -132,10 +146,24 @@ FontCollection::GetMinikinFontCollectionForFamilies(
     const std::string& locale) {
   // Look inside the font collections cache first.
   FamilyKey family_key(font_families, locale);
-  auto cached = font_collections_cache_.find(family_key);
-  if (cached != font_collections_cache_.end()) {
-    return cached->second;
+  // BD MOD: START
+  // auto cached = font_collections_cache_.find(family_key);
+  // if (cached != font_collections_cache_.end()) {
+  //   return cached->second;
+  // }
+  if (is_async_mode_) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto cached = font_collections_cache_.find(family_key);
+    if (cached != font_collections_cache_.end()) {
+      return cached->second;
+    }
+  } else {
+    auto cached = font_collections_cache_.find(family_key);
+    if (cached != font_collections_cache_.end()) {
+      return cached->second;
+    }
   }
+  //  END
 
   std::vector<std::shared_ptr<minikin::FontFamily>> minikin_families;
 
@@ -163,10 +191,18 @@ FontCollection::GetMinikinFontCollectionForFamilies(
   }
   if (enable_font_fallback_) {
     for (std::string fallback_family : fallback_fonts_for_locale_[locale]) {
-      auto it = fallback_fonts_.find(fallback_family);
-      if (it != fallback_fonts_.end()) {
-        minikin_families.push_back(it->second);
-      }
+      // BD MOD: START
+      // auto it = fallback_fonts_.find(fallback_family);
+      // if (it != fallback_fonts_.end()) {
+      //   minikin_families.push_back(it->second);
+      // }
+      TXT_FONTCOLLECTION_LOCK([&] {
+        auto it = fallback_fonts_.find(fallback_family);
+        if (it != fallback_fonts_.end()) {
+          minikin_families.push_back(it->second);
+        }
+      });
+      // END
     }
   }
   // Create the minikin font collection.
@@ -178,7 +214,11 @@ FontCollection::GetMinikinFontCollectionForFamilies(
   }
 
   // Cache the font collection for future queries.
-  font_collections_cache_[family_key] = font_collection;
+  // BD MOD: START
+  // font_collections_cache_[family_key] = font_collection;
+  TXT_FONTCOLLECTION_LOCK(
+      [&] { font_collections_cache_[family_key] = font_collection; });
+  // END
 
   return font_collection;
 }
@@ -241,19 +281,42 @@ const std::shared_ptr<minikin::FontFamily>& FontCollection::MatchFallbackFont(
   // Check if the ch's matched font has been cached. We cache the results of
   // this method as repeated matchFamilyStyleCharacter calls can become
   // extremely laggy when typing a large number of complex emojis.
-  auto lookup = fallback_match_cache_.find(ch);
-  if (lookup != fallback_match_cache_.end()) {
-    return *lookup->second;
+  // BD MOD: START
+  // auto lookup = fallback_match_cache_.find(ch);
+  // if (lookup != fallback_match_cache_.end()) {
+  //   return *lookup->second;
+  // }
+  if (is_async_mode_) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto lookup = fallback_match_cache_.find(ch);
+    if (lookup != fallback_match_cache_.end()) {
+      return *lookup->second;
+    }
+  } else {
+    auto lookup = fallback_match_cache_.find(ch);
+    if (lookup != fallback_match_cache_.end()) {
+      return *lookup->second;
+    }
   }
+  // END
+
   const std::shared_ptr<minikin::FontFamily>* match =
       &DoMatchFallbackFont(ch, locale);
-  fallback_match_cache_.insert(std::make_pair(ch, match));
+  // BD MOD: START
+  // fallback_match_cache_.insert(std::make_pair(ch, match));
+  TXT_FONTCOLLECTION_LOCK(
+      [&] { fallback_match_cache_.insert(std::make_pair(ch, match)); });
+  // END
   return *match;
 }
 
 const std::shared_ptr<minikin::FontFamily>& FontCollection::DoMatchFallbackFont(
     uint32_t ch,
     std::string locale) {
+  // BD ADD: START
+  TRACE_EVENT1("flutter", "FontCollection::DoMatchFallbackFont", "ch",
+               std::to_string(ch).c_str());
+  // END
   for (const sk_sp<SkFontMgr>& manager : GetFontManagerOrder()) {
     std::vector<const char*> bcp47;
     if (!locale.empty())
@@ -266,8 +329,11 @@ const std::shared_ptr<minikin::FontFamily>& FontCollection::DoMatchFallbackFont(
     SkString sk_family_name;
     typeface->getFamilyName(&sk_family_name);
     std::string family_name(sk_family_name.c_str());
-
-    fallback_fonts_for_locale_[locale].insert(family_name);
+    // BD MOD: START
+    // fallback_fonts_for_locale_[locale].insert(family_name);
+    TXT_FONTCOLLECTION_LOCK(
+        [&] { fallback_fonts_for_locale_[locale].insert(family_name); });
+    // END
 
     return GetFallbackFontFamily(manager, family_name);
   }
@@ -277,10 +343,25 @@ const std::shared_ptr<minikin::FontFamily>& FontCollection::DoMatchFallbackFont(
 const std::shared_ptr<minikin::FontFamily>&
 FontCollection::GetFallbackFontFamily(const sk_sp<SkFontMgr>& manager,
                                       const std::string& family_name) {
-  TRACE_EVENT0("flutter", "FontCollection::GetFallbackFontFamily");
-  auto fallback_it = fallback_fonts_.find(family_name);
-  if (fallback_it != fallback_fonts_.end()) {
-    return fallback_it->second;
+  // BD MOD: START
+  // TRACE_EVENT0("flutter", "FontCollection::GetFallbackFontFamily");
+  // auto fallback_it = fallback_fonts_.find(family_name);
+  // if (fallback_it != fallback_fonts_.end()) {
+  //   return fallback_it->second;
+  // }
+  TRACE_EVENT1("flutter", "FontCollection::GetFallbackFontFamily",
+               "family_name", family_name.c_str());
+  if (is_async_mode_) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto fallback_it = fallback_fonts_.find(family_name);
+    if (fallback_it != fallback_fonts_.end()) {
+      return fallback_it->second;
+    }
+  } else {
+    auto fallback_it = fallback_fonts_.find(family_name);
+    if (fallback_it != fallback_fonts_.end()) {
+      return fallback_it->second;
+    }
   }
 
   std::shared_ptr<minikin::FontFamily> minikin_family =
@@ -288,18 +369,41 @@ FontCollection::GetFallbackFontFamily(const sk_sp<SkFontMgr>& manager,
   if (!minikin_family)
     return g_null_family;
 
-  auto insert_it =
-      fallback_fonts_.insert(std::make_pair(family_name, minikin_family));
-
+  // BD MOD: START
+  // auto insert_it =
+  //     fallback_fonts_.insert(std::make_pair(family_name, minikin_family));
+  //
   // Clear the cache to force creation of new font collections that will
   // include this fallback font.
-  font_collections_cache_.clear();
-
-  return insert_it.first->second;
+  // font_collections_cache_.clear();
+  //
+  // return insert_it.first->second;
+  if (is_async_mode_) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto insert_it =
+        fallback_fonts_.insert(std::make_pair(family_name, minikin_family));
+    font_collections_cache_.clear();
+    return insert_it.first->second;
+  } else {
+    auto insert_it =
+        fallback_fonts_.insert(std::make_pair(family_name, minikin_family));
+    font_collections_cache_.clear();
+    return insert_it.first->second;
+  }
+  // END
 }
 
 void FontCollection::ClearFontFamilyCache() {
-  font_collections_cache_.clear();
+  // BD MOD: START
+  // font_collections_cache_.clear();
+  TXT_FONTCOLLECTION_LOCK([&] { font_collections_cache_.clear(); });
+  // END
 }
+
+// BD ADD: START
+void FontCollection::SetAsyncMode(bool async) {
+  is_async_mode_ = (is_async_mode_ || async);
+}
+// END
 
 }  // namespace txt

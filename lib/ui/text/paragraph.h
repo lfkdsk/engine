@@ -40,7 +40,13 @@ class Paragraph : public RefCountedDartWrappable<Paragraph> {
   double ideographicBaseline();
   bool didExceedMaxLines();
 
-  void layout(double width);
+  // BD MOD: START
+  // void layout(double width);
+  void layout(double maxWidth,
+              double minWidth,
+              bool async,
+              Dart_Handle callback_handle);
+  // END
   void paint(Canvas* canvas, double x, double y);
 
   std::vector<TextBox> getRectsForRange(unsigned start,
@@ -55,7 +61,9 @@ class Paragraph : public RefCountedDartWrappable<Paragraph> {
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
 
  private:
-  std::unique_ptr<ParagraphImpl> m_paragraphImpl;
+  // BD MOD:
+  // std::unique_ptr<ParagraphImpl> m_paragraphImpl;
+  std::shared_ptr<ParagraphImpl> m_paragraphImpl;
 
   explicit Paragraph(std::unique_ptr<txt::Paragraph> paragraph);
 };
