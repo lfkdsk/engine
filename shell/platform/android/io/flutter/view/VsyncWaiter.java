@@ -21,6 +21,8 @@ public class VsyncWaiter {
         if (initLooper) {
             if (Looper.myLooper() == null) {
                 Looper.prepare();
+            } else {
+                Looper.myLooper().quit();
             }
         } else {
             Looper.loop();
