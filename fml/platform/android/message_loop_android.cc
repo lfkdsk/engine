@@ -81,8 +81,11 @@ void MessageLoopAndroid::Run() {
 }
 
 void MessageLoopAndroid::Terminate() {
-  // BD ADD:
-  flutter::VsyncWaiterAndroid::LoopForVsync(true);
+  // BD ADD: START
+  if (!running_) {
+    flutter::VsyncWaiterAndroid::LoopForVsync(true);
+  }
+  // END
   running_ = false;
   ALooper_wake(looper_.get());
 }
