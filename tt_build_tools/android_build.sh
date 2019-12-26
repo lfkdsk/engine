@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+
+gitCid=`git log -1 --pretty=%H`
+gitUser=`git log -1 --pretty=%an`
+gitMessage=`git log -1 --pretty=%B`
+gitDate=`git log -1 --pretty=%ad`
+echo "commit is $gitCid"
+echo "user is $gitUser"
+echo "gitMessage is $gitMessage"
+
 source $(cd "$(dirname "$0")";pwd)/utils.sh
 
 cd ..
@@ -146,6 +155,18 @@ for liteMode in ${liteModes[@]}; do
               fi
               bd_upload $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
               bd_upload $androidDir/libflutter.so flutter/framework/$tosDir/$modeDir/libflutter_symtab.so
+              # get so BuildID
+              hashcode=`file $androidDir/libflutter.so | sed 's/.*BuildID\[xxHash\]=\([0-9a-zA-Z]*\),.*/\1/g'`
+              resultFile=$androidDir/$hashcode
+              # get so build mode
+              echo mode=$modeDir >> $resultFile
+              # get git commit id
+              echo cid=$gitCid >> $resultFile
+              echo user=$gitUser >> $resultFile
+              echo msg=$gitMessage >> $resultFile
+              echo time=$gitDate >> $resultFile
+              bd_upload $resultFile flutter/framework/buildid/$hashcode
+              rm $resultFile
           done
       done
   done
