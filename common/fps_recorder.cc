@@ -43,15 +43,13 @@ namespace flutter {
 
     void FpsRecorder::AddDrawCount(const fml::TimeDelta &timeDelta) {
         draw_lock.lock();
-        if (!is_drawn) { // is valid draw, so drawCount++
-            for (auto &it : fps_data_) {
-                if (it.second.first == 0) { // has no frameCount,abandon this drawCount
-                    continue;
-                }
-                it.second.second += 1;
+        for (auto &it : fps_data_) {
+            if (it.second.first == 0) { // has no frameCount,abandon this drawCount
+                continue;
             }
-            is_drawn = true;
+            it.second.second += 1;
         }
+        is_drawn = true;
         for (auto &it : gpu_time_) { // add costTime
             if (ui_time_[it.first].first == 0) { // has no frameCost,abandon this
                 continue;
