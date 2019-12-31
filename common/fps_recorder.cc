@@ -44,7 +44,7 @@ namespace flutter {
     void FpsRecorder::AddDrawCount(const fml::TimeDelta &timeDelta) {
         draw_lock.lock();
         for (auto &it : fps_data_) {
-            if (it.second.first == 0) { // has no frameCount,abandon this drawCount
+            if (it.second.second >= it.second.first) { // left drawCount from last record,abandon this drawCount
                 continue;
             }
             it.second.second += 1;
