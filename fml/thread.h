@@ -21,8 +21,10 @@ class Thread {
 // BD ADD: START
 #if OS_ANDROID
   explicit Thread(const std::string& name = "", bool createAndroidLoop = false);
+#elif OS_MACOSX
+  explicit Thread(const std::string& name = "", bool highQoS = false);
 #else
-  // END
+// END
   explicit Thread(const std::string& name = "");
 // BD ADD:
 #endif

@@ -35,6 +35,7 @@ NSString* const FlutterCompressSizeModeErrorDomain = @"FlutterCompressSizeModeEr
 static NSString* const kFLTAssetsPath = @"FLTAssetsPath";
 static NSString* const kFlutterAssets = @"flutter_assets";
 static FlutterCompressSizeModeMonitor kFlutterCompressSizeModeMonitor = nil;
+static BOOL highQoS = false;
 // END
 
 static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
@@ -178,6 +179,9 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   settings.dart_library_sources_kernel =
       make_mapping_callback(kPlatformStrongDill, kPlatformStrongDillSize);
 #endif  // FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
+
+  // BD ADD:
+  settings.high_qos = highQoS;
 
   return settings;
 }
@@ -329,6 +333,10 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 
 + (BOOL)needDecompressData {
   return [[FlutterCompressSizeModeManager sharedInstance] needDecompressData];
+}
+
++ (void)setThreadHighQoS:(BOOL)enabled {
+  highQoS = enabled;
 }
 
 // END

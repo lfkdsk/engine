@@ -436,7 +436,9 @@
 
   _threadHost = {threadLabel.UTF8String,  // label
                  flutter::ThreadHost::Type::UI | flutter::ThreadHost::Type::GPU |
-                     flutter::ThreadHost::Type::IO};
+                     flutter::ThreadHost::Type::IO,
+                 // BD ADD:
+                 settings.high_qos};
 
   // Lambda captures by pointers to ObjC objects are fine here because the
   // create call is

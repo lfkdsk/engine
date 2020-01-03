@@ -144,6 +144,10 @@ FLUTTER_EXPORT
  */
 + (void)predecompressData;
 
+// 是否开启线程QoS优化
+// 默认不开启，在引擎启动前设置生效
++ (void)setThreadHighQoS:(BOOL)enabled;
+
 // END
 
 @end
