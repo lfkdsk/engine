@@ -15,8 +15,10 @@ namespace flutter {
     class FpsRecorder {
     public:
         static FpsRecorder *Current() {
-            static FpsRecorder instance;
-            return &instance;
+            static std::once_flag flag;
+            static FpsRecorder *instance;
+            std::call_once(flag, [] { instance = new FpsRecorder(); });
+            return instance;
         }
 
         void AddFrameCount(int count, const fml::TimeDelta &timeDelta = fml::TimeDelta::Zero());
