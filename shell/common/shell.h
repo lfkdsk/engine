@@ -222,10 +222,6 @@ class Shell final : public PlatformView::Delegate,
   ///
   fml::WeakPtr<Engine> GetEngine();
 
-  // BD ADD: XIERAN
-  // 用来在Engine.cc内部的UI线程获取engine
-  fml::WeakPtr<Engine> GetWeakEngine();
-
   //----------------------------------------------------------------------------
   /// @brief      Platform views may only be accessed on the platform task
   ///             runner.
@@ -332,11 +328,7 @@ class Shell final : public PlatformView::Delegate,
 
   const TaskRunners task_runners_;
   const Settings settings_;
-  std::atomic_bool engine_created_;
-  fml::ManualResetWaitableEvent ui_latch_;
-  // BD MOD:
-  // DartVM* vm_;
-  std::shared_ptr<DartVM> vm_;
+  DartVMRef vm_;
   std::unique_ptr<PlatformView> platform_view_;  // on platform task runner
   std::unique_ptr<Engine> engine_;               // on UI task runner
   std::unique_ptr<Rasterizer> rasterizer_;       // on GPU task runner
@@ -385,9 +377,10 @@ class Shell final : public PlatformView::Delegate,
   // How many frames have been timed since last report.
   size_t UnreportedFramesCount() const;
 
-  Shell(TaskRunners task_runners, Settings settings);
+  Shell(DartVMRef vm, TaskRunners task_runners, Settings settings);
 
   static std::unique_ptr<Shell> CreateShellOnPlatformThread(
+      DartVMRef vm,
       TaskRunners task_runners,
       Settings settings,
       fml::RefPtr<const DartSnapshot> isolate_snapshot,
@@ -395,6 +388,7 @@ class Shell final : public PlatformView::Delegate,
       const Shell::CreateCallback<Rasterizer>& on_create_rasterizer);
 
   bool Setup(std::unique_ptr<PlatformView> platform_view,
+             std::unique_ptr<Engine> engine,
              std::unique_ptr<Rasterizer> rasterizer,
              std::unique_ptr<ShellIOManager> io_manager);
 

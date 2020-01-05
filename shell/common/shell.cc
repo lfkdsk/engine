@@ -42,6 +42,7 @@ constexpr char kTypeKey[] = "type";
 constexpr char kFontChange[] = "fontsChange";
 
 std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
+    DartVMRef vm,
     TaskRunners task_runners,
     Settings settings,
     fml::RefPtr<const DartSnapshot> isolate_snapshot,
@@ -52,7 +53,8 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
     return nullptr;
   }
 
-  auto shell = std::unique_ptr<Shell>(new Shell(task_runners, settings));
+  auto shell =
+      std::unique_ptr<Shell>(new Shell(std::move(vm), task_runners, settings));
 
   // Create the rasterizer on the GPU thread.
   std::promise<std::unique_ptr<Rasterizer>> rasterizer_promise;
@@ -139,13 +141,6 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
                          &unref_queue_future                              //
   ]() mutable {
         TRACE_EVENT0("flutter", "ShellSetupUISubsystem");
-
-        auto vm = DartVMRef::Create(shell->settings_);
-        FML_CHECK(vm) << "Must be able to initialize the VM.";
-        // BD MOD:
-        // shell->vm_ = vm.get();
-        shell->vm_ = vm.GetVM();
-
         const auto& task_runners = shell->GetTaskRunners();
 
         // The animator is owned by the UI thread but it gets its vsync pulses
@@ -273,6 +268,7 @@ std::unique_ptr<Shell> Shell::Create(
       !on_create_rasterizer) {
     return nullptr;
   }
+
   fml::AutoResetWaitableEvent latch;
   std::unique_ptr<Shell> shell;
   fml::TaskRunner::RunNowOrPostTask(
@@ -299,7 +295,7 @@ std::unique_ptr<Shell> Shell::Create(
   return shell;
 }
 
-Shell::Shell(TaskRunners task_runners, Settings settings)
+Shell::Shell(DartVMRef vm, TaskRunners task_runners, Settings settings)
     : task_runners_(std::move(task_runners)),
       settings_(std::move(settings)),
       vm_(std::move(vm)),
@@ -354,17 +350,15 @@ Shell::~Shell() {
   PersistentCache::GetCacheForProcess()->RemoveWorkerTaskRunner(
       task_runners_.GetIOTaskRunner());
 
+  vm_->GetServiceProtocol()->RemoveHandler(this);
+
   fml::AutoResetWaitableEvent ui_latch, gpu_latch, platform_latch, io_latch;
 
   fml::TaskRunner::RunNowOrPostTask(
       task_runners_.GetUITaskRunner(),
-      fml::MakeCopyable([this, &ui_latch]() mutable {
-        ui_latch_.Wait();
-        vm_->GetServiceProtocol()->RemoveHandler(this);
-        engine_.reset();
+      fml::MakeCopyable([engine = std::move(engine_), &ui_latch]() mutable {
+        engine.reset();
         ui_latch.Signal();
-        // BD ADD:
-        vm_.reset();
       }));
   ui_latch.Wait();
 
@@ -465,15 +459,14 @@ void Shell::RunEngine(
       task_runners_.GetUITaskRunner(),
       fml::MakeCopyable(
           [run_configuration = std::move(run_configuration),
-           this, result]() mutable {
-            auto engine = GetWeakEngine();
-            if (!engine) {
+           weak_engine = weak_engine_, result]() mutable {
+            if (!weak_engine) {
               FML_LOG(ERROR)
                   << "Could not launch engine with configuration - no engine.";
               result(Engine::RunStatus::Failure);
               return;
             }
-            auto run_result = engine->Run(std::move(run_configuration));
+            auto run_result = weak_engine->Run(std::move(run_configuration));
             if (run_result == flutter::Engine::RunStatus::Failure) {
               FML_LOG(ERROR) << "Could not launch engine with configuration.";
             }
@@ -517,28 +510,31 @@ bool Shell::IsSetup() const {
 }
 
 bool Shell::Setup(std::unique_ptr<PlatformView> platform_view,
+                  std::unique_ptr<Engine> engine,
                   std::unique_ptr<Rasterizer> rasterizer,
                   std::unique_ptr<ShellIOManager> io_manager) {
   if (is_setup_) {
     return false;
   }
 
-  if (!platform_view || !rasterizer || !io_manager) {
+  if (!platform_view || !engine || !rasterizer || !io_manager) {
     return false;
   }
 
   platform_view_ = std::move(platform_view);
+  engine_ = std::move(engine);
   rasterizer_ = std::move(rasterizer);
   io_manager_ = std::move(io_manager);
 
   // The weak ptr must be generated in the platform thread which owns the unique
   // ptr.
-  // BD MOD: XieRan
-  // weak_engine_ = engine_->GetWeakPtr();
+  weak_engine_ = engine_->GetWeakPtr();
   weak_rasterizer_ = rasterizer_->GetWeakPtr();
   weak_platform_view_ = platform_view_->GetWeakPtr();
 
   is_setup_ = true;
+
+  vm_->GetServiceProtocol()->AddHandler(this, GetServiceProtocolDescription());
 
   PersistentCache::GetCacheForProcess()->AddWorkerTaskRunner(
       task_runners_.GetIOTaskRunner());
@@ -575,26 +571,13 @@ fml::WeakPtr<Engine> Shell::GetEngine() {
   return weak_engine_;
 }
 
-// BD ADD: XIERAN
-fml::WeakPtr<Engine> Shell::GetWeakEngine() {
-  if (!engine_created_) {
-    ui_latch_.Wait();
-  }
-  FML_DCHECK(is_setup_);
-
-  // BD MOD: XieRan
-  // return weak_engine_;
-  if (engine_) {
-    return engine_->GetWeakPtr();
-  }
-  return {};
-  // END
-
-}
-
 fml::WeakPtr<PlatformView> Shell::GetPlatformView() {
   FML_DCHECK(is_setup_);
   return weak_platform_view_;
+}
+
+DartVM* Shell::GetDartVM() {
+  return &vm_;
 }
 
 // |PlatformView::Delegate|
@@ -607,56 +590,22 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
   // This is a synchronous operation because certain platforms depend on
   // setup/suspension of all activities that may be interacting with the GPU in
   // a synchronous fashion.
-
-  // BD ADD: XieRan
-  auto ui_task = [this] {
-    auto engine = GetWeakEngine();
-    if (engine) {
-      engine->OnOutputSurfaceCreated();
-    }
-  };
-  // END
-
   fml::AutoResetWaitableEvent latch;
-
-  // BD MOD: XieRan
-//        auto gpu_task =
-//                fml::MakeCopyable([& waiting_for_first_frame = waiting_for_first_frame_,
-//                                          rasterizer = rasterizer_->GetWeakPtr(),  //
-//                                          surface = std::move(surface),            //
-//                                          &latch]() mutable {
-//                    if (rasterizer) {
-//                        rasterizer->Setup(std::move(surface));
-//                    }
-//
-//                    waiting_for_first_frame.store(true);
-//
-//                    // Step 3: All done. Signal the latch that the platform thread is
-//                    // waiting on.
-//                    latch.Signal();
-//                });
-
   auto gpu_task =
       fml::MakeCopyable([& waiting_for_first_frame = waiting_for_first_frame_,
-                         rasterizer = rasterizer_->GetWeakPtr(),            //
-                         surface = std::move(surface),                      //
-                         ui_task_runner = task_runners_.GetUITaskRunner(),  //
-                         ui_task, &latch]() mutable {
+                         rasterizer = rasterizer_->GetWeakPtr(),  //
+                         surface = std::move(surface),            //
+                         &latch]() mutable {
         if (rasterizer) {
           rasterizer->Setup(std::move(surface));
         }
 
         waiting_for_first_frame.store(true);
 
-        // Step 2: Next, post a task on the UI thread to tell the engine that it
-        // has an output surface.
-        fml::TaskRunner::RunNowOrPostTask(ui_task_runner, ui_task);
-
-        // Step 3: All done. No need to wait for ui task.
-        // Signal the latch that the platform thread is waiting on.
+        // Step 3: All done. Signal the latch that the platform thread is
+        // waiting on.
         latch.Signal();
       });
-  // END
 
   // The normal flow executed by this method is that the platform thread is
   // starting the sequence and waiting on the latch. Later the UI thread posts
@@ -670,6 +619,25 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
   bool should_post_gpu_task =
       task_runners_.GetGPUTaskRunner() != task_runners_.GetPlatformTaskRunner();
 
+  auto ui_task = [engine = engine_->GetWeakPtr(),                      //
+                  gpu_task_runner = task_runners_.GetGPUTaskRunner(),  //
+                  gpu_task, should_post_gpu_task,
+                  &latch  //
+  ] {
+    if (engine) {
+      engine->OnOutputSurfaceCreated();
+    }
+    // Step 2: Next, tell the GPU thread that it should create a surface for its
+    // rasterizer.
+    if (should_post_gpu_task) {
+      fml::TaskRunner::RunNowOrPostTask(gpu_task_runner, gpu_task);
+    } else {
+      // See comment on should_post_gpu_task, in this case we just unblock
+      // the platform thread.
+      latch.Signal();
+    }
+  };
+
   // Threading: Capture platform view by raw pointer and not the weak pointer.
   // We are going to use the pointer on the IO thread which is not safe with a
   // weak pointer. However, we are preventing the platform view from being
@@ -679,22 +647,14 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
   FML_DCHECK(platform_view);
 
   auto io_task = [io_manager = io_manager_->GetWeakPtr(), platform_view,
-                  gpu_task_runner = task_runners_.GetGPUTaskRunner(), gpu_task,
-                  &latch, should_post_gpu_task] {
+                  ui_task_runner = task_runners_.GetUITaskRunner(), ui_task] {
     if (io_manager && !io_manager->GetResourceContext()) {
       io_manager->NotifyResourceContextAvailable(
           platform_view->CreateResourceContext());
     }
-
-    // Step 1: Tell the GPU thread that it should create a surface for its
-    // rasterizer.
-    if (should_post_gpu_task) {
-      fml::TaskRunner::RunNowOrPostTask(gpu_task_runner, gpu_task);
-    } else {
-      // See comment on should_post_gpu_task, in this case we just unblock
-      // the platform thread.
-      latch.Signal();
-    }
+    // Step 1: Next, post a task on the UI thread to tell the engine that it has
+    // an output surface.
+    fml::TaskRunner::RunNowOrPostTask(ui_task_runner, ui_task);
   };
 
   fml::TaskRunner::RunNowOrPostTask(task_runners_.GetIOTaskRunner(), io_task);
@@ -754,9 +714,9 @@ void Shell::OnPlatformViewDestroyed() {
   bool should_post_gpu_task =
       task_runners_.GetGPUTaskRunner() != task_runners_.GetPlatformTaskRunner();
 
-  auto ui_task = [this, gpu_task_runner = task_runners_.GetGPUTaskRunner(),
-                  gpu_task, should_post_gpu_task, &latch]() {
-    auto engine = GetWeakEngine();
+  auto ui_task = [engine = engine_->GetWeakPtr(),
+                  gpu_task_runner = task_runners_.GetGPUTaskRunner(), gpu_task,
+                  should_post_gpu_task, &latch]() {
     if (engine) {
       engine->OnOutputSurfaceDestroyed();
     }
@@ -799,22 +759,12 @@ void Shell::OnPlatformViewSetViewportMetrics(const ViewportMetrics& metrics) {
         }
       });
 
-  // BD MOD: XieRan
-//  task_runners_.GetUITaskRunner()->PostTask(
-//      [engine = engine_->GetWeakPtr(), metrics]() {
-//        if (engine) {
-//          engine->SetViewportMetrics(metrics);
-//        }
-//      });
-
-    task_runners_.GetUITaskRunner()->PostTask([this, metrics]() {
-        auto engine = GetWeakEngine();
+  task_runners_.GetUITaskRunner()->PostTask(
+      [engine = engine_->GetWeakPtr(), metrics]() {
         if (engine) {
-            engine->SetViewportMetrics(metrics);
+          engine->SetViewportMetrics(metrics);
         }
-    });
-    // END
-
+      });
 }
 
 // |PlatformView::Delegate|
@@ -824,8 +774,7 @@ void Shell::OnPlatformViewDispatchPlatformMessage(
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
   task_runners_.GetUITaskRunner()->PostTask(
-      [this, message = std::move(message)] {
-        auto engine = GetWeakEngine();
+      [engine = engine_->GetWeakPtr(), message = std::move(message)] {
         if (engine) {
           engine->DispatchPlatformMessage(std::move(message));
         }
@@ -857,8 +806,7 @@ void Shell::OnPlatformViewDispatchSemanticsAction(int32_t id,
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
   task_runners_.GetUITaskRunner()->PostTask(
-      [this, id, action, args = std::move(args)] {
-        auto engine = GetWeakEngine();
+      [engine = engine_->GetWeakPtr(), id, action, args = std::move(args)] {
         if (engine) {
           engine->DispatchSemanticsAction(id, action, std::move(args));
         }
@@ -870,12 +818,12 @@ void Shell::OnPlatformViewSetSemanticsEnabled(bool enabled) {
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
-  task_runners_.GetUITaskRunner()->PostTask([this, enabled] {
-    auto engine = GetWeakEngine();
-    if (engine) {
-      engine->SetSemanticsEnabled(enabled);
-    }
-  });
+  task_runners_.GetUITaskRunner()->PostTask(
+      [engine = engine_->GetWeakPtr(), enabled] {
+        if (engine) {
+          engine->SetSemanticsEnabled(enabled);
+        }
+      });
 }
 
 // |PlatformView::Delegate|
@@ -883,12 +831,12 @@ void Shell::OnPlatformViewSetAccessibilityFeatures(int32_t flags) {
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
-  task_runners_.GetUITaskRunner()->PostTask([this, flags] {
-    auto engine = GetWeakEngine();
-    if (engine) {
-      engine->SetAccessibilityFeatures(flags);
-    }
-  });
+  task_runners_.GetUITaskRunner()->PostTask(
+      [engine = engine_->GetWeakPtr(), flags] {
+        if (engine) {
+          engine->SetAccessibilityFeatures(flags);
+        }
+      });
 }
 
 // |PlatformView::Delegate|
@@ -946,8 +894,7 @@ void Shell::OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) {
       });
 
   // Schedule a new frame without having to rebuild the layer tree.
-  task_runners_.GetUITaskRunner()->PostTask([this]() {
-    auto engine = GetWeakEngine();
+  task_runners_.GetUITaskRunner()->PostTask([engine = engine_->GetWeakPtr()]() {
     if (engine) {
       engine->ScheduleFrame(false);
     }
@@ -1146,8 +1093,7 @@ void Shell::ReportTimings() {
 
   auto timings = std::move(unreported_timings_);
   unreported_timings_ = {};
-  task_runners_.GetUITaskRunner()->PostTask([this, timings] {
-    auto engine = GetWeakEngine();
+  task_runners_.GetUITaskRunner()->PostTask([timings, engine = weak_engine_] {
     if (engine) {
       engine->ReportTimings(std::move(timings));
     }
