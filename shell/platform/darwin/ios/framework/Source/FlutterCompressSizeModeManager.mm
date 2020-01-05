@@ -241,47 +241,39 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
 #pragma mark - 解压Data和Assets
 
-- (BOOL)decompressDataIfNeeded:(NSError**)error monitor:(FlutterCompressSizeModeMonitor)monitor {
-  return [self decompressDataIfNeeded:NO error:error monitor:monitor];
-}
-
-- (void)decompressDataAsyncIfNeeded:(FlutterCompressSizeModeMonitor)monitor {
+- (void)decompressDataAsyncIfNeeded:(BOOL)isPredecompressMode
+                            monitor:(FlutterCompressSizeModeMonitor)monitor {
   dispatch_async(self->_serialDecompressQueue, ^{
-    [self decompressDataIfNeeded:YES error:nil monitor:monitor];
+    [self decompressDataIfNeeded:isPredecompressMode monitor:monitor];
   });
 }
 
-- (BOOL)decompressDataIfNeeded:(BOOL)isAsync
-                         error:(NSError**)error
+- (void)decompressDataIfNeeded:(BOOL)isPredecompressMode
                        monitor:(FlutterCompressSizeModeMonitor)monitor {
   NSError* internalError = nil;
   BOOL succeeded = YES;
   BOOL needDecompress = NO;
 
-  {
-    FlutterCompressSizeModeManagerLock(self->_mutexLock);
-    [self removePreviousDecompressedData];
-    if ([self needDecompressData]) {
-      needDecompress = YES;
-      succeeded = [self decompressData:&internalError];
-    }
+  if ([self needDecompressData]) {
+    needDecompress = YES;
+    succeeded = [self decompressData:&internalError];
   }
 
   dispatch_async(dispatch_get_main_queue(), ^{
     if (monitor) {
-      monitor(needDecompress, isAsync, succeeded, internalError);
+      monitor(needDecompress, isPredecompressMode, succeeded, internalError);
     }
   });
+}
 
-  if (error) {
-    *error = internalError;
-  }
-
-  return succeeded;
+- (void)removePreviousDecompressedDataAsync {
+  dispatch_async(self->_serialDecompressQueue, ^{
+    [self removePreviousDecompressedData];
+  });
 }
 
 - (void)removePreviousDecompressedData {
-  // 存在已经解压缩过的数据，则清除历史数据
+  // 存在已经解压的和当前UUID不一致的数据，则清除这些历史数据
   NSFileManager* fileManager = [NSFileManager defaultManager];
   NSString* cacheDirectoryForDecompressedData = self.cacheDirectoryForDecompressedData;
   BOOL isDirectory = false;
@@ -444,29 +436,55 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 #pragma mark - vm data & isolate data
 
 - (NSData*)vmData {
-  FlutterCompressSizeModeManagerLock(self->_mutexLock);
-  if (!_vmData.get()) {
+  NSData* res = nil;
+
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    res = _vmData.get();
+  }
+
+  if (!res) {
     unsigned long size = 0;
     uint8_t* sectionData =
         getsectiondata((flutter_mach_header*)kMachHeader, kSegmentName, kVMDataSectionName, &size);
     NSData* zippedData = [[[NSData alloc] initWithBytes:sectionData length:size] autorelease];
-    _vmData.reset([[zippedData flutter_gunzippedData] retain]);
+    res = [zippedData flutter_gunzippedData];
   }
 
-  return _vmData.get();
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    if (!_vmData.get()) {
+      _vmData.reset([res retain]);
+    }
+  }
+
+  return res;
 }
 
 - (NSData*)isolateData {
-  FlutterCompressSizeModeManagerLock(self->_mutexLock);
-  if (!_isolateData.get()) {
+  NSData* res = nil;
+
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    res = _isolateData.get();
+  }
+
+  if (!res) {
     unsigned long size = 0;
     uint8_t* sectionData = getsectiondata((flutter_mach_header*)kMachHeader, kSegmentName,
                                           kIsolateDataSectionName, &size);
     NSData* zippedData = [[[NSData alloc] initWithBytes:sectionData length:size] autorelease];
-    _isolateData.reset([[zippedData flutter_gunzippedData] retain]);
+    res = [zippedData flutter_gunzippedData];
   }
 
-  return _isolateData.get();
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    if (!_isolateData.get()) {
+      _isolateData.reset([res retain]);
+    }
+  }
+
+  return res;
 }
 
 - (void)setVMData:(NSData*)data {
@@ -512,7 +530,10 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
 - (void)updateSettingsIfNeeded:(flutter::Settings&)settings
                        monitor:(FlutterCompressSizeModeMonitor _Nullable)monitor {
-  [self decompressDataIfNeeded:nil monitor:monitor];
+  if ([self needDecompressData]) {
+    [self decompressDataAsyncIfNeeded:NO monitor:monitor];
+  }
+  [self removePreviousDecompressedDataAsync];
 
   if (self.isCompressSizeMode) {
     settings.vm_snapshot_data = [self vmSnapshotDataCallback];

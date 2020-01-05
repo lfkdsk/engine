@@ -306,7 +306,9 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 
 + (void)predecompressData {
   [[FlutterCompressSizeModeManager sharedInstance]
-      decompressDataAsyncIfNeeded:kFlutterCompressSizeModeMonitor];
+      decompressDataAsyncIfNeeded:YES
+                          monitor:kFlutterCompressSizeModeMonitor];
+  [[FlutterCompressSizeModeManager sharedInstance] removePreviousDecompressedDataAsync];
 }
 
 + (NSString*)flutterAssetsPath {
@@ -326,9 +328,8 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 }
 
 + (BOOL)decompressData:(NSError**)error {
-  return [[FlutterCompressSizeModeManager sharedInstance]
-      decompressDataIfNeeded:error
-                     monitor:kFlutterCompressSizeModeMonitor];
+  [self predecompressData];
+  return YES;
 }
 
 + (BOOL)needDecompressData {
