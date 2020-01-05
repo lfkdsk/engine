@@ -41,8 +41,11 @@
  */
 FLUTTER_EXPORT
 @interface FlutterEngine
-// BD MOD: add FlutterImageLoaderRegistry
-    : NSObject <FlutterBinaryMessenger, FlutterTextureRegistry, FlutterImageLoaderRegistry, FlutterPluginRegistry>
+    // BD MOD: add FlutterImageLoaderRegistry
+    : NSObject <FlutterBinaryMessenger,
+                FlutterTextureRegistry,
+                FlutterImageLoaderRegistry,
+                FlutterPluginRegistry>
 /**
  * Initialize this FlutterEngine with a `FlutterDartProject`.
  *
@@ -230,6 +233,13 @@ FLUTTER_EXPORT
  * clock format and text scale.
  */
 @property(nonatomic, readonly) FlutterBasicMessageChannel* settingsChannel;
+
+/**
+ * Whether or not GPU calls are allowed.
+ *
+ * Typically this is set when the app is backgrounded and foregrounded.
+ */
+@property(nonatomic, assign) BOOL isGpuDisabled;
 
 @end
 

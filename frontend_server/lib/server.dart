@@ -8,6 +8,8 @@ import 'dart:async';
 import 'dart:io' hide FileSystemEntity;
 
 import 'package:args/args.dart';
+// BD ADD:
+import 'package:flutter_kernel_transformers/track_route_constructor_locations.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:flutter_kernel_transformers/track_widget_constructor_locations.dart';
@@ -22,9 +24,16 @@ class _FlutterFrontendCompiler implements frontend.CompilerInterface{
 
   _FlutterFrontendCompiler(StringSink output,
       {bool trackWidgetCreation: false, bool unsafePackageSerialization}) :
-          _compiler = new frontend.FrontendCompiler(output,
-          transformer: trackWidgetCreation ? new WidgetCreatorTracker() : null,
-          unsafePackageSerialization: unsafePackageSerialization);
+        // BD MOD: START
+        //_compiler = new frontend.FrontendCompiler(output,
+        //    transformer: trackWidgetCreation ? new WidgetCreatorTracker() : null,
+        _compiler = new frontend.FrontendCompiler(output,
+            transformer: new RouteCreatorTracker(
+                nextTransformer: trackWidgetCreation
+                    ? WidgetCreatorTracker()
+                    : null),
+        // END
+            unsafePackageSerialization: unsafePackageSerialization);
 
   @override
   Future<bool> compile(String filename, ArgResults options, {IncrementalCompiler generator}) async {

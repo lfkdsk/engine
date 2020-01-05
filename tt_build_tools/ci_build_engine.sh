@@ -54,19 +54,39 @@ gclient sync -D -f
 
 cd tt_build_tools
 
-bash android_build.sh $JCOUNT $MODE
+[ -e upload.zip ] && rm -rf upload.zip
+download_status=$(curl -o upload.zip "http://tosv.byted.org/obj/toutiao.ios.arch/flutter/upload.zip" -w %{http_code})
+echo "上传脚本更新结果: ${download_status}"
+unzip -oq upload.zip -d upload
+
+LITEMODE='normal,lite'
+
+bash android_build.sh $JCOUNT $MODE $LITEMODE
 if [ $? -ne 0 ]; then
 	echo "android_build Compile failed !"
 	exit 1
 fi
 
-bash iOS_build.sh $JCOUNT
+bash iOS_build.sh $JCOUNT '' $LITEMODE
 if [ $? -ne 0 ]; then
 	echo "iOS_build Compile failed !"
 	exit 1
 fi
 
-curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release/libflutter.so" http://symbolicate.byted.org/android_upload
-curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_arm64/libflutter.so" http://symbolicate.byted.org/android_upload
-curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_dynamicart/libflutter.so" http://symbolicate.byted.org/android_upload
-curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_release_arm64_dynamicart/libflutter.so" http://symbolicate.byted.org/android_upload
+
+liteModes=(${LITEMODE//,/ })
+if [ ${#liteModes[@]} == 0 ];then
+    liteModes=('normal')
+fi
+RUNTIME_MODE="debug profile release"
+for runtime_mode in ${RUNTIME_MODE}; do
+  for liteMode in ${liteModes[@]}; do
+    if [ "${liteMode}" != 'normal' ]; then
+      liteModeSuffix=_${liteMode}
+    fi
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}_arm64${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}_dynamicart${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+    curl -F "uuid=default" -F "type=Native" -F "file=@../../out/android_${runtime_mode}_arm64_dynamicart${liteModeSuffix}/libflutter.so" http://symbolicate.byted.org/android_upload
+  done
+done

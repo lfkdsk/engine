@@ -44,6 +44,26 @@ static std::unique_ptr<fml::Mapping> GetMapping(const fml::UniqueFD& directory,
   return mapping;
 }
 
+// BD DEL: START
+// Cherry-pick Reland Skia Caching improvements (#10434)
+// （commid-id:13df65fd29f133bf9b9ca97c0bb8bd6735caf956） 官方新增了一些test
+// case，但是test依赖于一些前置cid引入的依赖，这里暂时关闭
+// void ShellTest::SendEnginePlatformMessage(
+//    Shell* shell,
+//    fml::RefPtr<PlatformMessage> message) {
+//  fml::AutoResetWaitableEvent latch;
+//  fml::TaskRunner::RunNowOrPostTask(
+//      shell->GetTaskRunners().GetPlatformTaskRunner(),
+//      [shell, &latch, message = std::move(message)]() {
+//        if (auto engine = shell->weak_engine_) {
+//          engine->HandlePlatformMessage(std::move(message));
+//        }
+//        latch.Signal();
+//      });
+//  latch.Wait();
+//}
+// END
+
 void ShellTest::SetSnapshotsAndAssets(Settings& settings) {
   if (!assets_dir_.is_valid()) {
     return;

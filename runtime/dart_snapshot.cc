@@ -129,7 +129,9 @@ std::unique_ptr<DartSnapshotBuffer> ResolveIsolateData(
 
 std::unique_ptr<DartSnapshotBuffer> ResolveIsolateInstructions(
     const Settings& settings) {
-  if (settings.isolate_snapshot_data) {
+  // BD MOD:
+  // if (settings.isolate_snapshot_data) {
+  if (settings.isolate_snapshot_instr) {
     return DartSnapshotBuffer::CreateWithMapping(
         settings.isolate_snapshot_instr());
   }

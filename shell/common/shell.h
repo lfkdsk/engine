@@ -17,6 +17,7 @@
 #include "flutter/fml/memory/thread_checker.h"
 #include "flutter/fml/memory/weak_ptr.h"
 #include "flutter/fml/string_view.h"
+#include "flutter/fml/synchronization/sync_switch.h"
 #include "flutter/fml/synchronization/thread_annotations.h"
 #include "flutter/fml/synchronization/waitable_event.h"
 #include "flutter/fml/thread.h"
@@ -62,6 +63,13 @@ class Shell final : public PlatformView::Delegate,
 
   fml::WeakPtr<PlatformView> GetPlatformView();
 
+  // Embedders should call this under low memory conditions to free up
+  // internal caches used.
+  //
+  // This method posts a task to the GPU threads to signal the Rasterizer to
+  // free resources.
+  void NotifyLowMemoryWarning() const;
+
   bool IsSetup() const;
 
   Rasterizer::Screenshot Screenshot(Rasterizer::ScreenshotType type,
@@ -73,6 +81,13 @@ class Shell final : public PlatformView::Delegate,
    * @param closure执行完后回调
    */
   void ExitApp(fml::closure closure);
+
+  // BD ADD:
+  static int64_t GetEngineMainEnterMicros();
+
+  //----------------------------------------------------------------------------
+  /// @brief     Accessor for the disable GPU SyncSwitch
+  std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() const;
 
  private:
   using ServiceProtocolHandler =
@@ -90,6 +105,7 @@ class Shell final : public PlatformView::Delegate,
   std::unique_ptr<Engine> engine_;               // on UI task runner
   std::unique_ptr<Rasterizer> rasterizer_;       // on GPU task runner
   std::unique_ptr<ShellIOManager> io_manager_;   // on IO task runner
+  std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch_;
 
   std::unordered_map<std::string,  // method
                      std::pair<fml::RefPtr<fml::TaskRunner>,
@@ -151,13 +167,14 @@ class Shell final : public PlatformView::Delegate,
 
   // |PlatformView::Delegate|
   void OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) override;
-                
+
   /**
    * BD ADD:
    *
    */
   // |PlatformView::Delegate|
-  void OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) override;
+  void OnPlatformViewRegisterImageLoader(
+      std::shared_ptr<flutter::ImageLoader> imageLoader) override;
 
   // |PlatformView::Delegate|
   void OnPlatformViewSetNextFrameCallback(fml::closure closure) override;
@@ -166,7 +183,9 @@ class Shell final : public PlatformView::Delegate,
   void OnAnimatorBeginFrame(fml::TimePoint frame_time) override;
 
   // |Animator::Delegate|
-  void OnAnimatorNotifyIdle(int64_t deadline) override;
+  // BD: MOD
+  // void OnAnimatorNotifyIdle(int64_t deadline) override;
+  void OnAnimatorNotifyIdle(int64_t deadline, int type) override;
 
   // |Animator::Delegate|
   void OnAnimatorDraw(

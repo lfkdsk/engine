@@ -208,7 +208,9 @@ bool RuntimeController::BeginFrame(fml::TimePoint frame_time) {
   return false;
 }
 
-bool RuntimeController::NotifyIdle(int64_t deadline) {
+// BD MOD:
+// bool RuntimeController::NotifyIdle(int64_t deadline) {
+bool RuntimeController::NotifyIdle(int64_t deadline, int type) {
   std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
   if (!root_isolate) {
     return false;
@@ -218,8 +220,29 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   // BD MOD: START
   // Dart_NotifyIdle(deadline);
-  if (!Boost::Current()->IsGCDisabled()) {
+  if (type & Boost::kPageQuiet) {
+    if (Boost::Current()->IsGCDisabled()) {
+      Boost::Current()->Finish(Boost::kDisableGC);
+    }
     Dart_NotifyIdle(deadline);
+    
+    if (Boost::Current()->CanNotifyIdle()) {
+      if (auto* window = GetWindowIfAvailable()) {
+        window->NotifyIdle(500000);
+      }
+    }
+  }
+  if (type & Boost::kVsyncIdle) {
+    if (!Boost::Current()->IsGCDisabled()) {
+      Dart_NotifyIdle(deadline);
+    }
+    if (Boost::Current()->CanNotifyIdle()) {
+      int64_t micros = deadline - Dart_TimelineGetMicros();
+        auto* window = GetWindowIfAvailable();
+        if (window && micros > 2999) {
+          window->NotifyIdle(micros);
+        }
+    }
   }
   // END
 
@@ -344,6 +367,10 @@ void RuntimeController::ExitApp() {
     window->ExitApp();
   }
 }
+
+void RuntimeController::NotifyLowMemoryWarning() {
+  Dart_NotifyLowMemory();
+}
 // END
 
 RuntimeController::Locale::Locale(std::string language_code_,
@@ -368,6 +395,10 @@ std::vector<double> RuntimeController::GetFps(int thread_type,
                                               int fps_type,
                                               bool do_clear) {
   return client_.GetFps(thread_type, fps_type, do_clear);
+}
+
+int64_t RuntimeController::GetEngineMainEnterMicros() {
+  return client_.GetEngineMainEnterMicros();
 }
 // END
 

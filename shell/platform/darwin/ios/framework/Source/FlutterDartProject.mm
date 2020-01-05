@@ -14,6 +14,11 @@
 #include "flutter/shell/common/switches.h"
 #include "flutter/shell/platform/darwin/common/command_line.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
+// BD ADD: START
+#include "flutter/fml/file.h"
+#include "flutter/fml/mapping.h"
+#include "flutter/shell/platform/darwin/ios/framework/Source/FlutterCompressSizeModeManager.h"
+// END
 
 extern "C" {
 #if FLUTTER_RUNTIME_MODE == FLUTTER_RUNTIME_MODE_DEBUG
@@ -24,6 +29,12 @@ extern const intptr_t kPlatformStrongDillSize;
 }
 
 static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
+// BD ADD: START
+NSString* const FlutterCompressSizeModeErrorDomain = @"FlutterCompressSizeModeErrorDomain";
+static NSString* const kFLTAssetsPath = @"FLTAssetsPath";
+static NSString* const kFlutterAssets = @"flutter_assets";
+static FlutterCompressSizeModeMonitor kFlutterCompressSizeModeMonitor = nil;
+// END
 
 static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   auto command_line = flutter::CommandLineFromNSProcessInfo();
@@ -116,7 +127,12 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     }
 
     if (!assetsPath || assetsPath.length == 0) {
-      NSLog(@"Failed to find assets path for \"%@\"", assetsName);
+      // BD MOD: START
+      // NSLog(@"Failed to find assets path for \"%@\"", assetsName);
+      if (![FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode) {
+        NSLog(@"Failed to find assets path for \"%@\"", assetsName);
+      }
+      // END
     } else {
       settings.assets_path = assetsPath.UTF8String;
 
@@ -169,6 +185,12 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   if (self) {
     _precompiledDartBundle.reset([bundle retain]);
     _settings = DefaultSettingsForProcess(bundle);
+
+    // BD ADD: START
+    [[FlutterCompressSizeModeManager sharedInstance]
+        updateSettingsIfNeeded:_settings
+                       monitor:kFlutterCompressSizeModeMonitor];
+    // END
   }
 
   return self;
@@ -243,9 +265,13 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   if (bundle == nil) {
     bundle = [NSBundle mainBundle];
   }
-  NSString* flutterAssetsName = [bundle objectForInfoDictionaryKey:@"FLTAssetsPath"];
+  // BD MOD:
+  // NSString* flutterAssetsName = [bundle objectForInfoDictionaryKey:@"FLTAssetsPath"];
+  NSString* flutterAssetsName = [bundle objectForInfoDictionaryKey:kFLTAssetsPath];
   if (flutterAssetsName == nil) {
-    flutterAssetsName = @"Frameworks/App.framework/flutter_assets";
+    // BD MOD:
+    // flutterAssetsName = @"Frameworks/App.framework/flutter_assets";
+    flutterAssetsName = [NSString stringWithFormat:@"Frameworks/App.framework/%@", kFlutterAssets];
   }
   return flutterAssetsName;
 }
@@ -273,5 +299,43 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 + (NSString*)defaultBundleIdentifier {
   return @"io.flutter.flutter.app";
 }
+
+// BD ADD: START
++ (void)setCompressSizeModeMonitor:(FlutterCompressSizeModeMonitor)flutterCompressSizeModeMonitor {
+  kFlutterCompressSizeModeMonitor = [flutterCompressSizeModeMonitor copy];
+}
+
++ (void)predecompressData {
+  [[FlutterCompressSizeModeManager sharedInstance]
+      decompressDataAsyncIfNeeded:kFlutterCompressSizeModeMonitor];
+}
+
++ (NSString*)flutterAssetsPath {
+  NSBundle* bundle = [NSBundle bundleWithIdentifier:[FlutterDartProject defaultBundleIdentifier]];
+  if (bundle == nil) {
+    bundle = [NSBundle mainBundle];
+  }
+  NSString* flutterAssetsPath = [bundle objectForInfoDictionaryKey:kFLTAssetsPath];
+  if (flutterAssetsPath == nil) {
+    flutterAssetsPath = kFlutterAssets;
+  }
+  return flutterAssetsPath;
+}
+
++ (BOOL)isCompressSizeMode {
+  return [FlutterCompressSizeModeManager sharedInstance].isCompressSizeMode;
+}
+
++ (BOOL)decompressData:(NSError**)error {
+  return [[FlutterCompressSizeModeManager sharedInstance]
+      decompressDataIfNeeded:error
+                     monitor:kFlutterCompressSizeModeMonitor];
+}
+
++ (BOOL)needDecompressData {
+  return [[FlutterCompressSizeModeManager sharedInstance] needDecompressData];
+}
+
+// END
 
 @end

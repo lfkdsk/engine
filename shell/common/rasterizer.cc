@@ -15,6 +15,8 @@
 #include "third_party/skia/include/core/SkSurface.h"
 #include "third_party/skia/include/core/SkSurfaceCharacterization.h"
 #include "third_party/skia/include/utils/SkBase64.h"
+// BD ADD:
+#include "flutter/common/fps_recorder.h"
 
 namespace flutter {
 
@@ -31,6 +33,7 @@ Rasterizer::Rasterizer(
     std::unique_ptr<flutter::CompositorContext> compositor_context)
     : task_runners_(std::move(task_runners)),
       compositor_context_(std::move(compositor_context)),
+      user_override_resource_cache_bytes_(false),
       weak_factory_(this) {
   FML_DCHECK(compositor_context_);
 }
@@ -47,6 +50,16 @@ fml::WeakPtr<SnapshotDelegate> Rasterizer::GetSnapshotDelegate() const {
 
 void Rasterizer::Setup(std::unique_ptr<Surface> surface) {
   surface_ = std::move(surface);
+  // BD MOD: START
+  // if (max_cache_bytes_.has_value()) {
+  //   SetResourceCacheMaxBytes(max_cache_bytes_.value(),
+  //                            user_override_resource_cache_bytes_);
+  // }
+  if (max_cache_bytes_ > 0) {
+    SetResourceCacheMaxBytes(max_cache_bytes_,
+                             user_override_resource_cache_bytes_);
+  }
+  // END
   compositor_context_->OnGrContextCreated();
 }
 
@@ -54,6 +67,19 @@ void Rasterizer::Teardown() {
   compositor_context_->OnGrContextDestroyed();
   surface_.reset();
   last_layer_tree_.reset();
+}
+
+void Rasterizer::NotifyLowMemoryWarning() const {
+  if (!surface_) {
+    FML_DLOG(INFO) << "Rasterizer::PurgeCaches called with no surface.";
+    return;
+  }
+  auto context = surface_->GetContext();
+  if (!context) {
+    FML_DLOG(INFO) << "Rasterizer::PurgeCaches called with no GrContext.";
+    return;
+  }
+  context->freeGpuResources();
 }
 
 flutter::TextureRegistry* Rasterizer::GetTextureRegistry() {
@@ -179,6 +205,11 @@ bool Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
   // construction took. Fortunately, the layer tree does. Grab that time
   // for instrumentation.
   compositor_context_->engine_time().SetLapTime(layer_tree.construction_time());
+  // BD ADD: START
+  fml::TimeDelta construction_time = layer_tree.construction_time();
+  int miss_count = (int) (construction_time.ToMillisecondsF() / flutter::kOneFrameMS);
+  FpsRecorder::Current()->AddFrameCount(max(0, miss_count - 1), construction_time);
+  // END
 
   auto* canvas = frame->SkiaCanvas();
 
@@ -365,7 +396,8 @@ void Rasterizer::AddNextFrameCallback(fml::closure callback) {
 
 void Rasterizer::FireNextFrameCallbackIfPresent() {
   if (!next_frame_callbacks_.empty()) {
-    for(auto it = next_frame_callbacks_.begin(); it != next_frame_callbacks_.end(); ++it) {
+    for (auto it = next_frame_callbacks_.begin();
+         it != next_frame_callbacks_.end(); ++it) {
       task_runners_.GetUITaskRunner()->PostTask(*it);
     }
     next_frame_callbacks_.clear();
@@ -379,7 +411,20 @@ void Rasterizer::FireNextFrameCallbackIfPresent() {
   callback();
 }
 
-void Rasterizer::SetResourceCacheMaxBytes(int max_bytes) {
+void Rasterizer::SetResourceCacheMaxBytes(size_t max_bytes, bool from_user) {
+  user_override_resource_cache_bytes_ |= from_user;
+
+  if (!from_user && user_override_resource_cache_bytes_) {
+    // We should not update the setting here if a user has explicitly set a
+    // value for this over the flutter/skia channel.
+    return;
+  }
+
+  max_cache_bytes_ = max_bytes;
+  if (!surface_) {
+    return;
+  }
+
   GrContext* context = surface_->GetContext();
   if (context) {
     int max_resources;
@@ -387,6 +432,20 @@ void Rasterizer::SetResourceCacheMaxBytes(int max_bytes) {
     context->setResourceCacheLimits(max_resources, max_bytes);
   }
 }
+// BD DEL: START
+// std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
+//  if (!surface_) {
+//    return std::nullopt;
+//  }
+//  GrContext* context = surface_->GetContext();
+//  if (context) {
+//    size_t max_bytes;
+//    context->getResourceCacheLimits(nullptr, &max_bytes);
+//    return max_bytes;
+//  }
+//  return std::nullopt;
+// }
+// END
 
 Rasterizer::Screenshot::Screenshot() {}
 

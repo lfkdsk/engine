@@ -10,6 +10,10 @@ config("flutter_config") {
 
 source_set("common") {
   sources = [
+    # BD ADD: START
+    "fps_recorder.cc",
+    "fps_recorder.h",
+    # END
     "settings.cc",
     "settings.h",
     "task_runners.cc",

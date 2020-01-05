@@ -89,12 +89,20 @@ static const char* kDartDisableServiceAuthCodesArgs[]{
 };
 
 static const char* kDartTraceStartupArgs[]{
-    "--timeline_streams=Compiler,Dart,Debugger,Embedder,GC,Isolate,VM",
+    // BD MOD:
+    //"--timeline_streams=Compiler,Dart,Debugger,Embedder,GC,Isolate,VM",
+    "--timeline_streams=Compiler,Dart,Debugger,Embedder,GC,Isolate,VM,API",
 };
 
 static const char* kDartEndlessTraceBufferArgs[]{
     "--timeline_recorder=endless",
 };
+
+// BD ADD: START
+static const char* kDartStartupTraceBufferArgs[]{
+    "--timeline_recorder=startup",
+};
+// END
 
 static const char* kDartSystraceTraceBufferArgs[]{
     "--timeline_recorder=systrace",
@@ -105,7 +113,9 @@ static const char* kDartFuchsiaTraceArgs[] FML_ALLOW_UNUSED_TYPE = {
 };
 
 static const char* kDartTraceStreamsArgs[] = {
-    "--timeline_streams=Compiler,Dart,Debugger,Embedder,GC,Isolate,VM",
+    // BD MOD:
+    //"--timeline_streams=Compiler,Dart,Debugger,Embedder,GC,Isolate,VM",
+    "--timeline_streams=Compiler,Dart,Debugger,Embedder,GC,Isolate,VM,API",
 };
 
 constexpr char kFileUriPrefix[] = "file://";
@@ -339,8 +349,9 @@ DartVM::DartVM(std::shared_ptr<const DartVMData> vm_data,
     PushBackAll(&args, kDartDisableServiceAuthCodesArgs,
                 arraysize(kDartDisableServiceAuthCodesArgs));
   }
-
-  if (settings_.endless_trace_buffer || settings_.trace_startup) {
+  // BD MOD:
+  // if (settings_.endless_trace_buffer || settings_.trace_startup) {
+  if (settings_.endless_trace_buffer) {
     // If we are tracing startup, make sure the trace buffer is endless so we
     // don't lose early traces.
     PushBackAll(&args, kDartEndlessTraceBufferArgs,
@@ -354,6 +365,9 @@ DartVM::DartVM(std::shared_ptr<const DartVMData> vm_data,
   }
 
   if (settings_.trace_startup) {
+    // BD ADD:
+    PushBackAll(&args, kDartStartupTraceBufferArgs,
+                arraysize(kDartStartupTraceBufferArgs));
     PushBackAll(&args, kDartTraceStartupArgs, arraysize(kDartTraceStartupArgs));
   }
 
@@ -403,7 +417,9 @@ DartVM::DartVM(std::shared_ptr<const DartVMData> vm_data,
     if (engine_main_enter_ts != 0) {
       Dart_TimelineEvent("FlutterEngineMainEnter",  // label
                          engine_main_enter_ts,      // timestamp0
-                         engine_main_enter_ts,      // timestamp1_or_async_id
+                         // BD MOD:
+                         // engine_main_enter_ts,      // timestamp1_or_async_id
+                         Dart_TimelineGetMicros(),  // timestamp1_or_async_id
                          Dart_Timeline_Event_Duration,  // event type
                          0,                             // argument_count
                          nullptr,                       // argument_names

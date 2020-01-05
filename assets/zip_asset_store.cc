@@ -44,7 +44,16 @@ std::unique_ptr<fml::Mapping> ZipAssetStore::GetAsMapping(
   TRACE_EVENT1("flutter", "ZipAssetStore::GetAsMapping", "name",
                asset_name.c_str());
 
-  auto found = stat_cache_.find(directory_ + "/" + asset_name);
+  // BD MOD: START
+  // auto found = stat_cache_.find(directory_ + "/" + asset_name);
+  std::string cache_key;
+  if (directory_.empty()) {
+    cache_key = asset_name;
+  } else {
+    cache_key = directory_ + "/" + asset_name;
+  }
+  auto found = stat_cache_.find(cache_key);
+  // END
   if (found == stat_cache_.end()) {
     return nullptr;
   }

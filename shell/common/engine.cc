@@ -197,11 +197,12 @@ void Engine::BeginFrame(fml::TimePoint frame_time) {
   TRACE_EVENT0("flutter", "Engine::BeginFrame");
   runtime_controller_->BeginFrame(frame_time);
 }
-
-void Engine::NotifyIdle(int64_t deadline) {
+// BD MOD
+// void Engine::NotifyIdle(int64_t deadline) {
+void Engine::NotifyIdle(int64_t deadline, int type) {
   TRACE_EVENT1("flutter", "Engine::NotifyIdle", "deadline_now_delta",
                std::to_string(deadline - Dart_TimelineGetMicros()).c_str());
-  runtime_controller_->NotifyIdle(deadline);
+  runtime_controller_->NotifyIdle(deadline, type);
 }
 
 std::pair<bool, uint32_t> Engine::GetUIIsolateReturnCode() {
@@ -406,6 +407,10 @@ void Engine::ScheduleBackgroundFrame() {
 void Engine::ExitApp() {
   runtime_controller_->ExitApp();
 }
+
+void Engine::NotifyLowMemoryWarning() {
+  runtime_controller_->NotifyLowMemoryWarning();
+}
 // END
 
 void Engine::Render(std::unique_ptr<flutter::LayerTree> layer_tree) {
@@ -473,6 +478,10 @@ std::vector<double> Engine::GetFps(int thread_type,
                                    int fps_type,
                                    bool do_clear) {
   return delegate_.GetFps(thread_type, fps_type, do_clear);
+}
+
+int64_t Engine::GetEngineMainEnterMicros() {
+  return Shell::GetEngineMainEnterMicros();
 }
 // END
 

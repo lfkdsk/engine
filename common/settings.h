@@ -148,10 +148,12 @@ struct Settings {
       fml::UniqueFD::traits_type::InvalidValue();
   std::string assets_path;
   std::string flx_path;
+  // BD ADD: START
+  std::string zip_assets_file_path;
+  std::string zip_assets_directory;
+  // END
 
   std::string ToString() const;
-
-  bool should_defer_decode_image_when_platform_view_invalid = false;
 };
 
 }  // namespace flutter

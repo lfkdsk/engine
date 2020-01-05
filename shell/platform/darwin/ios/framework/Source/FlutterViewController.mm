@@ -224,11 +224,6 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
                object:nil];
 
   [center addObserver:self
-             selector:@selector(onMemoryWarning:)
-                 name:UIApplicationDidReceiveMemoryWarningNotification
-               object:nil];
-
-  [center addObserver:self
              selector:@selector(onUserSettingsChanged:)
                  name:UIContentSizeCategoryDidChangeNotification
                object:nil];
@@ -303,6 +298,13 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   if (!weak_platform_view) {
     return;
   }
+
+  // BD ADD: START
+  if (![_engine.get() platformTaskRunner]) {
+    return;
+  }
+  // END
+
   __unsafe_unretained auto weak_flutter_view_controller = self;
   // This is on the platform thread.
   weak_platform_view->SetNextFrameCallback([weak_platform_view, weak_flutter_view_controller,
@@ -397,6 +399,13 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   if (!weak_platform_view) {
     return;
   }
+
+  // BD ADD: START
+  if (![_engine.get() platformTaskRunner]) {
+    return;
+  }
+  // END
+
   __unsafe_unretained auto weak_flutter_view_controller = self;
   // This is on the platform thread.
   weak_platform_view->SetNextFrameCallback([weak_platform_view, weak_flutter_view_controller,
@@ -440,10 +449,14 @@ NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemantics
   if (appeared && !_surfaceCreated) {
     [self installSplashScreenViewCallback];
     [_engine.get() platformViewsController] -> SetFlutterView(_flutterView.get());
-    [_engine.get() platformView] -> NotifyCreated();
+    if ([_engine.get() platformView]) {
+      [_engine.get() platformView] -> NotifyCreated();
+    }
     _surfaceCreated = YES;
   } else if (!appeared && _surfaceCreated) {
-    [_engine.get() platformView] -> NotifyDestroyed();
+    if ([_engine.get() platformView]) {
+      [_engine.get() platformView] -> NotifyDestroyed();
+    }
     [_engine.get() platformViewsController] -> SetFlutterView(nullptr);
     _surfaceCreated = NO;
   }
@@ -874,6 +887,11 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 
 - (void)onAccessibilityStatusChanged:(NSNotification*)notification {
   auto platformView = [_engine.get() platformView];
+  // BD ADD: START
+  if (!platformView) {
+    return;
+  }
+  // END
   int32_t flags = 0;
   if (UIAccessibilityIsInvertColorsEnabled())
     flags |= static_cast<int32_t>(flutter::AccessibilityFeatureFlag::kInvertColors);
@@ -894,19 +912,6 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
   platformView->SetSemanticsEnabled(enabled || UIAccessibilityIsSpeakScreenEnabled());
   platformView->SetAccessibilityFeatures(flags);
 #endif
-}
-
-#pragma mark - Memory Notifications
-
-- (void)onMemoryWarning:(NSNotification*)notification {
-  [[_engine.get() systemChannel] sendMessage:@{@"type" : @"memoryPressure"}];
-
-  // BD ADD: START
-  if (FlutterRecreateSurfaceWhenReceiveMemorying) {
-    [self surfaceUpdated:NO];
-    [self surfaceUpdated:YES];
-  }
-  // END
 }
 
 #pragma mark - Locale updates

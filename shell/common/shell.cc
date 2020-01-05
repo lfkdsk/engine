@@ -71,17 +71,17 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
   auto io_task_runner = shell->GetTaskRunners().GetIOTaskRunner();
   fml::TaskRunner::RunNowOrPostTask(
       io_task_runner,
-      [&io_latch,           //
-       &io_manager,         //
-       &platform_view,      //
-       io_task_runner,      //
-       shell = shell.get()  //
+      [&io_latch,                                                         //
+       &io_manager,                                                       //
+       &platform_view,                                                    //
+       io_task_runner,                                                    //
+       shell = shell.get(),                                               //
+       is_backgrounded_sync_switch = shell->GetIsGpuDisabledSyncSwitch()  //
   ]() {
         TRACE_EVENT0("flutter", "ShellSetupIOSubsystem");
         io_manager = std::make_unique<ShellIOManager>(
-            platform_view->CreateResourceContext(), io_task_runner,
-            shell->settings_
-                .should_defer_decode_image_when_platform_view_invalid);
+            platform_view->CreateResourceContext(), is_backgrounded_sync_switch,
+            io_task_runner);
         io_latch.Signal();
       });
   io_latch.Wait();
@@ -167,6 +167,12 @@ static void RecordStartupTimestamp() {
   }
 }
 
+// BD ADD:
+int64_t Shell::GetEngineMainEnterMicros() {
+  return engine_main_enter_ts;
+}
+// END
+
 // Though there can be multiple shells, some settings apply to all components in
 // the process. These have to be setup before the shell or any of its
 // sub-components can be initialized. In a perfect world, this would be empty.
@@ -246,7 +252,8 @@ std::unique_ptr<Shell> Shell::Create(
 Shell::Shell(TaskRunners task_runners, Settings settings)
     : task_runners_(std::move(task_runners)),
       settings_(std::move(settings)),
-      engine_created_(false) {
+      engine_created_(false),
+      is_gpu_disabled_sync_switch_(new fml::SyncSwitch()) {
   FML_DCHECK(task_runners_.IsValid());
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
@@ -336,6 +343,43 @@ Shell::~Shell() {
         platform_latch.Signal();
       }));
   platform_latch.Wait();
+}
+
+void Shell::NotifyLowMemoryWarning() const {
+  task_runners_.GetGPUTaskRunner()->PostTask(
+      [rasterizer = rasterizer_->GetWeakPtr()]() {
+        if (rasterizer) {
+          rasterizer->NotifyLowMemoryWarning();
+        }
+      });
+  // The IO Manager uses resource cache limits of 0, so it is not necessary
+  // to purge them.
+
+  // BD ADD: START
+  if (engine_) {
+    engine_->NotifyLowMemoryWarning();
+  }
+
+  auto io_task = [io_manager = io_manager_->GetWeakPtr()]() {
+    if (io_manager) {
+      io_manager->GetSkiaUnrefQueue()->Drain();
+      if (io_manager->GetResourceContext()) {
+        io_manager->GetResourceContext()->freeGpuResources();
+      }
+    }
+  };
+  // Dart VM对象的释放：
+  // 1.Dart_NotifyLowMemory()->Isolate::NotifyLowMemory()->Isolate::KillAllIsolates(LibMsgId
+  // msg_id)->Isolate::KillLocked(LibMsgId msg_id)
+  // 2.通过Isolate的Port，将kLowMemoryMsg加入消息队列
+  // 3.在UI线程中执行IsolateMessageHandler::HandleLibMessage(const Array&
+  // message)
+  // 4.对于图片内存的释放需要确保图片sk_sp<SkImage>外面包裹的Codec、FrameInfo、CanvasImage先销毁
+  task_runners_.GetUITaskRunner()->PostTask(
+      [io_task_runner = task_runners_.GetIOTaskRunner(), io_task] {
+        io_task_runner->PostTask(io_task);
+      });
+  // END
 }
 
 bool Shell::IsSetup() const {
@@ -462,10 +506,6 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
           platform_view->CreateResourceContext());
     }
 
-    if (io_manager) {
-      io_manager->UpdatePlatformViewValid(true);
-    }
-
     // Step 1: Tell the GPU thread that it should create a surface for its
     // rasterizer.
     if (should_post_gpu_task) {
@@ -494,13 +534,6 @@ void Shell::OnPlatformViewDestroyed() {
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
-  // BD ADD: START
-  fml::TaskRunner::RunNowOrPostTask(
-      task_runners_.GetIOTaskRunner(), [io_manager = io_manager_.get()] {
-        io_manager->UpdatePlatformViewValid(false);
-      });
-  // END
-
   // Note:
   // This is a synchronous operation because certain platforms depend on
   // setup/suspension of all activities that may be interacting with the GPU in
@@ -511,7 +544,9 @@ void Shell::OnPlatformViewDestroyed() {
   auto io_task = [io_manager = io_manager_.get(), &latch]() {
     // Execute any pending Skia object deletions while GPU access is still
     // allowed.
-    io_manager->GetSkiaUnrefQueue()->Drain();
+    io_manager->GetIsGpuDisabledSyncSwitch()->Execute(
+        fml::SyncSwitch::Handlers().SetIfFalse(
+            [&] { io_manager->GetSkiaUnrefQueue()->Drain(); }));
     // Step 3: All done. Signal the latch that the platform thread is waiting
     // on.
     latch.Signal();
@@ -573,6 +608,16 @@ void Shell::OnPlatformViewDestroyed() {
 void Shell::OnPlatformViewSetViewportMetrics(const ViewportMetrics& metrics) {
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
+
+  // This is the formula Android uses.
+  // https://android.googlesource.com/platform/frameworks/base/+/master/libs/hwui/renderthread/CacheManager.cpp#41
+  size_t max_bytes = metrics.physical_width * metrics.physical_height * 12 * 4;
+  task_runners_.GetGPUTaskRunner()->PostTask(
+      [rasterizer = rasterizer_->GetWeakPtr(), max_bytes] {
+        if (rasterizer) {
+          rasterizer->SetResourceCacheMaxBytes(max_bytes, false);
+        }
+      });
 
   task_runners_.GetUITaskRunner()->PostTask([this, metrics]() {
     auto engine = GetEngine();
@@ -723,19 +768,20 @@ void Shell::OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) {
  * BD ADD:
  */
 // |PlatformView::Delegate|
-void Shell::OnPlatformViewRegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) {
-    FML_DCHECK(is_setup_);
-    FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
+void Shell::OnPlatformViewRegisterImageLoader(
+    std::shared_ptr<flutter::ImageLoader> imageLoader) {
+  FML_DCHECK(is_setup_);
+  FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
 
-    task_runners_.GetIOTaskRunner()->PostTask(
+  task_runners_.GetIOTaskRunner()->PostTask(
       [io_manager = io_manager_->GetWeakPtr(),
        imageLoader = std::move(imageLoader)] {
         if (io_manager) {
           io_manager->RegisterImageLoader(imageLoader);
-      }
-    });
+        }
+      });
 }
-    
+
 // |PlatformView::Delegate|
 void Shell::OnPlatformViewSetNextFrameCallback(fml::closure closure) {
   FML_DCHECK(is_setup_);
@@ -760,12 +806,16 @@ void Shell::OnAnimatorBeginFrame(fml::TimePoint frame_time) {
 }
 
 // |Animator::Delegate|
-void Shell::OnAnimatorNotifyIdle(int64_t deadline) {
+// BD: MOD
+// void Shell::OnAnimatorNotifyIdle(int64_t deadline) {
+void Shell::OnAnimatorNotifyIdle(int64_t deadline, int type) {
   FML_DCHECK(is_setup_);
   FML_DCHECK(task_runners_.GetUITaskRunner()->RunsTasksOnCurrentThread());
 
   if (engine_) {
-    engine_->NotifyIdle(deadline);
+    // BD: MOD
+    // engine_->NotifyIdle(deadline);
+    engine_->NotifyIdle(deadline, type);
   }
 }
 
@@ -825,9 +875,10 @@ void Shell::OnEngineHandlePlatformMessage(
         if (view) {
           view->HandlePlatformMessage(std::move(message));
         }
-      // BD MOD:
-      // });
-      }, Boost::Current()->IsDelayPlatformMessage());
+        // BD MOD:
+        // });
+      },
+      Boost::Current()->IsDelayPlatformMessage());
 }
 
 void Shell::HandleEngineSkiaMessage(fml::RefPtr<PlatformMessage> message) {
@@ -846,10 +897,14 @@ void Shell::HandleEngineSkiaMessage(fml::RefPtr<PlatformMessage> message) {
     return;
 
   task_runners_.GetGPUTaskRunner()->PostTask(
-      [rasterizer = rasterizer_->GetWeakPtr(),
-       max_bytes = args->value.GetInt()] {
+      [rasterizer = rasterizer_->GetWeakPtr(), max_bytes = args->value.GetInt(),
+       response = std::move(message->response())] {
         if (rasterizer) {
-          rasterizer->SetResourceCacheMaxBytes(max_bytes);
+          rasterizer->SetResourceCacheMaxBytes(static_cast<size_t>(max_bytes),
+                                               true);
+        }
+        if (response) {
+          response->CompleteEmpty();
         }
       });
 }
@@ -1200,5 +1255,9 @@ void Shell::ExitApp(fml::closure closure) {
           }));
 }
 // END
+
+std::shared_ptr<fml::SyncSwitch> Shell::GetIsGpuDisabledSyncSwitch() const {
+  return is_gpu_disabled_sync_switch_;
+}
 
 }  // namespace flutter

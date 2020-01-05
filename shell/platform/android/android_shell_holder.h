@@ -48,7 +48,10 @@ class AndroidShellHolder {
   void ExitApp(fml::closure closure);
 
   void UpdateSettings(const std::string& dynamic_dill_path);
+
+  void NotifyLowMemory();
   // END
+
  private:
   // BD MOD:
   // BEFORE: const flutter::Settings settings_;
