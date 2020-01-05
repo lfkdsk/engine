@@ -9,6 +9,8 @@
 #include "flutter/fml/memory/weak_ptr.h"
 #include "flutter/fml/synchronization/sync_switch.h"
 #include "third_party/skia/include/gpu/GrContext.h"
+// BD ADD:
+#include "flutter/lib/ui/painting/image_loader.h"
 
 namespace flutter {
 // Interface for methods that manage access to the resource GrContext and Skia
@@ -25,6 +27,9 @@ class IOManager {
   virtual fml::RefPtr<flutter::SkiaUnrefQueue> GetSkiaUnrefQueue() const = 0;
 
   virtual std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() = 0;
+
+  // BD ADD:
+  virtual std::shared_ptr<flutter::ImageLoader> GetImageLoader() const = 0;
 };
 
 }  // namespace flutter

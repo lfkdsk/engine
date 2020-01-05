@@ -70,9 +70,12 @@ public interface SplashScreen {
    */
   // We suppress NewApi because the CI linter thinks that "default" methods are unsupported.
   @SuppressLint("NewApi")
-  default boolean doesSplashViewRememberItsTransition() {
-    return false;
-  }
+  //  BD MOD: YuShijia Java7 not support default keyword
+  //  default boolean doesSplashViewRememberItsTransition() {
+  //    return false;
+  //  }
+  boolean doesSplashViewRememberItsTransition();
+  // END
 
   /**
    * Returns whatever state is necessary to restore a splash {@code View} after destruction
@@ -81,7 +84,10 @@ public interface SplashScreen {
   // We suppress NewApi because the CI linter thinks that "default" methods are unsupported.
   @SuppressLint("NewApi")
   @Nullable
-  default Bundle saveSplashScreenState() {
-    return null;
-  }
+  //  BD MOD: YuShijia Java7 not support default keyword
+  //  default Bundle saveSplashScreenState() {
+  //      return null;
+  //  }
+  Bundle saveSplashScreenState();
+  // END
 }

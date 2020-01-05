@@ -12,6 +12,8 @@
 #include "flutter/runtime/runtime_delegate.h"
 #include "third_party/tonic/dart_message_handler.h"
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 namespace flutter {
 
 RuntimeController::RuntimeController(
@@ -250,7 +252,9 @@ bool RuntimeController::ReportTimings(std::vector<int64_t> timings) {
   return false;
 }
 
-bool RuntimeController::NotifyIdle(int64_t deadline) {
+// BD MOD:
+// bool RuntimeController::NotifyIdle(int64_t deadline) {
+bool RuntimeController::NotifyIdle(int64_t deadline, int type) {
   std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
   if (!root_isolate) {
     return false;
@@ -258,7 +262,33 @@ bool RuntimeController::NotifyIdle(int64_t deadline) {
 
   tonic::DartState::Scope scope(root_isolate);
 
-  Dart_NotifyIdle(deadline);
+  // BD MOD: START
+  // Dart_NotifyIdle(deadline);
+  if (type & Boost::kPageQuiet) {
+    if (Boost::Current()->IsGCDisabled()) {
+      Boost::Current()->Finish(Boost::kDisableGC);
+    }
+    Dart_NotifyIdle(deadline);
+
+    if (Boost::Current()->CanNotifyIdle()) {
+      if (auto* window = GetWindowIfAvailable()) {
+        window->NotifyIdle(500000);
+      }
+    }
+  }
+  if (type & Boost::kVsyncIdle) {
+    if (!Boost::Current()->IsGCDisabled()) {
+      Dart_NotifyIdle(deadline);
+    }
+    if (Boost::Current()->CanNotifyIdle()) {
+      int64_t micros = deadline - Dart_TimelineGetMicros();
+        auto* window = GetWindowIfAvailable();
+        if (window && micros > 2999) {
+          window->NotifyIdle(micros);
+        }
+    }
+  }
+  // END
 
   // Idle notifications being in isolate scope are part of the contract.
   if (idle_notification_callback_) {
@@ -320,6 +350,11 @@ void RuntimeController::ScheduleFrame() {
 // |WindowClient|
 void RuntimeController::Render(Scene* scene) {
   client_.Render(scene->takeLayerTree());
+}
+
+
+void RuntimeController::AddNextFrameCallback(fml::closure callback) {
+  client_.AddNextFrameCallback(callback);
 }
 
 // |WindowClient|
@@ -389,6 +424,18 @@ std::pair<bool, uint32_t> RuntimeController::GetRootIsolateReturnCode() {
   return root_isolate_return_code_;
 }
 
+// BD ADD: START
+void RuntimeController::ExitApp() {
+  if (auto* window = GetWindowIfAvailable()) {
+    window->ExitApp();
+  }
+}
+
+void RuntimeController::NotifyLowMemoryWarning() {
+  Dart_NotifyLowMemory();
+}
+// END
+
 RuntimeController::Locale::Locale(std::string language_code_,
                                   std::string country_code_,
                                   std::string script_code_,
@@ -405,5 +452,17 @@ RuntimeController::WindowData::WindowData() = default;
 RuntimeController::WindowData::WindowData(const WindowData& other) = default;
 
 RuntimeController::WindowData::~WindowData() = default;
+
+// BD ADD: START
+std::vector<double> RuntimeController::GetFps(int thread_type,
+                                              int fps_type,
+                                              bool do_clear) {
+  return client_.GetFps(thread_type, fps_type, do_clear);
+}
+
+int64_t RuntimeController::GetEngineMainEnterMicros() {
+  return client_.GetEngineMainEnterMicros();
+}
+// END
 
 }  // namespace flutter

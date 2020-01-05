@@ -158,4 +158,8 @@ void UIDartState::ReportUnhandledException(const std::string& error,
                  << stack_trace;
 }
 
+fml::WeakPtr<IOManager> UIDartState::GetIOManager() const {
+  return io_manager_;
+}
+
 }  // namespace flutter

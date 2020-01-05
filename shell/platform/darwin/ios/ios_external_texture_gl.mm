@@ -72,6 +72,11 @@ void IOSExternalTextureGL::Paint(SkCanvas& canvas,
     }
     CreateTextureFromPixelBuffer();
     new_frame_ready_ = false;
+    // BD ADD: START LinYiyi
+    if (buffer_ref_) {
+      buffer_ref_.Reset(nullptr);
+    }
+    // END
   }
   if (!texture_ref_) {
     return;
@@ -97,7 +102,9 @@ void IOSExternalTextureGL::OnGrContextCreated() {
 }
 
 void IOSExternalTextureGL::OnGrContextDestroyed() {
-  texture_ref_.Reset(nullptr);
+  // Avoid video_player showing a black background when the app goes into the background and becomes
+  // active.
+  //  texture_ref_.Reset(nullptr);
   cache_ref_.Reset(nullptr);
 }
 

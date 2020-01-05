@@ -27,6 +27,8 @@
 #include "third_party/tonic/logging/dart_invoke.h"
 #include "third_party/tonic/scopes/dart_api_scope.h"
 #include "third_party/tonic/scopes/dart_isolate_scope.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 #if defined(OS_ANDROID)
 #include <android/log.h>
@@ -53,7 +55,13 @@ namespace flutter {
   V(SaveCompilationTrace, 0)    \
   V(ScheduleMicrotask, 1)       \
   V(GetCallbackHandle, 1)       \
-  V(GetCallbackFromHandle, 1)
+  V(GetCallbackFromHandle, 1)   \
+  /** BD ADD: START **/         \
+  V(ForceGC, 0)                 \
+  V(StartBoost, 2)              \
+  V(FinishBoost, 1)             \
+  V(PreloadFontFamilies, 2)
+  /** END **/
 
 BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
 
@@ -351,4 +359,26 @@ void GetCallbackFromHandle(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, DartCallbackCache::GetCallback(handle));
 }
 
+// BD ADD: START
+void StartBoost(Dart_NativeArguments args) {
+  uint16_t flags = (uint16_t)DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  int millis = DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 1));
+  Boost::Current()->StartUp(flags, millis);
+}
+
+void FinishBoost(Dart_NativeArguments args) {
+  uint16_t flags = (uint16_t)DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 0));
+  Boost::Current()->Finish(flags);
+}
+
+void PreloadFontFamilies(Dart_NativeArguments args) {
+  std::vector<std::string> font_families = DartConverter<std::vector<std::string>>::FromDart(Dart_GetNativeArgument(args, 0));
+  std::string locale = DartConverter<std::string>::FromDart(Dart_GetNativeArgument(args, 1));
+  Boost::Current()->PreloadFontFamilies(font_families, locale);
+}
+
+void ForceGC(Dart_NativeArguments args) {
+  Boost::Current()->ForceGC();
+}
+// END
 }  // namespace flutter

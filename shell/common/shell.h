@@ -222,6 +222,10 @@ class Shell final : public PlatformView::Delegate,
   ///
   fml::WeakPtr<Engine> GetEngine();
 
+  // BD ADD: XIERAN
+  // 用来在Engine.cc内部的UI线程获取engine
+  fml::WeakPtr<Engine> GetWeakEngine();
+
   //----------------------------------------------------------------------------
   /// @brief      Platform views may only be accessed on the platform task
   ///             runner.
@@ -306,6 +310,17 @@ class Shell final : public PlatformView::Delegate,
   ///
   bool EngineHasLivePorts() const;
 
+  /**
+   * BD ADD: QiuXinyue
+   * Native容器销毁时，通知Flutter退出App
+   * @param closure执行完后回调
+   */
+  void ExitApp(fml::closure closure);
+  // END
+
+  // BD ADD:
+  static int64_t GetEngineMainEnterMicros();
+
   //----------------------------------------------------------------------------
   /// @brief     Accessor for the disable GPU SyncSwitch
   std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() const;
@@ -317,7 +332,11 @@ class Shell final : public PlatformView::Delegate,
 
   const TaskRunners task_runners_;
   const Settings settings_;
-  DartVMRef vm_;
+  std::atomic_bool engine_created_;
+  fml::ManualResetWaitableEvent ui_latch_;
+  // BD MOD:
+  // DartVM* vm_;
+  std::shared_ptr<DartVM> vm_;
   std::unique_ptr<PlatformView> platform_view_;  // on platform task runner
   std::unique_ptr<Engine> engine_;               // on UI task runner
   std::unique_ptr<Rasterizer> rasterizer_;       // on GPU task runner
@@ -366,10 +385,9 @@ class Shell final : public PlatformView::Delegate,
   // How many frames have been timed since last report.
   size_t UnreportedFramesCount() const;
 
-  Shell(DartVMRef vm, TaskRunners task_runners, Settings settings);
+  Shell(TaskRunners task_runners, Settings settings);
 
   static std::unique_ptr<Shell> CreateShellOnPlatformThread(
-      DartVMRef vm,
       TaskRunners task_runners,
       Settings settings,
       fml::RefPtr<const DartSnapshot> isolate_snapshot,
@@ -377,7 +395,6 @@ class Shell final : public PlatformView::Delegate,
       const Shell::CreateCallback<Rasterizer>& on_create_rasterizer);
 
   bool Setup(std::unique_ptr<PlatformView> platform_view,
-             std::unique_ptr<Engine> engine,
              std::unique_ptr<Rasterizer> rasterizer,
              std::unique_ptr<ShellIOManager> io_manager);
 
@@ -425,6 +442,14 @@ class Shell final : public PlatformView::Delegate,
   // |PlatformView::Delegate|
   void OnPlatformViewMarkTextureFrameAvailable(int64_t texture_id) override;
 
+  /**
+   * BD ADD:
+   *
+   */
+  // |PlatformView::Delegate|
+  void OnPlatformViewRegisterImageLoader(
+      std::shared_ptr<flutter::ImageLoader> imageLoader) override;
+
   // |PlatformView::Delegate|
   void OnPlatformViewSetNextFrameCallback(const fml::closure& closure) override;
 
@@ -432,7 +457,9 @@ class Shell final : public PlatformView::Delegate,
   void OnAnimatorBeginFrame(fml::TimePoint frame_time) override;
 
   // |Animator::Delegate|
-  void OnAnimatorNotifyIdle(int64_t deadline) override;
+  // BD: MOD
+  // void OnAnimatorNotifyIdle(int64_t deadline) override;
+  void OnAnimatorNotifyIdle(int64_t deadline, int type) override;
 
   // |Animator::Delegate|
   void OnAnimatorDraw(
@@ -467,6 +494,11 @@ class Shell final : public PlatformView::Delegate,
 
   // |Rasterizer::Delegate|
   fml::Milliseconds GetFrameBudget() override;
+
+  // BD ADD: XieRan
+  // |Engine::Delegate|
+  void AddNextFrameCallback(fml::closure callback) override;
+  // END
 
   // |ServiceProtocol::Handler|
   fml::RefPtr<fml::TaskRunner> GetServiceProtocolHandlerTaskRunner(
@@ -519,6 +551,12 @@ class Shell final : public PlatformView::Delegate,
   std::unique_ptr<fml::WeakPtrFactory<Shell>> weak_factory_gpu_;
 
   friend class testing::ShellTest;
+
+  // BD ADD: YuanHuihui
+  std::vector<double> GetFps(int thread_type,
+                             int fps_type = kAvgFpsType,
+                             bool do_clear = false) override;
+  // END
 
   FML_DISALLOW_COPY_AND_ASSIGN(Shell);
 };

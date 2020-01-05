@@ -83,4 +83,9 @@ fml::TaskQueueId EmbedderTaskRunner::GetTaskQueueId() {
   return placeholder_id_;
 }
 
+// BD ADD: START
+void EmbedderTaskRunner::PostTask(fml::closure task, bool is_low_priority) {
+  PostTask(task);
+}
+// END
 }  // namespace flutter

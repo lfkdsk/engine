@@ -120,6 +120,23 @@ fml::WeakPtr<IOManager> ShellIOManager::GetWeakIOManager() const {
   return weak_factory_.GetWeakPtr();
 }
 
+/**
+ * BD ADD: Linyiyi
+ *
+ */
+void ShellIOManager::RegisterImageLoader(
+    std::shared_ptr<flutter::ImageLoader> imageLoader) {
+  imageLoader_ = imageLoader;
+}
+
+/**
+ * BD ADD: Linyiyi
+ *
+ */
+std::shared_ptr<flutter::ImageLoader> ShellIOManager::GetImageLoader() const {
+  return imageLoader_;
+}
+
 // |IOManager|
 std::shared_ptr<fml::SyncSwitch> ShellIOManager::GetIsGpuDisabledSyncSwitch() {
   return is_gpu_disabled_sync_switch_;

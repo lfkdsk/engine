@@ -29,10 +29,12 @@ class ShellTest;
 class Animator final {
  public:
   class Delegate {
+  
    public:
     virtual void OnAnimatorBeginFrame(fml::TimePoint frame_time) = 0;
-
-    virtual void OnAnimatorNotifyIdle(int64_t deadline) = 0;
+    // BD MOD:
+    // virtual void OnAnimatorNotifyIdle(int64_t deadline) = 0;
+    virtual void OnAnimatorNotifyIdle(int64_t deadline, int type) = 0;
 
     virtual void OnAnimatorDraw(
         fml::RefPtr<Pipeline<flutter::LayerTree>> pipeline) = 0;
@@ -49,6 +51,8 @@ class Animator final {
   float GetDisplayRefreshRate() const;
 
   void RequestFrame(bool regenerate_layer_tree = true);
+
+  void RequestBackgroundFrame();
 
   void Render(std::unique_ptr<flutter::LayerTree> layer_tree);
 
@@ -89,6 +93,7 @@ class Animator final {
   void DrawLastLayerTree();
 
   void AwaitVSync();
+  void AwaitVSyncForBackground();
 
   const char* FrameParity();
 

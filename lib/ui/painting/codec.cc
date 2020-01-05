@@ -33,6 +33,10 @@ namespace flutter {
 
 namespace {
 
+// BD ADD: LinYiyi
+static constexpr const char* kGetNativeImageTraceTag = "GetNativeImage";
+// END
+
 // This must be kept in sync with the enum in painting.dart
 enum PixelFormat {
   kRGBA8888,
@@ -244,7 +248,97 @@ void Codec::dispose() {
   ClearDartWrapper();
 }
 
+
+
+/**
+ * BD ADD:
+ *
+ */
+static void InvokeGetNativeImageCallback(
+    fml::RefPtr<CanvasImage> image,
+    std::unique_ptr<DartPersistentValue> callback,
+    size_t trace_id) {
+  std::shared_ptr<tonic::DartState> dart_state = callback->dart_state().lock();
+  if (!dart_state) {
+    TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+    return;
+  }
+  tonic::DartState::Scope scope(dart_state);
+  if (!image) {
+    DartInvoke(callback->value(), {Dart_Null()});
+  } else {
+    DartInvoke(callback->value(), {ToDart(image)});
+  }
+  TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+}
+
+/**
+ * BD ADD: LinYiyi
+ *
+ */
+void GetNativeImage(Dart_NativeArguments args) {
+  static size_t trace_counter = 1;
+  const size_t trace_id = trace_counter++;
+  TRACE_FLOW_BEGIN("flutter", kGetNativeImageTraceTag, trace_id);
+
+  Dart_Handle callback_handle = Dart_GetNativeArgument(args, 1);
+  if (!Dart_IsClosure(callback_handle)) {
+    TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+    Dart_SetReturnValue(args, ToDart("Callback must be a function"));
+    return;
+  }
+
+  Dart_Handle exception = nullptr;
+  const std::string url =
+      tonic::DartConverter<std::string>::FromArguments(args, 0, exception);
+  if (exception) {
+    TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+    Dart_SetReturnValue(args, exception);
+    return;
+  }
+
+  const int width = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 2));
+  const int height = tonic::DartConverter<int>::FromDart(Dart_GetNativeArgument(args, 3));
+  const float scale = tonic::DartConverter<float>::FromDart(Dart_GetNativeArgument(args, 4));
+
+  auto* dart_state = UIDartState::Current();
+
+  const auto& task_runners = dart_state->GetTaskRunners();
+  fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
+  std::shared_ptr<flutter::ImageLoader> imageLoader =
+      io_manager.get()->GetImageLoader();
+  imageLoader->Load(
+      url, width, height, scale, dart_state,
+      fml::MakeCopyable([context = dart_state->GetResourceContext(),
+                         ui_task_runner = task_runners.GetUITaskRunner(),
+                         io_task_runner = task_runners.GetIOTaskRunner(),
+                         queue = UIDartState::Current()->GetSkiaUnrefQueue(),
+                         callback = std::make_unique<DartPersistentValue>(
+                             tonic::DartState::Current(), callback_handle),
+                         trace_id](sk_sp<SkImage> skimage) mutable {
+        fml::RefPtr<CanvasImage> image;
+        if (skimage) {
+          image = CanvasImage::Create();
+          image->set_image({skimage, queue});
+        } else {
+          image = nullptr;
+        }
+        ui_task_runner->PostTask(
+            fml::MakeCopyable([callback = std::move(callback),
+                               image = std::move(image), trace_id]() mutable {
+              InvokeGetNativeImageCallback(image, std::move(callback),
+                                           trace_id);
+            }));
+      }));
+}
+// END
+
 void Codec::RegisterNatives(tonic::DartLibraryNatives* natives) {
+  // BD ADD: LinYiyi
+  natives->Register({
+      {"getNativeImage", GetNativeImage, 5, true},
+  });
+  // END
   natives->Register({
       {"instantiateImageCodec", InstantiateImageCodec, 5, true},
   });

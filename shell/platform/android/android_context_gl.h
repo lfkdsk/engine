@@ -17,6 +17,9 @@ namespace flutter {
 
 class AndroidContextGL : public fml::RefCountedThreadSafe<AndroidContextGL> {
  public:
+  // BD ADD:
+  static bool NeedBindAndUnbindContext();
+
   bool CreateWindowSurface(fml::RefPtr<AndroidNativeWindow> window);
 
   bool CreatePBufferSurface();

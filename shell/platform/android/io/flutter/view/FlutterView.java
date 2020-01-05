@@ -31,17 +31,30 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
+
+// BD ADD: HuWeijie
+import android.view.WindowManager;
+// END
+
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
+// BD ADD: HuWeijie
+import java.lang.ref.WeakReference;
+// END
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
+
+// BD ADD: HuWeijie
+import io.flutter.embedding.engine.FlutterJNI;
+// END
 
 import io.flutter.app.FlutterPluginRegistry;
 import io.flutter.embedding.android.AndroidKeyProcessor;
@@ -62,11 +75,20 @@ import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.editing.TextInputPlugin;
 import io.flutter.plugin.platform.PlatformPlugin;
 import io.flutter.plugin.platform.PlatformViewsController;
+// BD MOD: START
+//
+//import java.lang.ref.WeakReference;
+//import java.nio.ByteBuffer;
+//import java.nio.ByteOrder;
+//import java.util.*;
+//import java.util.concurrent.atomic.AtomicLong;
+// END
 
 /**
  * An Android view containing a Flutter app.
  */
-public class FlutterView extends SurfaceView implements BinaryMessenger, TextureRegistry {
+// BD MOD: add ImageLoaderRegistry
+public class FlutterView extends SurfaceView implements BinaryMessenger, TextureRegistry, IFlutterView {
     /**
      * Interface for those objects that maintain and expose a reference to a
      * {@code FlutterView} (such as a full-screen Flutter activity).
@@ -89,7 +111,7 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
 
     private static final String TAG = "FlutterView";
 
-    static final class ViewportMetrics {
+    public static final class ViewportMetrics {
         float devicePixelRatio = 1.0f;
         int physicalWidth = 0;
         int physicalHeight = 0;
@@ -105,6 +127,50 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         int systemGestureInsetRight = 0;
         int systemGestureInsetBottom = 0;
         int systemGestureInsetLeft = 0;
+
+        // BD ADD: XieRan
+        void update(ViewportMetrics metrics) {
+            devicePixelRatio = metrics.devicePixelRatio;
+            physicalWidth = metrics.physicalWidth;
+            physicalHeight = metrics.physicalHeight;
+            physicalPaddingTop = metrics.physicalPaddingTop;
+            physicalPaddingRight = metrics.physicalPaddingRight;
+            physicalPaddingBottom = metrics.physicalPaddingBottom;
+            physicalPaddingLeft = metrics.physicalPaddingLeft;
+            physicalViewInsetTop = metrics.physicalViewInsetTop;
+            physicalViewInsetRight = metrics.physicalViewInsetRight;
+            physicalViewInsetBottom = metrics.physicalViewInsetBottom;
+            physicalViewInsetLeft = metrics.physicalViewInsetLeft;
+            systemGestureInsetTop = metrics.systemGestureInsetTop;
+            systemGestureInsetRight = metrics.systemGestureInsetRight;
+            systemGestureInsetBottom = metrics.systemGestureInsetBottom;
+            systemGestureInsetLeft = metrics.systemGestureInsetLeft;
+        }
+
+        /**
+         * 获取当前对象的拷贝
+         */
+        ViewportMetrics snapShot() {
+            ViewportMetrics metrics = new ViewportMetrics();
+            metrics.devicePixelRatio = devicePixelRatio;
+            metrics.physicalWidth = physicalWidth;
+            metrics.physicalHeight = physicalHeight;
+            metrics.physicalPaddingTop = physicalPaddingTop;
+            metrics.physicalPaddingRight = physicalPaddingRight;
+            metrics.physicalPaddingBottom = physicalPaddingBottom;
+            metrics.physicalPaddingLeft = physicalPaddingLeft;
+            metrics.physicalViewInsetTop = physicalViewInsetTop;
+            metrics.physicalViewInsetRight = physicalViewInsetRight;
+            metrics.physicalViewInsetBottom = physicalViewInsetBottom;
+            metrics.physicalViewInsetLeft = physicalViewInsetLeft;
+            metrics.systemGestureInsetTop = systemGestureInsetTop;
+            metrics.systemGestureInsetRight = systemGestureInsetRight;
+            metrics.systemGestureInsetBottom = systemGestureInsetBottom;
+            metrics.systemGestureInsetLeft = systemGestureInsetLeft;
+            return metrics;
+        }
+        // END
+
     }
 
     private final DartExecutor dartExecutor;
@@ -116,7 +182,6 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
     private final PlatformChannel platformChannel;
     private final SettingsChannel settingsChannel;
     private final SystemChannel systemChannel;
-    private final InputMethodManager mImm;
     private final TextInputPlugin mTextInputPlugin;
     private final AndroidKeyProcessor androidKeyProcessor;
     private final AndroidTouchProcessor androidTouchProcessor;
@@ -137,6 +202,11 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         }
     };
 
+    // BD ADD: XIERAN
+    private PlatformPlugin mPlatformPlugin;
+    private WeakReference<Activity> mActivityRef;
+    private ActivityLifecycleListener mActivityLifecycleListener;
+
     public FlutterView(Context context) {
         this(context, null);
     }
@@ -146,9 +216,9 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
     }
 
     public FlutterView(Context context, AttributeSet attrs, FlutterNativeView nativeView) {
-        super(context, attrs);
+        super(context.getApplicationContext(), attrs);
 
-        Activity activity = getActivity(getContext());
+        Activity activity = getActivity(context);
         if (activity == null) {
             throw new IllegalArgumentException("Bad context");
         }
@@ -166,8 +236,6 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         mMetrics.devicePixelRatio = context.getResources().getDisplayMetrics().density;
         setFocusable(true);
         setFocusableInTouchMode(true);
-
-        mNativeView.attachViewAndActivity(this, activity);
 
         mSurfaceCallback = new SurfaceHolder.Callback() {
             @Override
@@ -203,14 +271,14 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         settingsChannel = new SettingsChannel(dartExecutor);
 
         // Create and setup plugins
-        PlatformPlugin platformPlugin = new PlatformPlugin(activity, platformChannel);
-        addActivityLifecycleListener(new ActivityLifecycleListener() {
+        // BD MOD: XieRan
+        mActivityLifecycleListener = new ActivityLifecycleListener() {
             @Override
             public void onPostResume() {
-                platformPlugin.updateSystemUiOverlays();
+                mPlatformPlugin.updateSystemUiOverlays();
             }
-        });
-        mImm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        };
+//         mImm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         PlatformViewsController platformViewsController = mNativeView.getPluginRegistry().getPlatformViewsController();
         mTextInputPlugin = new TextInputPlugin(this, dartExecutor, platformViewsController);
         androidKeyProcessor = new AndroidKeyProcessor(keyEventChannel, mTextInputPlugin);
@@ -220,6 +288,50 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         // Send initial platform information to Dart
         sendLocalesToDart(getResources().getConfiguration());
         sendUserPlatformSettingsToDart();
+
+        attachActivity((Activity) context);
+    }
+
+    /**
+     * Call this method when reuse this FlutterView on another Activity.
+     */
+    public void attachActivity(Activity activity) {
+        detachActivity();
+        mNativeView.attachViewAndActivity(this, activity);
+        mPlatformPlugin = new PlatformPlugin(activity, platformChannel);
+        addActivityLifecycleListener(mActivityLifecycleListener);
+        mActivityRef = new WeakReference<>(activity);
+    }
+
+    /**
+     * Call this method on Activity onDestroy in case of memory leak on Activity.
+     */
+    public void detachActivity() {
+        // mPlatformPlugin hold the strong reference of Activity, need to release.
+        if (mPlatformPlugin != null) {
+            removeActivityLifecycleListener(mActivityLifecycleListener);
+            mPlatformPlugin = null;
+            platformChannel.setPlatformMessageHandler(null);
+            if (mNativeView != null && mNativeView.isAttached()) {
+                mNativeView.detachFromFlutterView();
+            }
+            mActivityRef = null;
+        }
+    }
+
+    /**
+     * 跳出到其他Activity时取出ViewportMetrics存下来，用于恢复MediaQuery中的值
+     */
+    public ViewportMetrics getViewPortMetrics() {
+        return mMetrics.snapShot();
+    }
+
+    /**
+     * attach到新Activity时恢复之前的值
+     */
+    public void updateViewportMetrics(ViewportMetrics viewportMetrics) {
+        mMetrics.update(viewportMetrics);
+        updateViewportMetrics();
     }
 
     private static Activity getActivity(Context context) {
@@ -277,6 +389,10 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
 
     public void addActivityLifecycleListener(ActivityLifecycleListener listener) {
         mActivityLifecycleListeners.add(listener);
+    }
+
+    public void removeActivityLifecycleListener(ActivityLifecycleListener listener) {
+        mActivityLifecycleListeners.remove(listener);
     }
 
     public void onStart() {
@@ -498,7 +614,10 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         // rotations relative to default rotation while orientation is portrait
         // or landscape. By combining both, we can obtain a more precise measure
         // of the rotation.
-        Activity activity = (Activity)getContext();
+        Activity activity = mActivityRef != null ? mActivityRef.get() : null;
+        if (activity == null) {
+            return ZeroSides.NONE;
+        }
         int orientation = activity.getResources().getConfiguration().orientation;
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
 
@@ -630,7 +749,8 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
         resetAccessibilityTree();
     }
 
-    void resetAccessibilityTree() {
+    @Override
+    public void resetAccessibilityTree() {
         if (mAccessibilityNodeProvider != null) {
             mAccessibilityNodeProvider.reset();
         }
@@ -679,6 +799,9 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
     }
 
     // Called by FlutterNativeView to notify first Flutter frame rendered.
+    // BD ADD: XieRan
+    @Override
+    // END
     public void onFirstFrame() {
         didRenderFirstFrame = true;
 

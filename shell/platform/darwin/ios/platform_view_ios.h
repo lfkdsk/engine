@@ -40,6 +40,12 @@ class PlatformViewIOS final : public PlatformView {
   // |PlatformView|
   PointerDataDispatcherMaker GetDispatcherMaker() override;
 
+  /**
+   * BD ADD:
+   *
+   */
+  void RegisterExternalImageLoader(NSObject<FlutterImageLoader>* imageLoader);
+
   fml::scoped_nsprotocol<FlutterTextInputPlugin*> GetTextInputPlugin() const;
 
   void SetTextInputPlugin(fml::scoped_nsprotocol<FlutterTextInputPlugin*> plugin);

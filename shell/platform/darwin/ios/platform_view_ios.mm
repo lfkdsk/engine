@@ -16,6 +16,8 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterViewController_Internal.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/vsync_waiter_ios.h"
 #include "flutter/shell/platform/darwin/ios/ios_external_texture_gl.h"
+// BD ADD:
+#include "flutter/shell/platform/darwin/ios/ios_external_image_loader.h"
 
 namespace flutter {
 
@@ -91,6 +93,15 @@ void PlatformViewIOS::RegisterExternalTexture(int64_t texture_id,
                                               NSObject<FlutterTexture>* texture) {
   RegisterTexture(std::make_shared<IOSExternalTextureGL>(texture_id, texture));
 }
+  
+/**
+ * BD ADD:
+ *
+ */
+// |PlatformView|
+void PlatformViewIOS::RegisterExternalImageLoader(NSObject<FlutterImageLoader>* imageLoader) {
+  RegisterImageLoader(std::make_shared<IOSExternalImageLoader>(imageLoader));
+}
 
 // |PlatformView|
 std::unique_ptr<Surface> PlatformViewIOS::CreateRenderingSurface() {
@@ -143,7 +154,12 @@ void PlatformViewIOS::SetAccessibilityFeatures(int32_t flags) {
 // |PlatformView|
 void PlatformViewIOS::UpdateSemantics(flutter::SemanticsNodeUpdates update,
                                       flutter::CustomAccessibilityActionUpdates actions) {
-  FML_DCHECK(owner_controller_);
+  // BD MOD: START
+  // FML_DCHECK(owner_controller_);
+  if (!owner_controller_) {
+    return;
+  }
+  // END
   if (accessibility_bridge_) {
     accessibility_bridge_->UpdateSemantics(std::move(update), std::move(actions));
     [[NSNotificationCenter defaultCenter] postNotificationName:FlutterSemanticsUpdateNotification

@@ -11,6 +11,8 @@
 #include "flutter/shell/common/shell_io_manager.h"
 #include "flutter/shell/gpu/gpu_surface_gl_delegate.h"
 #include "flutter/shell/platform/android/android_external_texture_gl.h"
+// BD ADD:
+#include "flutter/shell/platform/android/android_external_image_loader.h"
 #include "flutter/shell/platform/android/android_surface_gl.h"
 #include "flutter/shell/platform/android/platform_message_response_android.h"
 #include "flutter/shell/platform/android/platform_view_android_jni.h"
@@ -46,15 +48,50 @@ void PlatformViewAndroid::NotifyCreated(
   if (android_surface_) {
     InstallFirstFrameCallback();
 
-    fml::AutoResetWaitableEvent latch;
-    fml::TaskRunner::RunNowOrPostTask(
-        task_runners_.GetGPUTaskRunner(),
-        [&latch, surface = android_surface_.get(),
-         native_window = std::move(native_window)]() {
-          surface->SetNativeWindow(native_window);
+    // BD MOD: START
+    //    fml::AutoResetWaitableEvent latch;
+    //    fml::TaskRunner::RunNowOrPostTask(
+    //        task_runners_.GetGPUTaskRunner(),
+    //        [&latch, surface = android_surface_.get(),
+    //         native_window = std::move(native_window)]() {
+    //          surface->SetNativeWindow(native_window);
+    //          latch.Signal();
+    //        });
+    //    latch.Wait();
+
+    if (AndroidContextGL::NeedBindAndUnbindContext()) {
+      fml::AutoResetWaitableEvent latch;
+      fml::RefPtr <fml::TaskRunner> gpu_runner = task_runners_.GetGPUTaskRunner();
+      fml::TaskRunner::RunNowOrPostTask(
+        task_runners_.GetIOTaskRunner(),
+        [&latch, gpu_runner, surface = android_surface_.get(),
+          native_window = std::move(native_window)]() {
+          surface->ResourceContextClearCurrent();
+
+          fml::AutoResetWaitableEvent latch_ui;
+          fml::TaskRunner::RunNowOrPostTask(
+            gpu_runner, [&surface, native_window, &latch_ui]() {
+              surface->SetNativeWindow(native_window);
+              latch_ui.Signal();
+            });
+          latch_ui.Wait();
+
+          surface->ResourceContextMakeCurrent();
           latch.Signal();
         });
-    latch.Wait();
+      latch.Wait();
+    } else {
+      fml::AutoResetWaitableEvent latch;
+      fml::TaskRunner::RunNowOrPostTask(
+          task_runners_.GetGPUTaskRunner(),
+          [&latch, surface = android_surface_.get(),
+           native_window = std::move(native_window)]() {
+            surface->SetNativeWindow(native_window);
+            latch.Signal();
+          });
+      latch.Wait();
+    }
+    // END
   }
 
   PlatformView::NotifyCreated();
@@ -376,6 +413,12 @@ void PlatformViewAndroid::RegisterExternalTexture(
     const fml::jni::JavaObjectWeakGlobalRef& surface_texture) {
   RegisterTexture(
       std::make_shared<AndroidExternalTextureGL>(texture_id, surface_texture));
+}
+/**
+ * BD ADD: register android image loader
+ */
+void PlatformViewAndroid::RegisterExternalImageLoader(const fml::jni::JavaObjectWeakGlobalRef& android_image_loader) {
+    RegisterImageLoader(std::make_shared<AndroidExternalImageLoader>(android_image_loader));
 }
 
 // |PlatformView|

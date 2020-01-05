@@ -13,6 +13,8 @@
 #include "FlutterMacros.h"
 #include "FlutterPlugin.h"
 #include "FlutterTexture.h"
+// BD ADD:
+#include "FlutterImageLoader.h"
 
 @class FlutterViewController;
 
@@ -46,7 +48,7 @@ extern NSString* const FlutterDefaultDartEntrypoint;
  * One of these methods must be invoked before calling `-setViewController:`.
  */
 FLUTTER_EXPORT
-@interface FlutterEngine : NSObject <FlutterTextureRegistry, FlutterPluginRegistry>
+@interface FlutterEngine : NSObject <FlutterTextureRegistry, FlutterPluginRegistry, FlutterImageLoaderRegistry>
 
 /**
  * Initialize this FlutterEngine.
@@ -279,6 +281,13 @@ FLUTTER_EXPORT
  * Can be nil after `destroyContext` is called.
  */
 @property(nonatomic, readonly) FlutterBasicMessageChannel* settingsChannel;
+
+/**
+ * Whether or not GPU calls are allowed.
+ *
+ * Typically this is set when the app is backgrounded and foregrounded.
+ */
+@property(nonatomic, assign) BOOL isGpuDisabled;
 
 /**
  * The `NSURL` of the observatory for the service isolate.

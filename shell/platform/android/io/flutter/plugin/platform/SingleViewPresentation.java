@@ -12,6 +12,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -188,11 +189,27 @@ class SingleViewPresentation extends Presentation {
             rootView.requestFocus();
         }
         setContentView(rootView);
+
+        // BD ADD: XieRan
+        // 防止参数不一致导致PlatformView展示不出来
+        DisplayMetrics metrics = new DisplayMetrics();
+        getDisplay().getMetrics(metrics);
+        getResources().getDisplayMetrics().setTo(metrics);
+        // END
     }
 
     public PresentationState detachState() {
-        container.removeAllViews();
-        rootView.removeAllViews();
+        // BD MOD: XieRan
+        if (container != null) {
+            container.removeAllViews();
+        }
+        // END
+        // BD MOD: XieRan
+        if (rootView != null) {
+            rootView.removeAllViews();
+        }
+        // END
+
         return state;
     }
 

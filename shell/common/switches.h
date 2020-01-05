@@ -171,6 +171,8 @@ DEF_SWITCH(
     "Uses separate threads for the platform, UI, GPU and IO task runners. "
     "By default, a single thread is used for all task runners. Only available "
     "in the flutter_tester.")
+// BD ADD
+DEF_SWITCH(DisableLeakVM, "disable-leak-vm", "Set leak_vm in setting.h to false.")
 DEF_SWITCHES_END
 
 void PrintUsage(const std::string& executable_name);

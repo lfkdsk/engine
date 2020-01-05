@@ -29,6 +29,10 @@ shared_library("flutter_shell_native") {
     "android_environment_gl.h",
     "android_external_texture_gl.cc",
     "android_external_texture_gl.h",
+    # BD ADD: START
+    "android_external_image_loader.cc",
+    "android_external_image_loader.h",
+    # END
     "android_native_window.cc",
     "android_native_window.h",
     "android_shell_holder.cc",
@@ -84,6 +88,8 @@ shared_library("flutter_shell_native") {
   }
 
   libs = [
+    # BD ADD:
+    "jnigraphics",
     "android",
     "EGL",
     "GLESv2",
@@ -217,13 +223,22 @@ android_java_sources = [
   "io/flutter/util/Predicate.java",
   "io/flutter/view/AccessibilityBridge.java",
   "io/flutter/view/AccessibilityViewEmbedder.java",
+  "io/flutter/view/CachedTextureView.java",
   "io/flutter/view/FlutterCallbackInformation.java",
   "io/flutter/view/FlutterMain.java",
   "io/flutter/view/FlutterNativeView.java",
   "io/flutter/view/FlutterRunArguments.java",
+  "io/flutter/view/FlutterTextureView.java",
   "io/flutter/view/FlutterView.java",
+  "io/flutter/view/IFlutterView.java",
   "io/flutter/view/TextureRegistry.java",
   "io/flutter/view/VsyncWaiter.java",
+  # BD ADD: START
+  "io/flutter/view/AndroidImageLoader.java",
+  "io/flutter/view/NativeLoadCallback.java",
+  "io/flutter/view/ImageLoaderRegistry.java",
+  "io/flutter/view/ImageLoaderRegistryImpl.java",
+  # END
 ]
 
 android_support_jars = [
@@ -286,7 +301,16 @@ action("flutter_shell_java") {
 action("icudtl_object") {
   script = "$flutter_root/sky/tools/objcopy.py"
 
-  icudtl_input = "//third_party/icu/flutter/icudtl.dat"
+  # BD MOD: START
+  # icudtl_input = "//third_party/icu/flutter/${icu_data_name}"
+  icu_data_name = "icudtl.dat"
+  if (icu_use_lite_data_file) {
+    icu_data_origin_name = icu_data_name
+    icu_data_name = "icudtl_lite.dat"
+  }
+  icudtl_input = "//third_party/icu/flutter/${icu_data_name}"
+  # END
+
   icudtl_output = "$root_build_dir/flutter_icu/icudtl.o"
 
   inputs = [
@@ -307,6 +331,11 @@ action("icudtl_object") {
     "--arch",
     current_cpu,
   ]
+  # BD ADD: START
+  if (icu_use_lite_data_file) {
+    args += ["--input_name", icu_data_origin_name]
+  }
+  # END
 }
 
 action("android_jar") {

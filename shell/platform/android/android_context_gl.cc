@@ -9,9 +9,13 @@
 #include <utility>
 
 #include "flutter/fml/trace_event.h"
+// BD ADD:
+#include <sys/system_properties.h>
 
 namespace flutter {
 
+// BD ADD:
+static int android_sdk_version = INT_MIN;
 template <class T>
 using EGLResult = std::pair<bool, T>;
 
@@ -113,6 +117,29 @@ static bool TeardownSurface(EGLDisplay display, EGLSurface surface) {
   return true;
 }
 
+// BD ADD: START
+bool AndroidContextGL::NeedBindAndUnbindContext() {
+  if (android_sdk_version != INT_MIN) {
+    // API less more than 21 (Android 5.0)
+    return android_sdk_version < 21;
+  }
+
+  char osVersion[PROP_VALUE_MAX];
+  int osVersionLength = __system_property_get("ro.build.version.sdk", osVersion);
+  bool valid = osVersionLength > 0;
+  for (int i = 0; i < osVersionLength; i++) {
+    char c = osVersion[i];
+    if (c > '9' || c < '0') {
+      valid = false;
+      break;
+    }
+  }
+  android_sdk_version = valid ? std::stoi(osVersion) : INT_MAX;
+  // API less more than 21 (Android 5.0)
+  return android_sdk_version < 21;
+}
+// END
+
 // For onscreen rendering.
 bool AndroidContextGL::CreateWindowSurface(
     fml::RefPtr<AndroidNativeWindow> window) {
@@ -187,6 +214,13 @@ AndroidContextGL::AndroidContextGL(fml::RefPtr<AndroidEnvironmentGL> env,
 
   // All done!
   valid_ = true;
+
+  // BD ADD: START
+  if (NeedBindAndUnbindContext()) {
+    MakeCurrent();
+    ClearCurrent();
+  }
+  // END
 }
 
 AndroidContextGL::~AndroidContextGL() {

@@ -118,7 +118,7 @@ public class PlatformViewsChannel {
       }
     }
 
-    private void resize(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+    private void resize(@NonNull MethodCall call, @NonNull final MethodChannel.Result result) {
       Map<String, Object> resizeArgs = call.arguments();
       PlatformViewResizeRequest resizeRequest = new PlatformViewResizeRequest(
           (int) resizeArgs.get("id"),

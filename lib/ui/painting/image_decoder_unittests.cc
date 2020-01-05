@@ -64,6 +64,16 @@ class TestIOManager final : public IOManager {
   }
 
   // |IOManager|
+  bool IsResourceContextValidForDecodeImage() const override {
+    return false;
+  }
+
+  // |IOManager|
+  std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override {
+    return nullptr;
+  }
+
+  // |IOManager|
   std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() override {
     did_access_is_gpu_disabled_sync_switch_ = true;
     return is_gpu_disabled_sync_switch_;

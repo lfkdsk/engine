@@ -7,6 +7,8 @@ package io.flutter.plugin.common;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.view.View;
+
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -14,6 +16,8 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.platform.PlatformViewRegistry;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterView;
+// BD ADD:
+import io.flutter.view.ImageLoaderRegistry;
 import io.flutter.view.TextureRegistry;
 
 /**
@@ -142,6 +146,13 @@ public interface PluginRegistry {
         TextureRegistry textures();
 
         /**
+         * BD ADD:
+         * Returns a {@link ImageLoaderRegistry} which the plugin can use for
+         * managing backend image loaders.
+         */
+        ImageLoaderRegistry imageLoaderRegistry();
+
+        /**
          * Returns the application's {@link PlatformViewRegistry}.
          *
          * Plugins can use the platform registry to register their view factories.
@@ -155,7 +166,7 @@ public interface PluginRegistry {
         PlatformViewRegistry platformViewRegistry();
 
         /**
-         * Returns the {@link FlutterView} that's instantiated by this plugin's
+         * Returns the {@link FlutterView} or {@link FlutterTextureView} that's instantiated by this plugin's
          * {@link #activity() activity}.
          *
          * <p>This registrar is for Flutter's v1 embedding. The {@link FlutterView} referenced by
@@ -167,7 +178,7 @@ public interface PluginRegistry {
          * <p>For instructions on migrating a plugin from Flutter's v1 Android embedding to v2,
          * visit http://flutter.dev/go/android-plugin-migration
          */
-        FlutterView view();
+        View view();
 
 
         /**

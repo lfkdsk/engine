@@ -5,6 +5,7 @@
 package io.flutter.plugin.platform;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -90,7 +91,12 @@ class VirtualDisplayController {
                 viewId,
                 createParams,
                 focusChangeListener);
-        presentation.show();
+        // BD MOD: XieRan
+        // presentation.show();
+        if (context instanceof Activity && !((Activity) context).isFinishing()) {
+          presentation.show();
+        }
+        // END
     }
 
     public void resize(final int width, final int height, final Runnable onNewSizeFrameAvailable) {
@@ -147,13 +153,24 @@ class VirtualDisplayController {
                 presentationState,
                 focusChangeListener,
                 isFocused);
-        presentation.show();
+        // BD MOD: XieRan
+        // presentation.show();
+        if (context instanceof Activity && !((Activity) context).isFinishing()) {
+          presentation.show();
+        }
+        // END
     }
 
     public void dispose() {
         PlatformView view = presentation.getView();
         // Fix rare crash on HuaWei device described in: https://github.com/flutter/engine/pull/9192
-        presentation.cancel();
+        // BD MOD: XieRan
+        // presentation.cancel();
+        // Activity已销毁后调用该方法会抛出异常
+        try {
+            presentation.cancel();
+        } catch (Exception ignore) {}
+        // END
         presentation.detachState();
         view.dispose();
         virtualDisplay.release();
@@ -198,7 +215,13 @@ class VirtualDisplayController {
         if (presentation == null)
             return null;
         PlatformView platformView = presentation.getView();
-        return platformView.getView();
+        // BD MOD: XieRan
+        // return platformView.getView();
+        if (platformView != null) {
+            return platformView.getView();
+        }
+        return null;
+        // return
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)

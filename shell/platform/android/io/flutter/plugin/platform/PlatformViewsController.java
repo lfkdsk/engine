@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+// BD ADD: YuShijia
+import static android.view.View.OnFocusChangeListener;
+
 /**
  * Manages platform views.
  * <p>
@@ -73,7 +76,7 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
     private final PlatformViewsChannel.PlatformViewsHandler channelHandler = new PlatformViewsChannel.PlatformViewsHandler() {
         @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
         @Override
-        public long createPlatformView(@NonNull PlatformViewsChannel.PlatformViewCreationRequest request) {
+        public long createPlatformView(@NonNull final PlatformViewsChannel.PlatformViewCreationRequest request) {
             ensureValidAndroidVersion();
 
             if (!validateDirection(request.direction)) {
@@ -111,9 +114,19 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
                     physicalHeight,
                     request.viewId,
                     createParams,
-                    (view, hasFocus) -> {
-                        if (hasFocus) {
-                            platformViewsChannel.invokeViewFocused(request.viewId);
+//                     BD MOD: YuShijia
+//                     (view, hasFocus) -> {
+//                         if (hasFocus) {
+//                             platformViewsChannel.invokeViewFocused(request.viewId);
+//                         }
+//                     }
+                    new OnFocusChangeListener() {
+                        @Override
+                        public void onFocusChange(View v, boolean hasFocus) {
+                            // TODO Auto-generated method stub
+                            if (hasFocus) {
+                                platformViewsChannel.invokeViewFocused(request.viewId);
+                            }
                         }
                     }
             );
@@ -159,7 +172,7 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
         }
 
         @Override
-        public void resizePlatformView(@NonNull PlatformViewsChannel.PlatformViewResizeRequest request, @NonNull Runnable onComplete) {
+        public void resizePlatformView(@NonNull PlatformViewsChannel.PlatformViewResizeRequest request, @NonNull final Runnable onComplete) {
             ensureValidAndroidVersion();
 
             final VirtualDisplayController vdController = vdControllers.get(request.viewId);
@@ -298,6 +311,9 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
      */
     @UiThread
     public void detach() {
+        // BD MOD: XieRan
+        // 使PlatformView在detach情况下依然可以dispose
+        // platformViewsChannel.setPlatformViewsHandler(null);
         platformViewsChannel.setPlatformViewsHandler(null);
         platformViewsChannel = null;
         context = null;

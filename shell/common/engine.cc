@@ -227,11 +227,13 @@ void Engine::ReportTimings(std::vector<int64_t> timings) {
   runtime_controller_->ReportTimings(std::move(timings));
 }
 
-void Engine::NotifyIdle(int64_t deadline) {
+// BD MOD
+// void Engine::NotifyIdle(int64_t deadline) {
+void Engine::NotifyIdle(int64_t deadline, int type) {
   auto trace_event = std::to_string(deadline - Dart_TimelineGetMicros());
   TRACE_EVENT1("flutter", "Engine::NotifyIdle", "deadline_now_delta",
                trace_event.c_str());
-  runtime_controller_->NotifyIdle(deadline);
+  runtime_controller_->NotifyIdle(deadline, type);
 }
 
 std::pair<bool, uint32_t> Engine::GetUIIsolateReturnCode() {
@@ -433,6 +435,20 @@ void Engine::ScheduleFrame(bool regenerate_layer_tree) {
   animator_->RequestFrame(regenerate_layer_tree);
 }
 
+void Engine::ScheduleBackgroundFrame() {
+  animator_->RequestBackgroundFrame();
+}
+
+// BD ADD: START
+void Engine::ExitApp() {
+  runtime_controller_->ExitApp();
+}
+
+void Engine::NotifyLowMemoryWarning() {
+  runtime_controller_->NotifyLowMemoryWarning();
+}
+// END
+
 void Engine::Render(std::unique_ptr<flutter::LayerTree> layer_tree) {
   if (!layer_tree)
     return;
@@ -458,6 +474,10 @@ void Engine::HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) {
   } else {
     delegate_.OnEngineHandlePlatformMessage(std::move(message));
   }
+}
+
+void Engine::AddNextFrameCallback(fml::closure callback) {
+  delegate_.AddNextFrameCallback(callback);
 }
 
 void Engine::UpdateIsolateDescription(const std::string isolate_name,
@@ -513,5 +533,17 @@ const std::string& Engine::GetLastEntrypoint() const {
 const std::string& Engine::GetLastEntrypointLibrary() const {
   return last_entry_point_library_;
 }
+
+// BD ADD: START
+std::vector<double> Engine::GetFps(int thread_type,
+                                   int fps_type,
+                                   bool do_clear) {
+  return delegate_.GetFps(thread_type, fps_type, do_clear);
+}
+
+int64_t Engine::GetEngineMainEnterMicros() {
+  return Shell::GetEngineMainEnterMicros();
+}
+// END
 
 }  // namespace flutter
