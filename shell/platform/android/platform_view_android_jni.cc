@@ -296,6 +296,10 @@ public:
     }
 
     void onLoadFail(JNIEnv* env, std::string cKey) {
+      auto dartState = static_cast<UIDartState *>(contextPtr);
+      dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([callback = std::move(callback)](){
+        callback(nullptr);
+      });
     }
 private:
     jobject androidImageLoader;
@@ -315,9 +319,11 @@ void CallJavaImageLoader(jobject android_image_loader, const std::string url, co
   auto loadContext = std::make_shared<ImageLoadContext>(callback, contextPtr, env->NewGlobalRef(android_image_loader));
   auto key = url + std::to_string(reinterpret_cast<jlong>(loadContext.get()));
   g_image_load_contexts[key] = loadContext;
-  auto nativeCallback = new fml::jni::ScopedJavaLocalRef<jobject>(env, env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor));
+  auto callObject = env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor);
+  auto nativeCallback = new fml::jni::ScopedJavaLocalRef<jobject>(env, callObject);
   env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(),
                       reinterpret_cast<jint>(width), reinterpret_cast<jint>(height), scale, nativeCallback->obj(), fml::jni::StringToJavaString(env, key).obj());
+  env->DeleteLocalRef(callObject);
 }
 /**
  * BD ADD: called by skia to release pixel resource
@@ -345,6 +351,13 @@ static void DestroyJNI(JNIEnv *env, jobject jcaller, jlong shell_holder) {
     // BD MOD
     // delete ANDROID_SHELL_HOLDER;
     ANDROID_SHELL_HOLDER->ExitApp([holder = ANDROID_SHELL_HOLDER]() { delete holder; });
+}
+
+/**
+ * BD ADD
+ */
+static void NotifyLowMemory(JNIEnv *env, jobject jcaller, jlong shell_holder) {
+    ANDROID_SHELL_HOLDER->NotifyLowMemory();
 }
 
 static void SurfaceCreated(JNIEnv* env,
@@ -735,6 +748,13 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(J)V",
           .fnPtr = reinterpret_cast<void*>(&DestroyJNI),
       },
+      // BD ADD:START
+      {
+          .name = "nativeNotifyLowMemory",
+          .signature = "(J)V",
+          .fnPtr = reinterpret_cast<void*>(&NotifyLowMemory),
+      },
+      // END
       {
           .name = "nativeRunBundleAndSnapshotFromLibrary",
           .signature = "(JLjava/lang/String;Ljava/lang/String;"

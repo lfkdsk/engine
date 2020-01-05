@@ -10,6 +10,10 @@ import android.content.Intent;
 
 import io.flutter.embedding.engine.FlutterEngine;
 import android.view.View;
+// BD ADD: START
+import io.flutter.view.ImageLoaderRegistry;
+import io.flutter.view.ImageLoaderRegistryImpl;
+// END
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.platform.PlatformViewRegistry;
@@ -38,6 +42,8 @@ public class FlutterPluginRegistry
     private FlutterNativeView mNativeView;
     private View mView;
     private IFlutterView mFlutterView;
+    // BD ADD:
+    private ImageLoaderRegistry mImageLoaderRegistry;
 
     private final PlatformViewsController mPlatformViewsController;
     private final Map<String, Object> mPluginMap = new LinkedHashMap<>(0);
@@ -51,6 +57,8 @@ public class FlutterPluginRegistry
         mNativeView = nativeView;
         mAppContext = context;
         mPlatformViewsController = new PlatformViewsController();
+        // BD ADD:
+        mImageLoaderRegistry = new ImageLoaderRegistryImpl(nativeView);
     }
 
     public FlutterPluginRegistry(FlutterEngine engine, Context context) {
@@ -136,6 +144,14 @@ public class FlutterPluginRegistry
         @Override
         public PlatformViewRegistry platformViewRegistry() {
             return mPlatformViewsController.getRegistry();
+        }
+
+        /**
+         * BD ADD:
+         */
+        @Override
+        public ImageLoaderRegistry imageLoaderRegistry() {
+            return mImageLoaderRegistry;
         }
 
         @Override

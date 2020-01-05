@@ -45,6 +45,10 @@ def get_out_dir(args):
 
     if args.enable_vulkan:
         target_dir.append('vulkan')
+    # BD ADD: START
+    if args.enable_lite:
+        target_dir.append('lite')
+    # END
 
     if args.enable_metal:
       target_dir.append('metal')
@@ -91,6 +95,28 @@ def to_gn_args(args):
         raise Exception('Bitcode is only supported for iOS')
 
     gn_args['enable_bitcode'] = args.bitcode
+
+    # BD ADD: START
+    if args.enable_lite:
+        print("enable lite mode.")
+        gn_args['dart_disable_boringssl'] = True
+        gn_args['dart_enable_opt_oz'] = True
+        gn_args['skia_enable_ccpr'] = False
+        gn_args['skialite_disable_pathop_apis'] = True
+        gn_args['skialite_disable_sksl_interpreter_and_codegenerators'] = True
+        # Use crop icudtl.dat
+        gn_args['icu_use_lite_data_file'] = True
+        # Crop harfbuzz, remove support for complex text and apple advanced type.
+        gn_args['hb_disable_arabic'] = True
+        gn_args['hb_disable_hangul'] = True
+        gn_args['hb_disable_hebrew'] = True
+        gn_args['hb_disable_myanmar'] = True
+        gn_args['hb_disable_khmer'] = True
+        gn_args['hb_disable_thai'] = True
+        gn_args['hb_disable_use'] = True
+        gn_args['hb_disable_indic'] = False
+        gn_args['hb_disable_aat'] = True
+    # END
 
     # Skia GN args.
     gn_args['skia_enable_flutter_defines'] = True # Enable Flutter API guards in Skia.
@@ -174,6 +200,10 @@ def to_gn_args(args):
     else:
         # Building host artifacts
         gn_args['target_cpu'] = 'x64'
+        # BD ADD: START
+        gn_args['dart_disable_boringssl'] = False
+        gn_args['dart_enable_opt_oz'] = False
+        # END
 
     # DBC is not supported anymore.
     if args.interpreter:
@@ -332,6 +362,11 @@ def parse_args(args):
 
   parser.add_argument('--bitcode', default=False, action='store_true',
                       help='Enable bitcode for iOS targets.')
+
+  # BD ADD: START
+  parser.add_argument('--lite', dest='enable_lite', action='store_const', const='true',
+                      help='Enable lite mode.')
+  # END
 
   return parser.parse_args(args)
 

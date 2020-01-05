@@ -40,8 +40,9 @@ class RuntimeDelegate {
 
   virtual void SetNeedsReportTimings(bool value) = 0;
 
-  // BD ADD: YuanHuihui
+  // BD ADD: START
   virtual std::vector<double> GetFps(int thread_type, int fps_type, bool do_clear) = 0;
+  virtual int64_t GetEngineMainEnterMicros() = 0;
   // END
 
  protected:

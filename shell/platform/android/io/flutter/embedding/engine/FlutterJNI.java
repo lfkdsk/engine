@@ -613,6 +613,16 @@ public class FlutterJNI {
   //------ Start Texture Registration Support -----
 
   //------ Start Dart Execution Support -------
+
+  // BD ADD:START
+  @UiThread
+  public void notifyLowMemory() {
+    ensureAttachedToNative();
+    nativeNotifyLowMemory(nativePlatformViewId);
+  }
+
+  private native void nativeNotifyLowMemory(long nativePlatformViewId);
+  // END
   /**
    * Executes a Dart entrypoint.
    * <p>

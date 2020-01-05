@@ -1391,6 +1391,40 @@ class Paint {
   }
 
 
+  // BD ADD: START
+  /// The [ImageFilter] to use when drawing raster images.
+  ///
+  /// For example, to blur an image using [Canvas.drawImage], apply an
+  /// [ImageFilter.blur]:
+  ///
+  /// ```dart
+  /// import 'dart:ui' as ui;
+  ///
+  /// ui.Image image;
+  ///
+  /// void paint(Canvas canvas, Size size) {
+  ///   canvas.drawImage(
+  ///     image,
+  ///     Offset.zero,
+  ///     Paint()..imageFilter = ui.ImageFilter.blur(sigmaX: .5, sigmaY: .5),
+  ///   );
+  /// }
+  /// ```
+  ///
+  /// See also:
+  ///
+  ///  * [MaskFilter], which is used for drawing geometry.
+  ImageFilter get imageFilter {
+    if (_objects == null)
+      return null;
+    return _objects[_kImageFilterIndex];
+  }
+  set imageFilter(ImageFilter value) {
+    _objects ??= List<dynamic>(_kObjectCount);
+    _objects[_kImageFilterIndex] = value;
+  }
+  // END
+
   /// Whether the colors of the image are inverted when drawn.
   ///
   /// Inverting the colors of an image applies a new color filter that will
@@ -1459,6 +1493,12 @@ class Paint {
       result.write('${semicolon}imageFilter: $imageFilter');
       semicolon = '; ';
     }
+    // BD ADD: START
+    if (imageFilter != null) {
+      result.write('${semicolon}imageFilter: $imageFilter');
+      semicolon = '; ';
+    }
+    // END
     if (invertColors)
       result.write('${semicolon}invert: $invertColors');
     result.write(')');

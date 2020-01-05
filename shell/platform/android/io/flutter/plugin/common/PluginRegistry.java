@@ -12,6 +12,8 @@ import android.view.View;
 import io.flutter.plugin.platform.PlatformViewRegistry;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterView;
+// BD ADD:
+import io.flutter.view.ImageLoaderRegistry;
 import io.flutter.view.TextureRegistry;
 
 /**
@@ -101,6 +103,13 @@ public interface PluginRegistry {
          * managing backend textures.
          */
         TextureRegistry textures();
+
+        /**
+         * BD ADD:
+         * Returns a {@link ImageLoaderRegistry} which the plugin can use for
+         * managing backend image loaders.
+         */
+        ImageLoaderRegistry imageLoaderRegistry();
 
         /**
          * Returns the application's {@link PlatformViewRegistry}.

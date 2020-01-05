@@ -213,6 +213,12 @@ void _drawFrame() {
 void _exitApp() {
   _invoke(window.exitApp, window._exitAppZone);
 }
+
+@pragma('vm:entry-point')
+// ignore: unused_element
+void _notifyIdle(int microseconds) {
+  _invoke1<Duration>(window.onNotifyIdle, window._onNotifyIdleZone, new Duration(microseconds: microseconds));
+}
 // END
 
 // ignore: always_declare_return_types, prefer_generic_function_type_aliases

@@ -108,16 +108,32 @@
                  name:UIApplicationDidReceiveMemoryWarningNotification
                object:nil];
 
+  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center addObserver:self
+             selector:@selector(onMemoryWarning:)
+                 name:UIApplicationDidReceiveMemoryWarningNotification
+               object:nil];
+
+  [center addObserver:self
+             selector:@selector(applicationBecameActive:)
+                 name:UIApplicationDidBecomeActiveNotification
+               object:nil];
+
+  [center addObserver:self
+             selector:@selector(applicationWillResignActive:)
+                 name:UIApplicationWillResignActiveNotification
+               object:nil];
+
   return self;
 }
 
 - (void)dealloc {
   [_pluginPublications release];
-  _binaryMessenger.parent = nil;
-  [_binaryMessenger release];
+    _binaryMessenger.parent = nil;
+    [_binaryMessenger release];
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
-  [center removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+  [center removeObserver:self];
 
   [super dealloc];
 }
@@ -147,17 +163,38 @@
 
 - (fml::WeakPtr<flutter::PlatformView>)platformView {
   FML_DCHECK(_shell);
-  return _shell->GetPlatformView();
+  // BD MOD: START
+  // return _shell->GetPlatformView();
+  if (_shell != nullptr) {
+    return _shell->GetPlatformView();
+  } else {
+    return fml::WeakPtr<flutter::PlatformView>();
+  }
+  // END
 }
 
 - (flutter::PlatformViewIOS*)iosPlatformView {
   FML_DCHECK(_shell);
-  return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  // BD MOD: START
+  // return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  if (_shell != nullptr) {
+    return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  } else {
+    return nullptr;
+  }
+  // END
 }
 
 - (fml::RefPtr<fml::TaskRunner>)platformTaskRunner {
   FML_DCHECK(_shell);
-  return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  // BD MOD: START
+  // return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  if (_shell != nullptr) {
+    return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  } else {
+    return nullptr;
+  }
+  // END
 }
 
 - (fml::RefPtr<fml::TaskRunner>)GPUTaskRunner {
@@ -166,11 +203,21 @@
 }
 
 - (void)ensureSemanticsEnabled {
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   self.iosPlatformView->SetSemanticsEnabled(true);
 }
 
 - (void)setViewController:(FlutterViewController*)viewController {
   FML_DCHECK(self.iosPlatformView);
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   _viewController = [viewController getWeakPtr];
   self.iosPlatformView->SetOwnerViewController(_viewController);
   [self maybeSetupPlatformViewChannels];
@@ -323,13 +370,25 @@
     [_textInputChannel.get() setMethodCallHandler:^(FlutterMethodCall* call, FlutterResult result) {
       [_textInputPlugin.get() handleMethodCall:call result:result];
     }];
-    self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
+    // BD MOD: START
+    // self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
+    if (self.iosPlatformView != nullptr) {
+      self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
+    }
+    // END
   }
 }
 
 - (flutter::Rasterizer::Screenshot)screenshot:(flutter::Rasterizer::ScreenshotType)type
                                  base64Encode:(bool)base64Encode {
-  return self.shell.Screenshot(type, base64Encode);
+  // BD MOD: START
+  // return self.shell.Screenshot(type, base64Encode);
+  if (_shell != nullptr) {
+    return self.shell.Screenshot(type, base64Encode);
+  } else {
+    return flutter::Rasterizer::Screenshot();
+  }
+  // END
 }
 
 - (void)launchEngine:(NSString*)entrypoint libraryURI:(NSString*)libraryOrNil {
@@ -360,10 +419,6 @@
     settings.advisory_script_uri = std::string("main.dart");
   }
 
-  settings.should_defer_decode_image_when_platform_view_invalid =
-      [[NSUserDefaults standardUserDefaults]
-          boolForKey:@"flutter_defer_decode_image_when_platform_view_invalid"];
-
   const auto threadLabel = [NSString stringWithFormat:@"%@.%zu", _labelPrefix, shellCount++];
   FML_DLOG(INFO) << "Creating threadHost for " << threadLabel.UTF8String;
   // The current thread will be used as the platform thread. Ensure that the message loop is
@@ -386,7 +441,6 @@
       [](flutter::Shell& shell) {
         return std::make_unique<flutter::Rasterizer>(shell, shell.GetTaskRunners());
       };
-
   if (flutter::IsIosEmbeddedViewsPreviewEnabled()) {
     // Embedded views requires the gpu and the platform views to be the same.
     // The plan is to eventually dynamically merge the threads when there's a
@@ -424,8 +478,12 @@
   }
 
   if (_shell == nullptr) {
+    // BD MOD: START
+    // FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
+    //                   << entrypoint.UTF8String;
     FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
-                   << entrypoint.UTF8String;
+                   << (entrypoint != nil ? entrypoint.UTF8String : "");
+    // END
   } else {
     [self setupChannels];
     if (!_platformViewsController) {
@@ -433,6 +491,7 @@
     }
     _publisher.reset([[FlutterObservatoryPublisher alloc] init]);
     [self maybeSetupPlatformViewChannels];
+    _shell->GetIsGpuDisabledSyncSwitch()->SetSwitch(_isGpuDisabled ? true : false);
   }
 
   return _shell != nullptr;
@@ -526,7 +585,14 @@
 - (flutter::Rasterizer::Screenshot)takeScreenshot:(flutter::Rasterizer::ScreenshotType)type
                                   asBase64Encoded:(BOOL)base64Encode {
   FML_DCHECK(_shell) << "Cannot takeScreenshot without a shell";
-  return _shell->Screenshot(type, base64Encode);
+  // BD MOD: START
+  // return _shell->Screenshot(type, base64Encode);
+  if (_shell != nullptr) {
+    return _shell->Screenshot(type, base64Encode);
+  } else {
+    return flutter::Rasterizer::Screenshot();
+  }
+  // END
 }
 
 - (NSObject<FlutterBinaryMessenger>*)binaryMessenger {
@@ -543,6 +609,11 @@
               message:(NSData*)message
           binaryReply:(FlutterBinaryReply)callback {
   NSAssert(channel, @"The channel must not be null");
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   fml::RefPtr<flutter::PlatformMessageResponseDarwin> response =
       (callback == nil) ? nullptr
                         : fml::MakeRefCounted<flutter::PlatformMessageResponseDarwin>(
@@ -562,6 +633,11 @@
               binaryMessageHandler:(FlutterBinaryMessageHandler)handler {
   NSAssert(channel, @"The channel must not be null");
   FML_DCHECK(_shell && _shell->IsSetup());
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   self.iosPlatformView->GetPlatformMessageRouter().SetMessageHandler(channel.UTF8String, handler);
 }
 
@@ -569,15 +645,30 @@
 
 - (int64_t)registerTexture:(NSObject<FlutterTexture>*)texture {
   int64_t textureId = _nextTextureId++;
-  self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  // BD MOD: START
+  // self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  if (self.iosPlatformView != nullptr) {
+    self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  }
+  // END
   return textureId;
 }
 
 - (void)unregisterTexture:(int64_t)textureId {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   _shell->GetPlatformView()->UnregisterTexture(textureId);
 }
 
 - (void)textureFrameAvailable:(int64_t)textureId {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   _shell->GetPlatformView()->MarkTextureFrameAvailable(textureId);
 }
 
@@ -600,7 +691,9 @@
 #pragma mark - FlutterImageLoaderRegistry
 
 - (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
-  self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  if (self.iosPlatformView != nullptr) {
+    self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+  }
 }
 
 #pragma mark - FlutterPluginRegistry
@@ -625,13 +718,38 @@
 }
 // END
 
-#pragma mark - Memory Notifications
+#pragma mark - Notifications
+
+- (void)applicationBecameActive:(NSNotification*)notification {
+  [self setIsGpuDisabled:NO];
+}
+
+- (void)applicationWillResignActive:(NSNotification*)notification {
+  [self setIsGpuDisabled:YES];
+}
 
 - (void)onMemoryWarning:(NSNotification*)notification {
+  // BD MOD: START
+  // if (_shell) {
+  //   _shell->NotifyLowMemoryWarning();
+  // }
+  // [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
+  // 放在回调里面执行_shell->NotifyLowMemoryWarning()是因为method
+  // channel消息的执行在Framework层会进行async/await的操作，用来等待任务执行完成
+  [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}
+                        reply:^(id _Nullable reply) {
+                          if (_shell) {
+                            _shell->NotifyLowMemoryWarning();
+                          }
+                        }];
+  // END
+}
+
+- (void)setIsGpuDisabled:(BOOL)value {
   if (_shell) {
-    _shell->NotifyLowMemoryWarning();
+    _shell->GetIsGpuDisabledSyncSwitch()->SetSwitch(value ? true : false);
   }
-  [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
+  _isGpuDisabled = value;
 }
 
 @end

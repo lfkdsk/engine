@@ -59,12 +59,12 @@ class WindowClient {
   virtual void UpdateIsolateDescription(const std::string isolate_name,
                                         int64_t isolate_port) = 0;
   virtual void SetNeedsReportTimings(bool value) = 0;
-  // BD ADD: QiuXinyue
+  // BD ADD: START
   virtual std::vector<double> GetFps(int thread_type,
                                      int fps_type,
                                      bool do_clear) = 0;
+  virtual int64_t GetEngineMainEnterMicros() = 0;
   // END
-
  protected:
   virtual ~WindowClient();
 };
@@ -100,8 +100,11 @@ class Window final {
 
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
 
-  // BD ADD:
+  // BD ADD: START
+  void NotifyIdle(int64_t microseconds);
+
   void ExitApp();
+  // END
 
  private:
   WindowClient* client_;

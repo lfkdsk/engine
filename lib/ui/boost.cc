@@ -14,7 +14,7 @@ namespace flutter {
 
 static const int64_t kDefaultMaxTime = 60000;
 
-static const int64_t kMaxSkipGCTime = 5000;
+static const int64_t kMaxSkipGCTime = 10000;
 
 Boost::Boost()
     : boost_flags_(0),
@@ -28,7 +28,8 @@ Boost::Boost()
       dart_frame_deadline_(TimePoint::Now()),
       extend_buffer_deadline_(0),
       extend_count_(0),
-      extend_semaphore_(4) {}
+      extend_semaphore_(4),
+      notify_idle_deadline_(0) {}
 
 Boost::~Boost() = default;
 
@@ -41,6 +42,9 @@ void Boost::StartUp(uint16_t flags, int millis) {
   if (flags & Flags::kDisableGC) {
     gc_deadline_ =
         millis < kMaxSkipGCTime ? deadline : (now + kMaxSkipGCTime * 1000);
+#if defined(DART_PERFORMANCE_EXTENSION)
+    Dart_SkipGCFromNow(millis < kMaxSkipGCTime ? millis : kMaxSkipGCTime);
+#endif
   }
   if (flags & Flags::kDisableAA) {
     aa_deadline_ = deadline;
@@ -61,6 +65,9 @@ void Boost::StartUp(uint16_t flags, int millis) {
   }
   if (flags & Flags::kEnableExtendBuffer) {
     extend_buffer_deadline_ = deadline;
+  }
+  if (flags & Flags::kCanNotifyIdle) {
+    notify_idle_deadline_ = deadline;
   }
 
   boost_flags_ |= flags;
@@ -117,6 +124,9 @@ void Boost::CheckFinished() {
       ui_message_athead_deadline_ < current_micros) {
     finish_flags |= kUiMessageAtHead;
   }
+  if (notify_idle_deadline_ > 0 && notify_idle_deadline_ < current_micros) {
+    finish_flags |= kCanNotifyIdle;
+  }
   Finish(finish_flags);
 }
 
@@ -128,6 +138,9 @@ void Boost::Finish(uint16_t flags) {
 
   if (flags & kDisableGC) {
     gc_deadline_ = 0;
+#if defined(DART_PERFORMANCE_EXTENSION)
+    Dart_SkipGCFromNow(0);
+#endif
   }
   if (flags & kDisableAA) {
     aa_deadline_ = 0;
@@ -227,6 +240,10 @@ void Boost::WaitSwapBufferIfNeed() {
   AutoResetWaitableEvent swap_buffer_wait;
   swap_buffer_wait.WaitWithTimeout(
       TimeDelta::FromMilliseconds(next_frame_time));
+}
+
+bool Boost::CanNotifyIdle() {
+  return boost_flags_ & Flags::kCanNotifyIdle;
 }
 
 void Boost::PreloadFontFamilies(const std::vector<std::string>& font_families,

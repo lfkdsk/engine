@@ -76,18 +76,20 @@ import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.editing.TextInputPlugin;
 import io.flutter.plugin.platform.PlatformPlugin;
 import io.flutter.plugin.platform.PlatformViewsController;
-
-// BD ADD: HuWeijie
-import io.flutter.view.AndroidImageLoader;
-import io.flutter.view.AndroidImageLoader.RealImageLoader;
-import io.flutter.view.ImageLoaderRegistry;
+// BD MOD: START
+//
+//import java.lang.ref.WeakReference;
+//import java.nio.ByteBuffer;
+//import java.nio.ByteOrder;
+//import java.util.*;
+//import java.util.concurrent.atomic.AtomicLong;
 // END
 
 /**
  * An Android view containing a Flutter app.
  */
 // BD MOD: add ImageLoaderRegistry
-public class FlutterView extends SurfaceView implements BinaryMessenger, TextureRegistry, IFlutterView, ImageLoaderRegistry {
+public class FlutterView extends SurfaceView implements BinaryMessenger, TextureRegistry, IFlutterView {
     /**
      * Interface for those objects that maintain and expose a reference to a
      * {@code FlutterView} (such as a full-screen Flutter activity).
@@ -193,10 +195,6 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
     private FlutterNativeView mNativeView;
     private boolean mIsSoftwareRenderingEnabled = false; // using the software renderer or not
     private boolean didRenderFirstFrame = false;
-
-    // BD ADD: HuWeijie
-    private AndroidImageLoader mAndroidImageLoader;
-    // END
 
     private final AccessibilityBridge.OnAccessibilityChangeListener onAccessibilityChangeListener = new AccessibilityBridge.OnAccessibilityChangeListener() {
         @Override
@@ -917,45 +915,6 @@ public class FlutterView extends SurfaceView implements BinaryMessenger, Texture
      */
     public interface FirstFrameListener {
         void onFirstFrame();
-    }
-    /**
-     * BD ADD: register android image loader
-     */
-    @Override
-    public void registerImageLoader(RealImageLoader realImageLoader) {
-      ensureAndroidImageLoaderAttached();
-      mAndroidImageLoader.registerImageLoader(realImageLoader);
-    }
-    /**
-     * BD ADD: unregister android image loader
-     */
-    @Override
-    public void unRegisterImageLoader() {
-      enableTransparentBackground();
-      mAndroidImageLoader.unRegisterImageLoader();
-    }
-    /**
-     * BD ADD: initialize android image loader
-     */
-    private void ensureAndroidImageLoaderAttached() {
-      if (mAndroidImageLoader != null) {
-        return;
-      }
-
-      mAndroidImageLoader = new AndroidImageLoader();
-      registerAndroidImageLoader(mAndroidImageLoader);
-    }
-    /**
-     * BD ADD: register android image loader
-     */
-    private void registerAndroidImageLoader(AndroidImageLoader androidImageLoader) {
-        mNativeView.getFlutterJNI().registerAndroidImageLoader(androidImageLoader);
-    }
-    /**
-     * BD ADD: unregister android image loader
-     */
-    private void unRegisterAndroidImageLoader() {
-        mNativeView.getFlutterJNI().unRegisterAndroidImageLoader();
     }
 
     @Override

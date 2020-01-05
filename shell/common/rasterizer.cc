@@ -15,6 +15,8 @@
 #include "third_party/skia/include/core/SkSurface.h"
 #include "third_party/skia/include/core/SkSurfaceCharacterization.h"
 #include "third_party/skia/include/utils/SkBase64.h"
+// BD ADD:
+#include "flutter/common/fps_recorder.h"
 
 namespace flutter {
 
@@ -56,10 +58,16 @@ fml::WeakPtr<Rasterizer> Rasterizer::GetWeakPtr() const {
 
 void Rasterizer::Setup(std::unique_ptr<Surface> surface) {
   surface_ = std::move(surface);
-  if (max_cache_bytes_.has_value()) {
-    SetResourceCacheMaxBytes(max_cache_bytes_.value(),
+  // BD MOD: START
+  // if (max_cache_bytes_.has_value()) {
+  //   SetResourceCacheMaxBytes(max_cache_bytes_.value(),
+  //                            user_override_resource_cache_bytes_);
+  // }
+  if (max_cache_bytes_ > 0) {
+    SetResourceCacheMaxBytes(max_cache_bytes_,
                              user_override_resource_cache_bytes_);
   }
+  // END
   compositor_context_->OnGrContextCreated();
   if (surface_->GetExternalViewEmbedder()) {
     const auto platform_id =
@@ -222,6 +230,11 @@ RasterStatus Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
   // construction took. Fortunately, the layer tree does. Grab that time
   // for instrumentation.
   compositor_context_->ui_time().SetLapTime(layer_tree.build_time());
+  // BD ADD: START
+  fml::TimeDelta construction_time = layer_tree.build_time();
+  int miss_count = (int) (construction_time.ToMillisecondsF() / flutter::kOneFrameMS);
+  FpsRecorder::Current()->AddFrameCount(max(0, miss_count - 1), construction_time);
+  // END
 
   auto* external_view_embedder = surface_->GetExternalViewEmbedder();
 
@@ -432,7 +445,8 @@ void Rasterizer::AddNextFrameCallback(fml::closure callback) {
 
 void Rasterizer::FireNextFrameCallbackIfPresent() {
   if (!next_frame_callbacks_.empty()) {
-    for(auto it = next_frame_callbacks_.begin(); it != next_frame_callbacks_.end(); ++it) {
+    for (auto it = next_frame_callbacks_.begin();
+         it != next_frame_callbacks_.end(); ++it) {
       task_runners_.GetUITaskRunner()->PostTask(*it);
     }
     next_frame_callbacks_.clear();
@@ -467,6 +481,20 @@ void Rasterizer::SetResourceCacheMaxBytes(size_t max_bytes, bool from_user) {
     context->setResourceCacheLimits(max_resources, max_bytes);
   }
 }
+// BD DEL: START
+// std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
+//  if (!surface_) {
+//    return std::nullopt;
+//  }
+//  GrContext* context = surface_->GetContext();
+//  if (context) {
+//    size_t max_bytes;
+//    context->getResourceCacheLimits(nullptr, &max_bytes);
+//    return max_bytes;
+//  }
+//  return std::nullopt;
+// }
+// END
 
 std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
   if (!surface_) {

@@ -7,6 +7,8 @@
 #include <sstream>
 
 #include "flutter/assets/directory_asset_bundle.h"
+// BD ADD:
+#include "flutter/assets/zip_asset_store.h"
 #include "flutter/fml/file.h"
 #include "flutter/fml/unique_fd.h"
 #include "flutter/runtime/dart_vm.h"
@@ -22,10 +24,16 @@ RunConfiguration RunConfiguration::InferFromSettings(
     asset_manager->PushBack(std::make_unique<DirectoryAssetBundle>(
         fml::Duplicate(settings.assets_dir)));
   }
-
-  asset_manager->PushBack(
-      std::make_unique<DirectoryAssetBundle>(fml::OpenDirectory(
-          settings.assets_path.c_str(), false, fml::FilePermission::kRead)));
+  // BD MOD: START
+  if (!settings.zip_assets_file_path.empty()) {
+      asset_manager->PushBack(std::make_unique<ZipAssetStore>(
+              settings.zip_assets_file_path, settings.zip_assets_directory));
+  } else {
+      asset_manager->PushBack(
+              std::make_unique<DirectoryAssetBundle>(fml::OpenDirectory(
+                      settings.assets_path.c_str(), false, fml::FilePermission::kRead)));
+  }
+  // END
 
   return {IsolateConfiguration::InferFromSettings(settings, asset_manager,
                                                   io_worker),

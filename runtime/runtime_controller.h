@@ -60,8 +60,10 @@ class RuntimeController final : public WindowClient {
   bool BeginFrame(fml::TimePoint frame_time);
 
   bool ReportTimings(std::vector<int64_t> timings);
+// BD MOD:
+// bool NotifyIdle(int64_t deadline);
+    bool NotifyIdle(int64_t deadline, int type);
 
-  bool NotifyIdle(int64_t deadline);
 
   bool IsRootIsolateRunning() const;
 
@@ -85,8 +87,10 @@ class RuntimeController final : public WindowClient {
 
   std::pair<bool, uint32_t> GetRootIsolateReturnCode();
 
-  // BD ADD:
+  // BD ADD: START
   void ExitApp();
+  void NotifyLowMemoryWarning();
+  // END
 
  private:
   struct Locale {
@@ -188,10 +192,12 @@ class RuntimeController final : public WindowClient {
   // |WindowClient|
   void SetNeedsReportTimings(bool value) override;
 
-  // BD ADD: YuanHuihui
+  // BD ADD: START
   std::vector<double> GetFps(int thread_type,
                              int fps_type,
                              bool do_clear) override;
+  int64_t GetEngineMainEnterMicros() override;
+  // END
 
   FML_DISALLOW_COPY_AND_ASSIGN(RuntimeController);
 };

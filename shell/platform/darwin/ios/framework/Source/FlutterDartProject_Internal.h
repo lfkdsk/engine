@@ -20,6 +20,9 @@
 
 + (NSString*)flutterAssetsName:(NSBundle*)bundle;
 
+// BD ADD:
++ (NSString*)flutterAssetsPath;
+
 @end
 
 #endif  // SHELL_PLATFORM_IOS_FRAMEWORK_SOURCE_FLUTTERDARTPROJECT_INTERNAL_H_

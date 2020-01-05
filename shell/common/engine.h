@@ -470,7 +470,9 @@ class Engine final : public RuntimeDelegate {
   ///                       against the system monotonic clock. Use
   ///                       `Dart_TimelineGetMicros()`, for consistency.
   ///
-  void NotifyIdle(int64_t deadline);
+// BD MOD:
+//  void NotifyIdle(int64_t deadline);
+    void NotifyIdle(int64_t deadline, int type);
 
   //----------------------------------------------------------------------------
   /// @brief      Dart code cannot fully measure the time it takes for a
@@ -711,8 +713,10 @@ class Engine final : public RuntimeDelegate {
   FontCollection& GetFontCollection() override;
   void ScheduleBackgroundFrame();
 
-  // BD ADD:
+  // BD ADD: START
   void ExitApp();
+  void NotifyLowMemoryWarning();
+  // END
 
  private:
   Engine::Delegate& delegate_;
@@ -770,11 +774,13 @@ class Engine final : public RuntimeDelegate {
 
   friend class testing::ShellTest;
 
-  // BD ADD: YuanHuihui
+  // BD ADD: Start
   std::vector<double> GetFps(int thread_type,
                              int fps_type,
                              bool do_clear) override;
+  int64_t GetEngineMainEnterMicros() override;
   // END
+
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

@@ -25,8 +25,8 @@ class ShellIOManager final : public IOManager {
       sk_sp<const GrGLInterface> gl_interface);
 
   ShellIOManager(sk_sp<GrContext> resource_context,
-                 fml::RefPtr<fml::TaskRunner> unref_queue_task_runner,
-                 bool should_defer_decode_image_when_platform_view_invalid);
+                 std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch,
+                 fml::RefPtr<fml::TaskRunner> unref_queue_task_runner);
 
   ~ShellIOManager() override;
 
@@ -52,18 +52,15 @@ class ShellIOManager final : public IOManager {
   // |IOManager|
   fml::RefPtr<flutter::SkiaUnrefQueue> GetSkiaUnrefQueue() const override;
 
-  // BD ADD: QiuXinyue
-  void UpdatePlatformViewValid(bool valid);
-  bool IsResourceContextValidForDecodeImage() const override;
-  // END
-
   // BD ADD: LinYiyi
   void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
-  // END
-
-  // BD ADD: LinYiyi
+  
+  // BD ADD:
   std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override;
   // END
+
+  // |IOManager|
+  std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() override;
 
  private:
   // Resource context management.
@@ -82,10 +79,9 @@ class ShellIOManager final : public IOManager {
    */
   std::shared_ptr<flutter::ImageLoader> imageLoader_;
 
-  FML_DISALLOW_COPY_AND_ASSIGN(ShellIOManager);
+  std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch_;
 
-  bool is_platform_view_valid_ = false;
-  bool should_defer_decode_image_when_platform_view_invalid_ = false;
+  FML_DISALLOW_COPY_AND_ASSIGN(ShellIOManager);
 };
 
 }  // namespace flutter

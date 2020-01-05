@@ -257,21 +257,22 @@ void Codec::dispose() {
  * BD ADD:
  *
  */
-static void InvokeGetNativeImageCallback(fml::RefPtr<CanvasImage> image,
-                                         std::unique_ptr<DartPersistentValue> callback,
-                                         size_t trace_id) {
-    std::shared_ptr<tonic::DartState> dart_state = callback->dart_state().lock();
-    if (!dart_state) {
-        TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
-        return;
-    }
-    tonic::DartState::Scope scope(dart_state);
-    if (!image) {
-        DartInvoke(callback->value(), {Dart_Null()});
-    } else {
-        DartInvoke(callback->value(), {ToDart(image)});
-    }
+static void InvokeGetNativeImageCallback(
+    fml::RefPtr<CanvasImage> image,
+    std::unique_ptr<DartPersistentValue> callback,
+    size_t trace_id) {
+  std::shared_ptr<tonic::DartState> dart_state = callback->dart_state().lock();
+  if (!dart_state) {
     TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
+    return;
+  }
+  tonic::DartState::Scope scope(dart_state);
+  if (!image) {
+    DartInvoke(callback->value(), {Dart_Null()});
+  } else {
+    DartInvoke(callback->value(), {ToDart(image)});
+  }
+  TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
 }
 
 /**
@@ -291,7 +292,8 @@ void GetNativeImage(Dart_NativeArguments args) {
   }
 
   Dart_Handle exception = nullptr;
-  const std::string url = tonic::DartConverter<std::string>::FromArguments(args, 0, exception);
+  const std::string url =
+      tonic::DartConverter<std::string>::FromArguments(args, 0, exception);
   if (exception) {
     TRACE_FLOW_END("flutter", kGetNativeImageTraceTag, trace_id);
     Dart_SetReturnValue(args, exception);
@@ -306,23 +308,30 @@ void GetNativeImage(Dart_NativeArguments args) {
 
   const auto& task_runners = dart_state->GetTaskRunners();
   fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
-  std::shared_ptr<flutter::ImageLoader> imageLoader = io_manager.get()->GetImageLoader();
-  imageLoader->Load(url, width, height, scale, dart_state, fml::MakeCopyable(
-      [context = dart_state->GetResourceContext(),
-       ui_task_runner = task_runners.GetUITaskRunner(),
-       io_task_runner = task_runners.GetIOTaskRunner(),
-       queue = UIDartState::Current()->GetSkiaUnrefQueue(),
-       callback = std::make_unique<DartPersistentValue>(tonic::DartState::Current(), callback_handle),
-       trace_id](sk_sp<SkImage> skimage) mutable {
-         auto image = CanvasImage::Create();
-         image->set_image({skimage, queue});
-
-         ui_task_runner->PostTask(fml::MakeCopyable(
-             [callback = std::move(callback),
-              image = std::move(image),
-              trace_id]() mutable {
-                InvokeGetNativeImageCallback(image, std::move(callback), trace_id);
-             }));
+  std::shared_ptr<flutter::ImageLoader> imageLoader =
+      io_manager.get()->GetImageLoader();
+  imageLoader->Load(
+      url, width, height, scale, dart_state,
+      fml::MakeCopyable([context = dart_state->GetResourceContext(),
+                         ui_task_runner = task_runners.GetUITaskRunner(),
+                         io_task_runner = task_runners.GetIOTaskRunner(),
+                         queue = UIDartState::Current()->GetSkiaUnrefQueue(),
+                         callback = std::make_unique<DartPersistentValue>(
+                             tonic::DartState::Current(), callback_handle),
+                         trace_id](sk_sp<SkImage> skimage) mutable {
+        fml::RefPtr<CanvasImage> image;
+        if (skimage) {
+          image = CanvasImage::Create();
+          image->set_image({skimage, queue});
+        } else {
+          image = nullptr;
+        }
+        ui_task_runner->PostTask(
+            fml::MakeCopyable([callback = std::move(callback),
+                               image = std::move(image), trace_id]() mutable {
+              InvokeGetNativeImageCallback(image, std::move(callback),
+                                           trace_id);
+            }));
       }));
 }
 // END
