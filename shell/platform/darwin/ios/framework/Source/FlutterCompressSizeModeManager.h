@@ -30,14 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedInstance;
 
 /**
- * 设置App.framework的mach_header和UUID
- *
- * @param mh App.framework的mach_header
- * @param appUUIDString App.framework的UUID
- */
-- (void)configAppMH:(flutter_mach_header*)mh appUUIDString:(NSString*)appUUIDString;
-
-/**
  * 解压数据到磁盘
  *
  * @param error 解压失败原因

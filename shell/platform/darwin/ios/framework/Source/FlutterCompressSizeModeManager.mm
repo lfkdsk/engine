@@ -55,10 +55,7 @@ static NSString* const kIsolateDataFileName = @"isolate_snapshot_data";
 static NSString* const kIcudtlDataFileName = @"icudtl.dat";
 static NSString* const kAssetsFlagFileName = @"flutter_assets_flag";
 static NSString* const kIcudtlFlagFileName = @"flutter_icudtl_flag";
-
-static NSString* kFlutterAssets;
-static NSString* kZipIcudtlFilePath;
-static NSString* kZipAssetsFilePath;
+static const struct mach_header* kMachHeader = nullptr;
 
 #pragma mark - MachHeader
 
@@ -110,23 +107,12 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   if (isolateDataSection == NULL && vmDataSection == NULL) {
     return;
   }
-  const uint8_t* uuidPtr = ImageUUID(mh);
-  NSString* uuidString = nil;
-  if (uuidPtr != NULL) {
-    NSUUID* uuid = [[[NSUUID alloc] initWithUUIDBytes:uuidPtr] autorelease];
-    uuidString = [uuid UUIDString];
-  }
-  if (uuidString.length == 0) {
-    uuidString = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]];
-  }
 
-  [[FlutterCompressSizeModeManager sharedInstance] configAppMH:(flutter_mach_header*)mh
-                                                 appUUIDString:uuidString];
+  kMachHeader = mh;
 }
 
 @interface FlutterCompressSizeModeManager ()
 
-@property(nonatomic) flutter_mach_header* appMachHeader;
 @property(nonatomic) NSString* appUUIDString;
 @property(nonatomic) NSString* cacheDirectoryForDecompressedData;
 @property(nonatomic) NSString* cacheDirectoryForCurrentUUID;
@@ -136,6 +122,9 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 @property(nonatomic) NSString* assetsPath;
 @property(nonatomic) NSString* assetsFlagPath;
 @property(nonatomic) NSString* icudtlFlagPath;
+@property(nonatomic) NSString* flutterAssets;
+@property(nonatomic) NSString* zipIcudtlFilePath;
+@property(nonatomic) NSString* zipAssetsFilePath;
 
 @end
 
@@ -147,13 +136,6 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 }
 
 + (void)initialize {
-  kFlutterAssets = [[FlutterDartProject flutterAssetsPath] copy];
-  kZipIcudtlFilePath = [[[[NSBundle mainBundle] pathForResource:@"Frameworks/App.framework"
-                                                         ofType:@""]
-      stringByAppendingPathComponent:@"flutter_compress_icudtl.zip"] copy];
-  kZipAssetsFilePath = [[[[NSBundle mainBundle] pathForResource:@"Frameworks/App.framework"
-                                                         ofType:@""]
-      stringByAppendingPathComponent:@"flutter_compress_assets.zip"] copy];
   _dyld_register_func_for_add_image(&ImageAdded);
 }
 
@@ -176,6 +158,9 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   [_assetsPath release];
   [_assetsFlagPath release];
   [_icudtlFlagPath release];
+  [_flutterAssets release];
+  [_zipIcudtlFilePath release];
+  [_zipAssetsFilePath release];
   pthread_mutex_destroy(&_mutexLock);
   dispatch_release(_serialDecompressQueue);
   [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -190,7 +175,6 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     NSString* path = [paths objectAtIndex:0];
     self.cacheDirectoryForDecompressedData =
         [[path stringByAppendingPathComponent:kDecompressedDataCacheDirectory] copy];
-    self.isCompressSizeMode = NO;
 
     NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
     [center addObserver:self
@@ -207,19 +191,40 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
     _serialDecompressQueue =
         dispatch_queue_create("com.bytedance.flutter.decompress", DISPATCH_QUEUE_SERIAL);
+
+    if (kMachHeader != nullptr) {
+      self.isCompressSizeMode = YES;
+      const uint8_t* uuidPtr = ImageUUID(kMachHeader);
+      NSString* uuidString = nil;
+      if (uuidPtr != NULL) {
+        NSUUID* uuid = [[[NSUUID alloc] initWithUUIDBytes:uuidPtr] autorelease];
+        uuidString = [uuid UUIDString];
+      }
+      if (uuidString.length == 0) {
+        uuidString = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]];
+      }
+      [self updateConfig:uuidString];
+    } else {
+      self.isCompressSizeMode = NO;
+    }
   }
 
   return self;
 }
 
-- (void)configAppMH:(flutter_mach_header*)mh appUUIDString:(NSString*)appUUIDString {
-  self.appMachHeader = mh;
+- (void)updateConfig:(NSString*)appUUIDString {
   self.appUUIDString = [appUUIDString copy];
-  self.isCompressSizeMode = YES;
+
+  self.flutterAssets = [[FlutterDartProject flutterAssetsPath] copy];
+  self.zipIcudtlFilePath = [[[[NSBundle mainBundle] pathForResource:@"Frameworks/App.framework"
+                                                             ofType:@""]
+      stringByAppendingPathComponent:@"flutter_compress_icudtl.zip"] copy];
+  self.zipAssetsFilePath = [[[[NSBundle mainBundle] pathForResource:@"Frameworks/App.framework"
+                                                             ofType:@""]
+      stringByAppendingPathComponent:@"flutter_compress_assets.zip"] copy];
 
   self.cacheDirectoryForCurrentUUID = [[self.cacheDirectoryForDecompressedData
       stringByAppendingPathComponent:self.appUUIDString] copy];
-
   self.vmDataPath =
       [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kVMDataFileName] copy];
   self.isolateDataPath = [[self.cacheDirectoryForCurrentUUID
@@ -227,7 +232,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   self.icudtlDataPath =
       [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kIcudtlDataFileName] copy];
   self.assetsPath =
-      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kFlutterAssets] copy];
+      [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:self.flutterAssets] copy];
   self.assetsFlagPath =
       [[self.cacheDirectoryForCurrentUUID stringByAppendingPathComponent:kAssetsFlagFileName] copy];
   self.icudtlFlagPath =
@@ -376,7 +381,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 }
 
 - (BOOL)decompressIcudtlData:(NSError**)error {
-  BOOL succeeded = [FlutterZipArchive unzipFileAtPath:kZipIcudtlFilePath
+  BOOL succeeded = [FlutterZipArchive unzipFileAtPath:self.zipIcudtlFilePath
                                         toDestination:self.cacheDirectoryForCurrentUUID
                                             overwrite:YES
                                              password:nil
@@ -403,7 +408,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 }
 
 - (BOOL)decompressAssetsData:(NSError**)error {
-  BOOL succeeded = [FlutterZipArchive unzipFileAtPath:kZipAssetsFilePath
+  BOOL succeeded = [FlutterZipArchive unzipFileAtPath:self.zipAssetsFilePath
                                         toDestination:self.cacheDirectoryForCurrentUUID
                                             overwrite:YES
                                              password:nil
@@ -443,7 +448,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   if (!_vmData.get()) {
     unsigned long size = 0;
     uint8_t* sectionData =
-        getsectiondata(self.appMachHeader, kSegmentName, kVMDataSectionName, &size);
+        getsectiondata((flutter_mach_header*)kMachHeader, kSegmentName, kVMDataSectionName, &size);
     NSData* zippedData = [[[NSData alloc] initWithBytes:sectionData length:size] autorelease];
     _vmData.reset([[zippedData flutter_gunzippedData] retain]);
   }
@@ -455,8 +460,8 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   FlutterCompressSizeModeManagerLock(self->_mutexLock);
   if (!_isolateData.get()) {
     unsigned long size = 0;
-    uint8_t* sectionData =
-        getsectiondata(self.appMachHeader, kSegmentName, kIsolateDataSectionName, &size);
+    uint8_t* sectionData = getsectiondata((flutter_mach_header*)kMachHeader, kSegmentName,
+                                          kIsolateDataSectionName, &size);
     NSData* zippedData = [[[NSData alloc] initWithBytes:sectionData length:size] autorelease];
     _isolateData.reset([[zippedData flutter_gunzippedData] retain]);
   }
@@ -517,8 +522,8 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     if ([self isAssetsDecompressedFileValid] && self.assetsPath.length > 0) {
       settings.assets_path = self.assetsPath.UTF8String;
     } else {
-      settings.zip_assets_file_path = kZipAssetsFilePath.UTF8String;
-      settings.zip_assets_directory = kFlutterAssets.UTF8String;
+      settings.zip_assets_file_path = self.zipAssetsFilePath.UTF8String;
+      settings.zip_assets_directory = self.flutterAssets.UTF8String;
     }
   }
 }
@@ -572,8 +577,9 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
           std::initializer_list<fml::FileMapping::Protection>{fml::FileMapping::Protection::kRead});
     };
   } else {
-    return []() {
-      flutter::ZipAssetStore zipAssetStore(kZipIcudtlFilePath.UTF8String, "");
+    return [scoped_manager =
+                fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
+      flutter::ZipAssetStore zipAssetStore(scoped_manager.get().zipIcudtlFilePath.UTF8String, "");
       return zipAssetStore.GetAsMapping(kIcudtlDataFileName.UTF8String);
     };
   }
