@@ -55,6 +55,10 @@ for liteMode in ${liteModes[@]}; do
 		real_mode=${mode%_dynamicart}
 		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
 		then
+            # dynamicart与lite互斥
+            if [ "$liteMode" != 'normal' ]; then
+                continue
+            fi
 		   iOSArmV7Dir=out/ios_${real_mode}_arm_dynamicart
 		fi
 		iOSSimDir=out/ios_debug_sim

@@ -109,6 +109,10 @@ for liteMode in ${liteModes[@]}; do
 
             # dynamicart只打release
             if [ $dynamic = 'dynamicart' ]; then
+                # dynamicart与lite互斥
+                if [ "$liteMode" != 'normal' ]; then
+                    continue
+                fi
                 if [ $mode = 'release' -o $mode = 'profile' ]; then
                     ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamicart $liteModeComdSuffix
                     androidDir=out/android_${mode}${platformPostFix}_dynamicart
