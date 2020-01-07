@@ -1126,6 +1126,9 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
         if (!accessibilityManager.isTouchExplorationEnabled()) {
             return false;
         }
+        if (flutterSemanticsTree.isEmpty()) {
+            return false;
+        }
 
         SemanticsNode semanticsNodeUnderCursor = getRootSemanticsNode().hitTest(new float[] {event.getX(), event.getY(), 0, 1});
         if (semanticsNodeUnderCursor.platformViewId != -1) {
