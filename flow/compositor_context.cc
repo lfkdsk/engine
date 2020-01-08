@@ -65,7 +65,7 @@ CompositorContext::ScopedFrame::ScopedFrame(
 CompositorContext::ScopedFrame::~ScopedFrame() {
   context_.EndFrame(*this, instrumentation_enabled_);
   // BD ADD:
-  FpsRecorder::Current()->AddDrawCount(context_.frame_time_.LastLap());
+  FpsRecorder::Current()->AddDrawCount(context_.raster_time_.LastLap());
 }
 
 RasterStatus CompositorContext::ScopedFrame::Raster(

@@ -1543,7 +1543,7 @@ void Shell::ExitApp(fml::closure closure) {
           [this, ui_task_runner = task_runners_.GetUITaskRunner(),
            platform_task_runner = task_runners_.GetPlatformTaskRunner(),
            closure = std::move(closure)]() {
-            auto engine = GetWeakEngine();
+            auto engine = engine_->GetWeakPtr();
             if (engine) {
               engine->ExitApp();
             }

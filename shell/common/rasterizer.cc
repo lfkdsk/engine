@@ -289,7 +289,7 @@ RasterStatus Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
   compositor_context_->ui_time().SetLapTime(layer_tree.build_time());
   // BD ADD: START
   fml::TimeDelta construction_time = layer_tree.build_time();
-  int miss_count = (int) (construction_time.ToMillisecondsF() / flutter::kOneFrameMS);
+  int miss_count = (int) (construction_time.ToMillisecondsF() / delegate_.GetFrameBudget().count());
   FpsRecorder::Current()->AddFrameCount(max(0, miss_count - 1), construction_time);
   // END
 
@@ -542,20 +542,6 @@ void Rasterizer::SetResourceCacheMaxBytes(size_t max_bytes, bool from_user) {
     context->setResourceCacheLimits(max_resources, max_bytes);
   }
 }
-// BD DEL: START
-// std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
-//  if (!surface_) {
-//    return std::nullopt;
-//  }
-//  GrContext* context = surface_->GetContext();
-//  if (context) {
-//    size_t max_bytes;
-//    context->getResourceCacheLimits(nullptr, &max_bytes);
-//    return max_bytes;
-//  }
-//  return std::nullopt;
-// }
-// END
 
 std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
   if (!surface_) {

@@ -80,6 +80,7 @@ int Stopwatch::GetMaxSamples() {
 
 std::vector<double> Stopwatch::GetFps(int type) const {
   double fps = 0;
+  const double one_frame_ms = frame_budget_.count();
   std::vector<double> result;
   if (type == kAvgFpsType) {
     int drop_count = 0;
@@ -91,7 +92,7 @@ std::vector<double> Stopwatch::GetFps(int type) const {
       if (frame_time_ms > 0) {
         totalTime += frame_time_ms;
         frame_count++;
-        if (frame_time_ms > kOneFrameMS) {
+        if (frame_time_ms > one_frame_ms) {
           drop_count += (int)UnitFrameInterval(frame_time_ms);
         }
       }
@@ -106,8 +107,8 @@ std::vector<double> Stopwatch::GetFps(int type) const {
 
   } else if (type == kWorstFpsType) {
     double max_frame_ms = Stopwatch::MaxDelta().ToMillisecondsF();
-    if (max_frame_ms < kOneFrameMS) {
-      fps = 1e3 / kOneFrameMS;
+    if (max_frame_ms < one_frame_ms) {
+      fps = 1e3 / one_frame_ms;
     } else {
       fps = 1e3 / max_frame_ms;
     }
