@@ -214,7 +214,7 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
 
         dartExecutor = mNativeView.getDartExecutor();
         flutterRenderer = new FlutterRenderer(mNativeView.getFlutterJNI());
-        mIsSoftwareRenderingEnabled = FlutterJNI.nativeGetIsSoftwareRenderingEnabled();
+        mIsSoftwareRenderingEnabled = mNativeView.getFlutterJNI().nativeGetIsSoftwareRenderingEnabled();
         mMetrics = new ViewportMetrics();
         mMetrics.devicePixelRatio = context.getResources().getDisplayMetrics().density;
         setFocusable(true);
@@ -788,31 +788,6 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
                 mMetrics.systemGestureInsetBottom,
                 mMetrics.systemGestureInsetLeft
         );
-    }
-
-    // Called by native to update the semantics/accessibility tree.
-    @Override
-    public void updateSemantics(ByteBuffer buffer, String[] strings) {
-        try {
-            if (mAccessibilityNodeProvider != null) {
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-                mAccessibilityNodeProvider.updateSemantics(buffer, strings);
-            }
-        } catch (Exception ex) {
-            Log.e(TAG, "Uncaught exception while updating semantics", ex);
-        }
-    }
-
-    @Override
-    public void updateCustomAccessibilityActions(ByteBuffer buffer, String[] strings) {
-        try {
-            if (mAccessibilityNodeProvider != null) {
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-                mAccessibilityNodeProvider.updateCustomAccessibilityActions(buffer, strings);
-            }
-        } catch (Exception ex) {
-            Log.e(TAG, "Uncaught exception while updating local context actions", ex);
-        }
     }
 
     // Called by FlutterNativeView to notify first Flutter frame rendered.

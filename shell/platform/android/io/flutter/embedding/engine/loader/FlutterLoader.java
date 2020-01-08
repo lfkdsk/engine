@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,13 +18,15 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.WindowManager;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import io.flutter.BuildConfig;
 import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.util.PathUtils;
 import io.flutter.view.VsyncWaiter;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * Finds Flutter resources in an application APK and also loads Flutter's native library.
@@ -85,6 +88,52 @@ public class FlutterLoader {
     @Nullable
     private Settings settings;
 
+    // BD ADD START:
+    public interface SoLoader {
+        void loadLibrary(Context context, String libraryName);
+    }
+
+    private InitTask sInitTask;
+
+    private class InitTask extends AsyncTask<Void, Void, Void> {
+        private final Context context;
+
+        public InitTask(Context applicationContext) {
+            this.context = applicationContext;
+        }
+
+        @Override
+        protected Void doInBackground(Void... unused) {
+            try {
+                long initStartTimestampMillis = SystemClock.uptimeMillis();
+                initConfig(context);
+                initResources(context);
+
+                if (settings.getSoLoader() != null) {
+                    settings.getSoLoader().loadLibrary(context, "flutter");
+                } else {
+                    System.loadLibrary("flutter");
+                }
+
+                VsyncWaiter
+                        .getInstance((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
+                        .init();
+
+                // We record the initialization time using SystemClock because at the start of the
+                // initialization we have not yet loaded the native library to call into dart_tools_api.h.
+                // To get Timeline timestamp of the start of initialization we simply subtract the delta
+                // from the Timeline timestamp at the current moment (the assumption is that the overhead
+                // of the JNI call is negligible).
+                long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
+                FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
+            } catch (Exception e){
+                throw new RuntimeException("InitTask failed.", e);
+            }
+            return null;
+        }
+    }
+    // END
+
     /**
      * Starts initialization of the native system.
      * @param applicationContext The Android application context.
@@ -115,23 +164,15 @@ public class FlutterLoader {
 
         this.settings = settings;
 
-        long initStartTimestampMillis = SystemClock.uptimeMillis();
-        initConfig(applicationContext);
-        initResources(applicationContext);
+        sInitTask = new InitTask(applicationContext);
+        sInitTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-        System.loadLibrary("flutter");
-
-        VsyncWaiter
-            .getInstance((WindowManager) applicationContext.getSystemService(Context.WINDOW_SERVICE))
-            .init();
-
-        // We record the initialization time using SystemClock because at the start of the
-        // initialization we have not yet loaded the native library to call into dart_tools_api.h.
-        // To get Timeline timestamp of the start of initialization we simply subtract the delta
-        // from the Timeline timestamp at the current moment (the assumption is that the overhead
-        // of the JNI call is negligible).
-        long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
-        FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new ResourceCleaner(applicationContext).start();
+            }
+        }, 5000L);
     }
 
     /**
@@ -149,19 +190,27 @@ public class FlutterLoader {
         if (Looper.myLooper() != Looper.getMainLooper()) {
           throw new IllegalStateException("ensureInitializationComplete must be called on the main thread");
         }
-        if (settings == null) {
+        if (settings == null || sInitTask == null) {
           throw new IllegalStateException("ensureInitializationComplete must be called after startInitialization");
         }
         try {
+            // BD ADD:
+            sInitTask.get();
             if (resourceExtractor != null) {
                 resourceExtractor.waitForCompletion();
             }
 
             List<String> shellArgs = new ArrayList<>();
             shellArgs.add("--icu-symbol-prefix=_binary_icudtl_dat");
+            String nativeLibraryDir = settings.getNativeLibraryDir();
+            if (nativeLibraryDir == null) {
+                ApplicationInfo applicationInfo = applicationContext.getPackageManager().getApplicationInfo(
+                        applicationContext.getPackageName(), PackageManager.GET_META_DATA);
+                nativeLibraryDir = applicationInfo.nativeLibraryDir;
+            }
 
             ApplicationInfo applicationInfo = getApplicationInfo(applicationContext);
-            shellArgs.add("--icu-native-lib-path=" + applicationInfo.nativeLibraryDir + File.separator + DEFAULT_LIBRARY);
+            shellArgs.add("--icu-native-lib-path=" + nativeLibraryDir + File.separator + DEFAULT_LIBRARY);
 
             if (args != null) {
                 Collections.addAll(shellArgs, args);
@@ -180,13 +229,18 @@ public class FlutterLoader {
                 // Most devices can load the AOT shared library based on the library name
                 // with no directory path.  Provide a fully qualified path to the library
                 // as a workaround for devices where that fails.
-                shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + applicationInfo.nativeLibraryDir + File.separator + aotSharedLibraryName);
+                shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + nativeLibraryDir + File.separator + aotSharedLibraryName);
             }
 
             shellArgs.add("--cache-dir-path=" + PathUtils.getCacheDirectory(applicationContext));
             if (settings.getLogTag() != null) {
                 shellArgs.add("--log-tag=" + settings.getLogTag());
             }
+            // BD ADD:START
+            if (settings.isDisableLeakVM()) {
+                shellArgs.add("--disable-leak-vm");
+            }
+            // END
 
             String appStoragePath = PathUtils.getFilesDir(applicationContext);
             String engineCachesPath = PathUtils.getCacheDirectory(applicationContext);
@@ -222,6 +276,14 @@ public class FlutterLoader {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                //BD ADD: SunKun
+                try {
+                    sInitTask.get();
+                } catch (Exception e) {
+                    Log.e(TAG, "Flutter initialization failed.", e);
+                    throw new RuntimeException(e);
+                }
+                //END
                 if (resourceExtractor != null) {
                     resourceExtractor.waitForCompletion();
                 }
@@ -332,11 +394,30 @@ public class FlutterLoader {
 
     public static class Settings {
         private String logTag;
+        // BD ADD START:
+        private String nativeLibraryDir;
+        private SoLoader soLoader;
+        private boolean disableLeakVM = false;
+        // END
 
         @Nullable
         public String getLogTag() {
             return logTag;
         }
+
+        // BD ADD START:
+        public String getNativeLibraryDir() {
+            return nativeLibraryDir;
+        }
+
+        public SoLoader getSoLoader() {
+            return soLoader;
+        }
+
+        public boolean isDisableLeakVM() {
+            return disableLeakVM;
+        }
+        // END
 
         /**
          * Set the tag associated with Flutter app log messages.
@@ -345,5 +426,20 @@ public class FlutterLoader {
         public void setLogTag(String tag) {
             logTag = tag;
         }
+
+        // BD ADD START:
+        public void setNativeLibraryDir(String dir) {
+            nativeLibraryDir = dir;
+        }
+
+        public void setSoLoader(SoLoader loader) {
+            soLoader = loader;
+        }
+
+        // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
+        public void disableLeakVM() {
+            disableLeakVM = true;
+        }
+        // END
     }
 }

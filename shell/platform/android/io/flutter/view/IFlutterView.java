@@ -10,8 +10,6 @@ import io.flutter.plugin.common.BinaryMessenger;
  * Email:xieran.sai@bytedance.com
  */
 public interface IFlutterView extends TextureRegistry, BinaryMessenger {
-    void updateSemantics(ByteBuffer buffer, String[] strings);
-    void updateCustomAccessibilityActions(ByteBuffer buffer, String[] strings);
     void onFirstFrame();
     void resetAccessibilityTree();
     DartExecutor getDartExecutor();

@@ -64,11 +64,6 @@ class TestIOManager final : public IOManager {
   }
 
   // |IOManager|
-  bool IsResourceContextValidForDecodeImage() const override {
-    return false;
-  }
-
-  // |IOManager|
   std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override {
     return nullptr;
   }

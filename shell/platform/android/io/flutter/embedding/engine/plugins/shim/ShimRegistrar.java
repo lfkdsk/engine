@@ -21,6 +21,8 @@ import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.platform.PlatformViewRegistry;
 import io.flutter.view.FlutterMain;
 import io.flutter.view.FlutterView;
+import io.flutter.view.ImageLoaderRegistry;
+import io.flutter.view.ImageLoaderRegistryImpl;
 import io.flutter.view.TextureRegistry;
 
 /**
@@ -80,6 +82,15 @@ class ShimRegistrar implements PluginRegistry.Registrar, FlutterPlugin, Activity
   @Override
   public FlutterView view() {
     throw new UnsupportedOperationException("The new embedding does not support the old FlutterView.");
+  }
+
+  /**
+   * BD ADD:
+   */
+  // TODO @胡伟杰
+  @Override
+  public ImageLoaderRegistry imageLoaderRegistry() {
+    return null;
   }
 
   @Override

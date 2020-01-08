@@ -279,8 +279,7 @@ public:
                     sk_sp<SkData> buffer = SkData::MakeWithProc(pixels, row_bytes * height, ReleaseLoadContext,
                                                                 contextPtr);
                     SkPixmap pixelMap(sk_info, buffer->data(), row_bytes);
-                    skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixelMap, false, sk_info.colorSpace(),
-                                                                  true);
+                    skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixelMap, false, true);
                     auto res = AndroidBitmap_unlockPixels(env, jbitmap);
                     if (ANDROID_BITMAP_RESULT_SUCCESS != res) {
                         FML_LOG(ERROR)
