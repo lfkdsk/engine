@@ -14,6 +14,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
 
+// BD ADD: YuShijia
+import android.os.Bundle;
+
 /**
  * {@link SplashScreen} that displays a given {@link Drawable}, which then fades its alpha
  * to zero when instructed to {@link #transitionToFlutter(Runnable)}.
@@ -107,4 +110,16 @@ public final class DrawableSplashScreen implements SplashScreen {
       setImageDrawable(drawable);
     }
   }
+
+  // BD ADD: YuShijia Java7 not support default keyword
+  @Override
+  public boolean doesSplashViewRememberItsTransition() {
+    return false;
+  }
+
+  @Override
+  public Bundle saveSplashScreenState() {
+    return null;
+  }
+  // END
 }

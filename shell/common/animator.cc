@@ -6,6 +6,8 @@
 
 #include "flutter/fml/trace_event.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 
 namespace flutter {
 
@@ -161,8 +163,12 @@ void Animator::BeginFrame(fml::TimePoint frame_start_time,
           if (notify_idle_task_id == self->notify_idle_task_id_ &&
               !self->frame_scheduled_) {
             TRACE_EVENT0("flutter", "BeginFrame idle callback");
-            self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
-                                                 100000);
+            // BD MOD: START
+            // self->delegate_.OnAnimatorNotifyIdle(Dart_TimelineGetMicros() +
+            //                                     100000);
+            self->delegate_.OnAnimatorNotifyIdle(
+                Dart_TimelineGetMicros() + 100000, Boost::kPageQuiet);
+            // END
           }
         },
         kNotifyIdleTaskWaitTime);
@@ -217,14 +223,20 @@ void Animator::RequestFrame(bool regenerate_layer_tree) {
   // started an expensive operation right after posting this message however.
   // To support that, we need edge triggered wakes on VSync.
 
-  task_runners_.GetUITaskRunner()->PostTask([self = weak_factory_.GetWeakPtr(),
-                                             frame_number = frame_number_]() {
-    if (!self.get()) {
-      return;
-    }
-    TRACE_EVENT_ASYNC_BEGIN0("flutter", "Frame Request Pending", frame_number);
-    self->AwaitVSync();
-  });
+  // BD MOD: START
+  // task_runners_.GetUITaskRunner()->PostTask([self =
+  // weak_factory_.GetWeakPtr(),
+  fml::TaskRunner::RunNowOrPostTask(
+      task_runners_.GetUITaskRunner(), [self = weak_factory_.GetWeakPtr(),
+                                        // END
+                                        frame_number = frame_number_]() {
+        if (!self.get()) {
+          return;
+        }
+        TRACE_EVENT_ASYNC_BEGIN0("flutter", "Frame Request Pending",
+                                 frame_number);
+        self->AwaitVSync();
+      });
   frame_scheduled_ = true;
 }
 
@@ -240,8 +252,46 @@ void Animator::AwaitVSync() {
           }
         }
       });
+  // BD MOD: START
+  // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+  task_runners_.GetUITaskRunner()->PostTask(
+      [this, dart_frame_deadline_ = std::move(dart_frame_deadline_)]() {
+        delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kVsyncIdle);
+      });
+  // END
+}
 
-  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+void Animator::RequestBackgroundFrame() {
+  if (!paused_) {
+    return;
+  }
+
+  if (!pending_frame_semaphore_.TryWait()) {
+    return;
+  }
+  regenerate_layer_tree_ = true;
+  frame_scheduled_ = true;
+  task_runners_.GetUITaskRunner()->PostTask([self = weak_factory_.GetWeakPtr(),
+                                             frame_number = frame_number_]() {
+    if (!self.get()) {
+      return;
+    }
+    TRACE_EVENT_ASYNC_BEGIN0("flutter", "Frame Request Pending", frame_number);
+    self->AwaitVSyncForBackground();
+  });
+}
+
+void Animator::AwaitVSyncForBackground() {
+  waiter_->AsyncWaitForVsync(
+      [self = weak_factory_.GetWeakPtr()](fml::TimePoint frame_start_time,
+                                          fml::TimePoint frame_target_time) {
+        if (self) {
+          self->BeginFrame(frame_start_time, frame_target_time);
+        }
+      });
+  // BD MOD:
+  // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
+  delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kVsyncIdle);
 }
 
 void Animator::ScheduleSecondaryVsyncCallback(const fml::closure& callback) {

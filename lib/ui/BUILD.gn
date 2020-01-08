@@ -66,6 +66,10 @@ source_set("ui") {
     "painting/single_frame_codec.h",
     "painting/vertices.cc",
     "painting/vertices.h",
+    # BD ADD: START
+    "painting/image_loader.cc",
+    "painting/image_loader.h",
+    # END
     "plugins/callback_cache.cc",
     "plugins/callback_cache.h",
     "semantics/custom_accessibility_action.cc",
@@ -107,6 +111,10 @@ source_set("ui") {
     "window/viewport_metrics.h",
     "window/window.cc",
     "window/window.h",
+    # BD ADD: START
+    "boost.cc",
+    "boost.h",
+    # END
   ]
 
   public_configs = [ "$flutter_root:config" ]

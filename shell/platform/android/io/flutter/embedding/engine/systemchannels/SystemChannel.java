@@ -9,6 +9,8 @@ import android.support.annotation.NonNull;
 import java.util.HashMap;
 import java.util.Map;
 
+// BD ADD
+import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.Log;
 import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.plugin.common.BasicMessageChannel;
@@ -22,8 +24,14 @@ public class SystemChannel {
 
   @NonNull
   public final BasicMessageChannel<Object> channel;
+  // BD ADD:START
+  @NonNull
+  private final DartExecutor dartExecutor;
+  // END
 
   public SystemChannel(@NonNull DartExecutor dartExecutor) {
+    // BD ADD
+    this.dartExecutor = dartExecutor;
     this.channel = new BasicMessageChannel<>(dartExecutor, "flutter/system", JSONMessageCodec.INSTANCE);
   }
 
@@ -31,7 +39,14 @@ public class SystemChannel {
     Log.v(TAG, "Sending memory pressure warning to Flutter.");
     Map<String, Object> message = new HashMap<>(1);
     message.put("type", "memoryPressure");
-    channel.send(message);
+    // BD MOD
+    //channel.send(message);
+    channel.send(message, new BasicMessageChannel.Reply<Object>() {
+      @Override
+      public void reply(Object reply) {
+        dartExecutor.getFlutterJNI().notifyLowMemory();
+      }
+    });
+    // END
   }
-
 }

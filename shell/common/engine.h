@@ -227,6 +227,16 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
     ///                              collected and send back to Dart.
     ///
     virtual void SetNeedsReportTimings(bool needs_reporting) = 0;
+
+    // BD ADD: XieRan
+    virtual void AddNextFrameCallback(fml::closure callback) = 0;
+    // END
+
+    // BD ADD: YuanHuihui
+    virtual std::vector<double> GetFps(int thread_type,
+                                       int fps_type,
+                                       bool do_clear) = 0;
+    // END
   };
 
   //----------------------------------------------------------------------------
@@ -469,7 +479,9 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
   ///                       against the system monotonic clock. Use
   ///                       `Dart_TimelineGetMicros()`, for consistency.
   ///
-  void NotifyIdle(int64_t deadline);
+// BD MOD:
+//  void NotifyIdle(int64_t deadline);
+    void NotifyIdle(int64_t deadline, int type);
 
   //----------------------------------------------------------------------------
   /// @brief      Dart code cannot fully measure the time it takes for a
@@ -708,6 +720,12 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
 
   // |RuntimeDelegate|
   FontCollection& GetFontCollection() override;
+  void ScheduleBackgroundFrame();
+
+  // BD ADD: START
+  void ExitApp();
+  void NotifyLowMemoryWarning();
+  // END
 
   // |PointerDataDispatcher::Delegate|
   void DoDispatchPacket(std::unique_ptr<PointerDataPacket> packet,
@@ -765,6 +783,9 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
   void HandlePlatformMessage(fml::RefPtr<PlatformMessage> message) override;
 
   // |RuntimeDelegate|
+  void AddNextFrameCallback(fml::closure callback) override;
+
+  // |RuntimeDelegate|
   void UpdateIsolateDescription(const std::string isolate_name,
                                 int64_t isolate_port) override;
 
@@ -789,6 +810,14 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
   RunStatus PrepareAndLaunchIsolate(RunConfiguration configuration);
 
   friend class testing::ShellTest;
+
+  // BD ADD: Start
+  std::vector<double> GetFps(int thread_type,
+                             int fps_type,
+                             bool do_clear) override;
+  int64_t GetEngineMainEnterMicros() override;
+  // END
+
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

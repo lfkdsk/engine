@@ -217,6 +217,20 @@ void _drawFrame() {
   _invoke(window.onDrawFrame, window._onDrawFrameZone);
 }
 
+// BD ADD: START
+@pragma('vm:entry-point')
+// ignore: unused_element
+void _exitApp() {
+  _invoke(window.exitApp, window._exitAppZone);
+}
+
+@pragma('vm:entry-point')
+// ignore: unused_element
+void _notifyIdle(int microseconds) {
+  _invoke1<Duration>(window.onNotifyIdle, window._onNotifyIdleZone, new Duration(microseconds: microseconds));
+}
+// END
+
 // ignore: always_declare_return_types, prefer_generic_function_type_aliases
 typedef _UnaryFunction(Null args);
 // ignore: always_declare_return_types, prefer_generic_function_type_aliases

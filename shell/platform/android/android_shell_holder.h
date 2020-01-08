@@ -39,6 +39,12 @@ class AndroidShellHolder {
 
   void UpdateAssetManager(fml::RefPtr<flutter::AssetManager> asset_manager);
 
+  // BD ADD:START
+  void ExitApp(fml::closure closure);
+
+  void NotifyLowMemory();
+  // END
+
  private:
   const flutter::Settings settings_;
   const fml::jni::JavaObjectWeakGlobalRef java_object_;

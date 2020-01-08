@@ -6,6 +6,7 @@ package io.flutter.view;
 
 import android.support.annotation.NonNull;
 import android.view.Choreographer;
+import android.os.Looper;
 import android.view.WindowManager;
 
 import io.flutter.Log;
@@ -21,6 +22,18 @@ public class VsyncWaiter {
             instance = new VsyncWaiter(windowManager);
         }
         return instance;
+    }
+
+    public static void loopForVsync(boolean initLooper) {
+        if (initLooper) {
+            if (Looper.myLooper() == null) {
+                Looper.prepare();
+            } else {
+                Looper.myLooper().quit();
+            }
+        } else {
+            Looper.loop();
+        }
     }
 
     @NonNull
