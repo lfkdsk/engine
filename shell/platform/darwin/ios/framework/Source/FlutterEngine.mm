@@ -124,22 +124,6 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
                  name:UIApplicationWillResignActiveNotification
                object:nil];
 
-  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
-  [center addObserver:self
-             selector:@selector(onMemoryWarning:)
-                 name:UIApplicationDidReceiveMemoryWarningNotification
-               object:nil];
-
-  [center addObserver:self
-             selector:@selector(applicationBecameActive:)
-                 name:UIApplicationDidBecomeActiveNotification
-               object:nil];
-
-  [center addObserver:self
-             selector:@selector(applicationWillResignActive:)
-                 name:UIApplicationWillResignActiveNotification
-               object:nil];
-
   return self;
 }
 
@@ -789,12 +773,6 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
   // END
 }
 
-- (void)setIsGpuDisabled:(BOOL)value {
-  if (_shell) {
-    _shell->GetIsGpuDisabledSyncSwitch()->SetSwitch(value ? true : false);
-  }
-  _isGpuDisabled = value;
-}
 
 - (void)setIsGpuDisabled:(BOOL)value {
   if (_shell) {

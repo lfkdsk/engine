@@ -594,7 +594,7 @@ typedef enum UIAccessibilityContrast : NSInteger {
 //
 //
 - (void)scheduleBackgroundFrame {
-  [_engine.get() shell].GetWeakEngine()->ScheduleBackgroundFrame();
+  [_engine.get() shell].GetEngine()->ScheduleBackgroundFrame();
 }
 // END
 
@@ -608,6 +608,7 @@ typedef enum UIAccessibilityContrast : NSInteger {
   if (_viewportMetrics.physical_width &&
       ((optimiseEnabled && self.view.window) || !optimiseEnabled)) {
     [self surfaceUpdated:YES];
+  }
   [self goToApplicationLifecycle:@"AppLifecycleState.resumed"];
 }
 
