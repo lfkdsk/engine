@@ -26,7 +26,7 @@ vars = {
   'tt_icu_git': 'ssh://git@code.byted.org/tech_client/icu',
   'tt_icu_revision': 'd7a5950de1b5d876338f21f3eaaa8094556c6323',
   'tt_harfbuzz_git': 'ssh://git@code.byted.org/tech_client/harfbuzz',
-  'tt_harfbuzz_revision': 'f4ab267af824f9eec171cb45be8a64d71ee2b071',
+  'tt_harfbuzz_revision': '7917a55cfbb82eeb1db75f04844d79695a6c0f33',
   # END
   'fuchsia_git': 'https://fuchsia.googlesource.com',
   'github_git': 'https://github.com',
@@ -36,7 +36,7 @@ vars = {
   # 'skia_git': 'https://skia.googlesource.com',
   # 'skia_revision': 'c3ff97a98b74554854b5822797c6b7b431f4d8d2',
   'skia_git': 'git@code.byted.org:tech_client',
-  'skia_revision': '1369d81305419e8d1826e94b5a73619e71cf4eff',
+  'skia_revision': 'e2254ca3fb6fc33477afa5af7148e6a358c189a2',
   # END
 
   # When updating the Dart revision, ensure that all entries that are
