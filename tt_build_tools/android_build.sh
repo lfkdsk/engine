@@ -91,11 +91,11 @@ for liteMode in ${liteModes[@]}; do
   for mode in 'debug' 'profile' 'release'; do
       for platform in ${platforms[@]}; do
           # x64和x86只打debug
-          if [ $mode != 'debug' ]; then
-              if [ $platform = 'x64' -o $platform = 'x86' ]; then
-                  continue
-              fi
-          fi
+          #if [ $mode != 'debug' ]; then
+          #    if [ $platform = 'x64' -o $platform = 'x86' ]; then
+          #        continue
+          #    fi
+          #fi
           for dynamic in ${dynamics[@]}; do
               modeDir=android-$platform
 
