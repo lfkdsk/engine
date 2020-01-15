@@ -44,6 +44,21 @@ function checkResult() {
     fi
 }
 
+platformResult="unknown"
+mapPlatform() {
+    if [ $1 == "arm" ]; then
+       platformResult="armeabi_v7a"
+    elif [ $1 == "arm64" ];then
+       platformResult="arm64_v8a"
+    elif [ $1 == "x64" ];then
+       platformResult="x86_64"
+    elif [ $1 == "x86" ];then
+       platformResult="x86"
+    else
+       platformResult="unknown"
+    fi
+}
+
 cd ..
 
 cacheDir=out/tt_android_cache
@@ -167,6 +182,24 @@ for liteMode in ${liteModes[@]}; do
               echo time=$gitDate >> $resultFile
               bd_upload $resultFile flutter/framework/buildid/$hashcode
               rm $resultFile
+              #upload file for flutter.gradle dependencies
+              mapPlatform $platform
+              echo $platformResult
+              if [ $liteMode != 'normal' ]; then
+                bd_upload $androidDir/${platformResult}_${mode}_lite.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_lite/1.0.0-${tosDir}/${platformResult}_${mode}_lite-1.0.0-${tosDir}.jar
+                bd_upload $androidDir/${platformResult}_${mode}_lite.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_lite/1.0.0-${tosDir}/${platformResult}_${mode}_lite-1.0.0-${tosDir}.pom
+                if [ $platform = 'arm' ]; then
+                    bd_upload $androidDir/flutter_embedding_${mode}_lite.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_lite/1.0.0-${tosDir}/flutter_embedding_${mode}_lite-1.0.0-${tosDir}.jar
+                    bd_upload $androidDir/flutter_embedding_${mode}_lite.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_lite/1.0.0-${tosDir}/flutter_embedding_${mode}_lite-1.0.0-${tosDir}.pom
+                fi
+              else
+                bd_upload $androidDir/${platformResult}_${mode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.jar
+                bd_upload $androidDir/${platformResult}_${mode}.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.pom
+                if [ $platform = 'arm' ]; then
+                    bd_upload $androidDir/flutter_embedding_${mode}.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}/1.0.0-${tosDir}/flutter_embedding_${mode}-1.0.0-${tosDir}.jar
+                    bd_upload $androidDir/flutter_embedding_${mode}.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}/1.0.0-${tosDir}/flutter_embedding_${mode}-1.0.0-${tosDir}.pom
+                fi
+              fi
           done
       done
   done

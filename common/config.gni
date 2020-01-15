@@ -34,6 +34,7 @@ declare_args() {
   # BD ADD: START
   # Whether to use a cropped icudtl.dat
   icu_use_lite_data_file = false
+  enable_lite = false
   # END
 }
 

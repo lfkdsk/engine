@@ -148,6 +148,18 @@ public class FlutterJNI {
     }
   }
 
+  public static void loopForVsync(boolean initLooper) {
+      if (initLooper) {
+          if (Looper.myLooper() == null) {
+              Looper.prepare();
+          } else {
+              Looper.myLooper().quit();
+          }
+      } else {
+          Looper.loop();
+      }
+  }
+
   // TODO(mattcarroll): add javadocs
   public static native void nativeOnVsync(long frameTimeNanos, long frameTargetTimeNanos, long cookie);
 

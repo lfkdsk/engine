@@ -94,6 +94,7 @@ def to_gn_args(args):
     # BD ADD: START
     if args.enable_lite:
         print("enable lite mode.")
+        gn_args['enable_lite'] = True
         gn_args['dart_disable_boringssl'] = True
         gn_args['dart_enable_opt_oz'] = True
         gn_args['skia_enable_ccpr'] = False

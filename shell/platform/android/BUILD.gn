@@ -115,7 +115,14 @@ action("gen_android_build_config_java") {
   ]
 }
 
-embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
+# BD MOD: START
+#embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
+if (enable_lite) {
+    embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode" + "_lite"
+} else {
+    embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
+}
+# END
 embedding_jar_filename = "$embedding_artifact_id.jar"
 embedding_jar_path = "$root_out_dir/$embedding_jar_filename"
 
@@ -352,8 +359,17 @@ action("android_jar") {
     "$root_build_dir/$engine_library",
   ]
 
-  engine_artifact_id =
-      string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
+  # BD MOD: START
+  # engine_artifact_id =
+  #       string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
+  if (enable_lite) {
+    engine_artifact_id =
+          string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+  } else {
+    engine_artifact_id =
+          string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
+  }
+  # END
 
   engine_jar_filename = "$engine_artifact_id.jar"
 
@@ -390,8 +406,17 @@ action("pom_libflutter") {
     "$flutter_root/tools/android_support/files.json",
   ]
 
-  artifact_id =
-      string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
+  # BD MOD: START
+  #artifact_id =
+  #    string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
+  if (enable_lite) {
+    artifact_id =
+              string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+  } else {
+    artifact_id =
+          string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
+  }
+  # END
 
   outputs = [
     "$root_build_dir/$artifact_id.pom",
@@ -414,7 +439,14 @@ action("pom_embedding") {
     "$flutter_root/tools/android_support/files.json",
   ]
 
-  artifact_id = "flutter_embedding_$flutter_runtime_mode"
+  # BD MOD: START
+  # artifact_id = "flutter_embedding_$flutter_runtime_mode"
+  if (enable_lite) {
+    artifact_id = "flutter_embedding_${flutter_runtime_mode}_lite"
+  } else {
+    artifact_id = "flutter_embedding_$flutter_runtime_mode"
+  }
+  # END
 
   outputs = [
     "$root_build_dir/$artifact_id.pom",
