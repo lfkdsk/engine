@@ -163,6 +163,7 @@ if (current_toolchain == host_toolchain) {
     fixtures = [
       "fixtures/DashInNooglerHat.jpg",
       "fixtures/Horizontal.jpg",
+      "fixtures/Horizontal.png",
     ]
   }
 
