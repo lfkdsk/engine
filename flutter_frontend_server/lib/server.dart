@@ -19,6 +19,8 @@ import 'package:frontend_server/frontend_server.dart' as frontend
         argParser,
         usage,
         ProgramTransformer;
+// BD ADD:
+import 'package:flutter_frontend_server/track_route_constructor_locations.dart';
 
 /// Wrapper around [FrontendCompiler] that adds [widgetCreatorTracker] kernel
 /// transformation to the compilation.
@@ -29,7 +31,7 @@ class _FlutterFrontendCompiler implements frontend.CompilerInterface {
       {bool unsafePackageSerialization,
       frontend.ProgramTransformer transformer})
       : _compiler = frontend.FrontendCompiler(output,
-            transformer: transformer,
+            transformer: RouteCreatorTracker(nextTransformer: transformer),
             unsafePackageSerialization: unsafePackageSerialization);
 
   @override

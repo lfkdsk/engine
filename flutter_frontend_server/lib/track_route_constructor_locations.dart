@@ -5,8 +5,7 @@ library track_route_constructor_locations;
 
 import 'package:kernel/ast.dart';
 import 'package:kernel/class_hierarchy.dart';
-import 'package:meta/meta.dart';
-import 'package:vm/frontend_server.dart' show ProgramTransformer;
+import 'package:frontend_server/frontend_server.dart' show ProgramTransformer;
 
 const String _creationLocationParameterName = 'settings';
 
@@ -15,8 +14,11 @@ class _RouteCallSiteTransformer extends Transformer {
   final Class _routeClass;
   final Class _routeSettingsClass;
 
-  const _RouteCallSiteTransformer(this._hierarchy, this._routeClass,
-      this._routeSettingsClass,);
+  const _RouteCallSiteTransformer(
+    this._hierarchy,
+    this._routeClass,
+    this._routeSettingsClass,
+  );
 
   @override
   StaticInvocation visitStaticInvocation(StaticInvocation node) {
@@ -52,13 +54,11 @@ class _RouteCallSiteTransformer extends Transformer {
       Class constructedClass) {
     final Location location = node.location;
     final List<NamedExpression> arguments = <NamedExpression>[
-      new NamedExpression(
-          'name', new StringLiteral(location.toString())),
+      NamedExpression('name', StringLiteral(location.toString())),
     ];
-    Expression newRouteSettings = new ConstructorInvocation(
+    final Expression newRouteSettings = ConstructorInvocation(
       _routeSettingsClass.constructors.first,
-      new Arguments(<Expression>[], named: arguments),
-      isConst: true,
+      Arguments(<Expression>[], named: arguments),
     );
     _maybeAddCreationLocationArgument(
       node.arguments,
@@ -68,9 +68,11 @@ class _RouteCallSiteTransformer extends Transformer {
   }
 
   /// Add the creation location to the arguments list if possible.
-  void _maybeAddCreationLocationArgument(Arguments arguments,
-      FunctionNode function,
-      Expression creationLocation,) {
+  void _maybeAddCreationLocationArgument(
+    Arguments arguments,
+    FunctionNode function,
+    Expression creationLocation,
+  ) {
     if (_hasNamedArgument(arguments, _creationLocationParameterName)) {
       return;
     }
@@ -79,7 +81,7 @@ class _RouteCallSiteTransformer extends Transformer {
     }
 
     final NamedExpression namedArgument =
-    new NamedExpression(_creationLocationParameterName, creationLocation);
+        NamedExpression(_creationLocationParameterName, creationLocation);
     namedArgument.parent = arguments;
     arguments.named.add(namedArgument);
   }
@@ -99,7 +101,6 @@ class _RouteCallSiteTransformer extends Transformer {
   }
 }
 
-
 /// 构建Route时，如果没有传递RouteSettings参数，主动创建一个RouteSettings，传给Route
 /// 保证通过Route能够获取到页面命名之类的信息
 /// RouteSettings的name参数(即页面命名)为Route的创建位置
@@ -109,7 +110,7 @@ class RouteCreatorTracker implements ProgramTransformer {
   Class _routeSettinsClass;
 
   RouteCreatorTracker({ProgramTransformer nextTransformer})
-      :_nextTransformer=nextTransformer;
+      : _nextTransformer = nextTransformer;
 
   /// Transform the given [program].
   ///
@@ -128,13 +129,14 @@ class RouteCreatorTracker implements ProgramTransformer {
       // This application doesn't actually use the package:flutter library.
       return;
     }
-    ClassHierarchy hierarchy = new ClassHierarchy(
+    final ClassHierarchy hierarchy = ClassHierarchy(
       _computeFullProgram(program),
       onAmbiguousSupertypes: (Class cls, Supertype a, Supertype b) {},
     );
 
     // Transform call sites to pass the location parameter.
-    final _RouteCallSiteTransformer callsiteTransformer = new _RouteCallSiteTransformer(
+    final _RouteCallSiteTransformer callsiteTransformer =
+        _RouteCallSiteTransformer(
       hierarchy,
       _routeClass,
       _routeSettinsClass,
@@ -172,7 +174,7 @@ class RouteCreatorTracker implements ProgramTransformer {
   }
 
   Component _computeFullProgram(Component deltaProgram) {
-    final Set<Library> libraries = new Set<Library>();
+    final Set<Library> libraries = Set<Library>();
     final List<Library> workList = <Library>[];
     for (Library library in deltaProgram.libraries) {
       if (libraries.add(library)) {
@@ -187,7 +189,6 @@ class RouteCreatorTracker implements ProgramTransformer {
         }
       }
     }
-    return new Component()
-      ..libraries.addAll(libraries);
+    return Component()..libraries.addAll(libraries);
   }
 }
