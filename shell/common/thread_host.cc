@@ -10,14 +10,7 @@ ThreadHost::ThreadHost() = default;
 
 ThreadHost::ThreadHost(ThreadHost&&) = default;
 
-// BD ADD: START
-#ifdef OS_MACOSX
-ThreadHost::ThreadHost(std::string name_prefix, uint64_t mask, bool highQoS) {
-#else
-// END
 ThreadHost::ThreadHost(std::string name_prefix, uint64_t mask) {
-// BD ADD:
-#endif
   if (mask & ThreadHost::Type::Platform) {
     platform_thread = std::make_unique<fml::Thread>(name_prefix + ".platform");
   }
@@ -27,10 +20,6 @@ ThreadHost::ThreadHost(std::string name_prefix, uint64_t mask) {
 // ui_thread = std::make_unique<fml::Thread>(name_prefix + ".ui");
 #if OS_ANDROID
     ui_thread = std::make_unique<fml::Thread>(name_prefix + ".ui", true);
-// BD ADD: START
-#elif OS_MACOSX
-    ui_thread = std::make_unique<fml::Thread>(name_prefix + ".ui", highQoS);
-// END
 #else
     ui_thread = std::make_unique<fml::Thread>(name_prefix + ".ui");
 #endif
@@ -38,14 +27,7 @@ ThreadHost::ThreadHost(std::string name_prefix, uint64_t mask) {
   }
 
   if (mask & ThreadHost::Type::GPU) {
-// BD ADD: START
-#if OS_MACOSX
-    gpu_thread = std::make_unique<fml::Thread>(name_prefix + ".gpu", highQoS);
-#else
-// END
     gpu_thread = std::make_unique<fml::Thread>(name_prefix + ".gpu");
-// BD ADD:
-#endif
   }
 
   if (mask & ThreadHost::Type::IO) {

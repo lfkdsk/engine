@@ -55,34 +55,15 @@ Thread::Thread(const std::string& name, bool createAndroidLoop)
 }
 #else
 // END
-// BD ADD: START
-#if OS_MACOSX
-Thread::Thread(const std::string& name, bool highQoS) : joined_(false) {
-#else
-// END
 Thread::Thread(const std::string& name) : joined_(false) {
-// BD ADD:
-#endif
   fml::AutoResetWaitableEvent latch;
   fml::RefPtr<fml::TaskRunner> runner;
-#if OS_MACOSX
-  thread_ =
-      std::make_unique<std::thread>([&latch, &runner, name, highQoS]() -> void {
-#else
   thread_ = std::make_unique<std::thread>([&latch, &runner, name]() -> void {
-#endif
     SetCurrentThreadName(name);
     fml::MessageLoop::EnsureInitializedForCurrentThread();
     auto& loop = MessageLoop::GetCurrent();
     runner = loop.GetTaskRunner();
     latch.Signal();
-// BD ADD: START
-#if OS_MACOSX
-    if (highQoS) {
-      pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
-    }
-#endif
-// END
     loop.Run();
   });
   latch.Wait();

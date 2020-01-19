@@ -439,9 +439,7 @@
 
   _threadHost = {threadLabel.UTF8String,  // label
                  flutter::ThreadHost::Type::UI | flutter::ThreadHost::Type::GPU |
-                     flutter::ThreadHost::Type::IO,
-                 // BD ADD:
-                 settings.high_qos};
+                     flutter::ThreadHost::Type::IO};
 
   // Lambda captures by pointers to ObjC objects are fine here because the
   // create call is
@@ -470,6 +468,10 @@
                                       _threadHost.ui_thread->GetTaskRunner(),          // ui
                                       _threadHost.io_thread->GetTaskRunner()           // io
     );
+
+    // BD ADD:
+    [self setupQualityOfService:task_runners];
+
     // Create the shell. This is a blocking operation.
     _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
                                     std::move(settings),      // settings
@@ -483,6 +485,10 @@
                                       _threadHost.ui_thread->GetTaskRunner(),          // ui
                                       _threadHost.io_thread->GetTaskRunner()           // io
     );
+
+    // BD ADD:
+    [self setupQualityOfService:task_runners];
+
     // Create the shell. This is a blocking operation.
     _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
                                     std::move(settings),      // settings
@@ -765,6 +771,22 @@
   }
   _isGpuDisabled = value;
 }
+
+// BD ADD: START
+- (void)setupQualityOfService:(flutter::TaskRunners&)task_runners {
+  auto settings = [_dartProject.get() settings];
+
+  if (!settings.high_qos) {
+    return;
+  }
+
+  task_runners.GetUITaskRunner()->PostTask(
+      [] { pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0); });
+
+  task_runners.GetGPUTaskRunner()->PostTask(
+      [] { pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0); });
+}
+// END
 
 @end
 

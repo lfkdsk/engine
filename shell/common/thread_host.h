@@ -31,14 +31,8 @@ struct ThreadHost {
 
   ThreadHost& operator=(ThreadHost&&) = default;
 
-// BD ADD: START
-#ifdef OS_MACOSX
-  ThreadHost(std::string name_prefix, uint64_t type_mask, bool highQoS = false);
-#else
-// END
   ThreadHost(std::string name_prefix, uint64_t type_mask);
-// BD ADD:
-#endif
+
   ~ThreadHost();
 
   void Reset();
