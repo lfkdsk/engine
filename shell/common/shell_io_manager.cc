@@ -53,7 +53,9 @@ ShellIOManager::ShellIOManager(
                             : nullptr),
       unref_queue_(fml::MakeRefCounted<flutter::SkiaUnrefQueue>(
           std::move(unref_queue_task_runner),
-          fml::TimeDelta::FromMilliseconds(250))),
+          fml::TimeDelta::FromMilliseconds(250),
+          // BD ADD:
+          resource_context_)),
       weak_factory_(this),
       is_gpu_disabled_sync_switch_(is_gpu_disabled_sync_switch) {
   if (!resource_context_) {
@@ -90,6 +92,8 @@ void ShellIOManager::NotifyResourceContextAvailable(
 
 void ShellIOManager::UpdateResourceContext(sk_sp<GrContext> resource_context) {
   resource_context_ = std::move(resource_context);
+  // BD ADD:
+  unref_queue_->UpdateResourceContext(resource_context_);
   resource_context_weak_factory_ =
       resource_context_ ? std::make_unique<fml::WeakPtrFactory<GrContext>>(
                               resource_context_.get())
