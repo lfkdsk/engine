@@ -115,6 +115,9 @@
                  name:UIApplicationWillResignActiveNotification
                object:nil];
 
+  // BD ADD:
+  _isGpuDisabled = ([UIApplication sharedApplication].applicationState != UIApplicationStateActive);
+
   return self;
 }
 
