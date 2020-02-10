@@ -27,7 +27,9 @@ class TestIOManager final : public IOManager {
                             : nullptr),
         unref_queue_(fml::MakeRefCounted<SkiaUnrefQueue>(
             task_runner,
-            fml::TimeDelta::FromNanoseconds(0))),
+            fml::TimeDelta::FromNanoseconds(0),
+            // BD ADD:
+            gl_context_)),
         runner_(task_runner),
         weak_factory_(this),
         is_gpu_disabled_sync_switch_(std::make_shared<fml::SyncSwitch>()) {

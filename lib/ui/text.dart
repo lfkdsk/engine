@@ -1828,8 +1828,18 @@ class Paragraph extends NativeFieldWrapperClass2 {
   /// Computes the size and position of each glyph in the paragraph.
   ///
   /// The [ParagraphConstraints] control how wide the text is allowed to be.
-  void layout(ParagraphConstraints constraints) => _layout(constraints.width);
-  void _layout(double width) native 'Paragraph_layout';
+  // BD MOD: START
+  // void layout(ParagraphConstraints constraints) => _layout(constraints.width);
+  // void _layout(double width) native 'Paragraph_layout';
+  void layout(ParagraphConstraints maxConstraints,
+          {ParagraphConstraints minConstraints =
+              const ParagraphConstraints(width: -1),
+          bool async = false,
+          void callback()}) =>
+      _layout(maxConstraints.width, minConstraints.width, async, callback);
+  void _layout(double maxWidth, double minWidth, bool async, void callback())
+      native 'Paragraph_layout';
+  // END
 
   /// Returns a list of text boxes that enclose the given text range.
   ///

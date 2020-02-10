@@ -474,9 +474,20 @@ typedef enum UIAccessibilityContrast : NSInteger {
 - (void)surfaceUpdated:(BOOL)appeared {
   // NotifyCreated/NotifyDestroyed are synchronous and require hops between the UI and GPU thread.
 
-    // BD MOD: BaiKunlun
-    // if (appeared) {
-    if (appeared && !_surfaceCreated) {
+  // BD MOD: BaiKunlun
+  // if (appeared) {
+  //  [self installFirstFrameCallback];
+  //  [_engine.get() platformViewsController] -> SetFlutterView(_flutterView.get());
+  //  [_engine.get() platformViewsController] -> SetFlutterViewController(self);
+  //  [_engine.get() platformView] -> NotifyCreated();
+  // } else {
+  //  self.displayingFlutterUI = NO;
+  //  [_engine.get() platformView] -> NotifyDestroyed();
+  //  [_engine.get() platformViewsController] -> SetFlutterView(nullptr);
+  //  [_engine.get() platformViewsController] -> SetFlutterViewController(nullptr);
+  // }
+  if (appeared && !_surfaceCreated &&
+      [UIApplication sharedApplication].applicationState != UIApplicationStateBackground) {
     [self installFirstFrameCallback];
     [_engine.get() platformViewsController] -> SetFlutterView(_flutterView.get());
     [_engine.get() platformViewsController] -> SetFlutterViewController(self);
@@ -862,11 +873,11 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
   // 当恢复active时在此处提前创建Surface，可避免视图拉伸跳变
   else if (ABS(originViewportSize.width - _viewportMetrics.physical_width) > 0.01 ||
            ABS(originViewportSize.height - _viewportMetrics.physical_height) > 0.01) {
-      if ([UIApplication sharedApplication].applicationState == UIApplicationStateInactive) {
-          [self surfaceUpdated:YES];
-      }
+    if ([UIApplication sharedApplication].applicationState == UIApplicationStateInactive) {
+      [self surfaceUpdated:YES];
+    }
   }
-    // END
+  // END
 }
 
 - (void)viewSafeAreaInsetsDidChange {

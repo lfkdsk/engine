@@ -46,6 +46,8 @@ def get_out_dir(args):
     # BD ADD: START
     if args.enable_lite:
         target_dir.append('lite')
+    if args.enable_lite_global:
+        target_dir.append('liteg')
     # END
 
     if args.enable_metal and args.target_os == 'ios':
@@ -92,7 +94,7 @@ def to_gn_args(args):
     gn_args['enable_bitcode'] = args.bitcode
 
     # BD ADD: START
-    if args.enable_lite:
+    if args.enable_lite or args.enable_lite_global:
         print("enable lite mode.")
         gn_args['enable_lite'] = True
         gn_args['dart_disable_boringssl'] = True
@@ -100,18 +102,12 @@ def to_gn_args(args):
         gn_args['skia_enable_ccpr'] = False
         gn_args['skialite_disable_pathop_apis'] = True
         gn_args['skialite_disable_sksl_interpreter_and_codegenerators'] = True
-        # Use crop icudtl.dat
-        gn_args['icu_use_lite_data_file'] = True
-        # Crop harfbuzz, remove support for complex text and apple advanced type.
-        gn_args['hb_disable_arabic'] = True
-        gn_args['hb_disable_hangul'] = True
-        gn_args['hb_disable_hebrew'] = True
-        gn_args['hb_disable_myanmar'] = True
-        gn_args['hb_disable_khmer'] = True
-        gn_args['hb_disable_thai'] = True
-        gn_args['hb_disable_use'] = True
-        gn_args['hb_disable_indic'] = False
-        gn_args['hb_disable_aat'] = True
+        if args.enable_lite:
+            # Use crop icudtl.dat
+            gn_args['icu_use_lite_data_file'] = True
+            # Crop harfbuzz, remove support for complex text and apple advanced type.
+            gn_args['hb_disable_aat'] = True
+            gn_args['hb_disable_all_lang'] = True
     # END
 
     # Skia GN args.
@@ -382,6 +378,8 @@ def parse_args(args):
   # BD ADD: START
   parser.add_argument('--lite', dest='enable_lite', action='store_const', const='true',
                       help='Enable lite mode.')
+  parser.add_argument('--liteg', dest='enable_lite_global', action='store_const', const='true',
+                      help='Enable lite global mode.')
   # END
 
   return parser.parse_args(args)

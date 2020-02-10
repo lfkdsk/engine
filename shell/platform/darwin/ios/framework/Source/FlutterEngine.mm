@@ -124,6 +124,9 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
                  name:UIApplicationWillResignActiveNotification
                object:nil];
 
+  // BD ADD:
+  _isGpuDisabled = ([UIApplication sharedApplication].applicationState != UIApplicationStateActive);
+
   return self;
 }
 
@@ -487,6 +490,10 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
                                       _threadHost.ui_thread->GetTaskRunner(),          // ui
                                       _threadHost.io_thread->GetTaskRunner()           // io
     );
+
+    // BD ADD:
+    [self setupQualityOfService:task_runners];
+
     // Create the shell. This is a blocking operation.
     _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
                                     std::move(settings),      // settings
@@ -500,6 +507,10 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
                                       _threadHost.ui_thread->GetTaskRunner(),          // ui
                                       _threadHost.io_thread->GetTaskRunner()           // io
     );
+
+    // BD ADD:
+    [self setupQualityOfService:task_runners];
+
     // Create the shell. This is a blocking operation.
     _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
                                     std::move(settings),      // settings
@@ -780,6 +791,22 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
   }
   _isGpuDisabled = value;
 }
+
+// BD ADD: START
+- (void)setupQualityOfService:(flutter::TaskRunners&)task_runners {
+  auto settings = [_dartProject.get() settings];
+
+  if (!settings.high_qos) {
+    return;
+  }
+
+  task_runners.GetUITaskRunner()->PostTask(
+      [] { pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0); });
+
+  task_runners.GetGPUTaskRunner()->PostTask(
+      [] { pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0); });
+}
+// END
 
 @end
 

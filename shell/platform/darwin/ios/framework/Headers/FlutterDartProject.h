@@ -139,12 +139,18 @@ FLUTTER_EXPORT
  * 如果之前已经解压过，则返回YES，error是nil
  * 如果之前没有解压过，则返回当次解压结果
  */
-+ (BOOL)decompressData:(NSError**)error;
++ (BOOL)decompressData:(NSError**)error
+    FLUTTER_DEPRECATED(
+        "Does not support decompress synchronously. Use -predecompressData instead.");
 
 /**
  * 预解压资源
  */
 + (void)predecompressData;
+
+// 是否开启线程QoS优化
+// 默认不开启，在引擎启动前设置生效
++ (void)setThreadHighQoS:(BOOL)enabled;
 
 // END
 

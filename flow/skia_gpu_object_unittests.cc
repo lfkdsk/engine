@@ -9,6 +9,8 @@
 #include "flutter/testing/thread_test.h"
 #include "gtest/gtest.h"
 #include "third_party/skia/include/core/SkRefCnt.h"
+// BD ADD:
+#include "third_party/skia/include/gpu/GrContext.h"
 
 namespace flutter {
 namespace testing {
@@ -33,8 +35,13 @@ class TestSkObject : public SkRefCnt {
 
 TEST_F(SkiaGpuObjectTest, UnrefQueue) {
   fml::RefPtr<fml::TaskRunner> task_runner = CreateNewThread();
+  // BD MOD: START
+  // fml::RefPtr<SkiaUnrefQueue> queue = fml::MakeRefCounted<SkiaUnrefQueue>(
+  //     task_runner, fml::TimeDelta::FromSeconds(0));
+  sk_sp<GrContext> resource_context;
   fml::RefPtr<SkiaUnrefQueue> queue = fml::MakeRefCounted<SkiaUnrefQueue>(
-      task_runner, fml::TimeDelta::FromSeconds(0));
+      task_runner, fml::TimeDelta::FromSeconds(0), resource_context);
+  // END
 
   std::shared_ptr<fml::AutoResetWaitableEvent> latch =
       std::make_shared<fml::AutoResetWaitableEvent>();
