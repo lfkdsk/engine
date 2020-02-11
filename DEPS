@@ -26,7 +26,7 @@ vars = {
   'tt_icu_git': 'ssh://git@code.byted.org/tech_client/icu',
   'tt_icu_revision': 'd7a5950de1b5d876338f21f3eaaa8094556c6323',
   'tt_harfbuzz_git': 'ssh://git@code.byted.org/tech_client/harfbuzz',
-  'tt_harfbuzz_revision': 'aed2b6829edca0bdaf3c07662c82464e269110a8',
+  'tt_harfbuzz_revision': 'dd664b3c35d25e06729c24479592fc9dcffb1cb7',
   # END
   'fuchsia_git': 'https://fuchsia.googlesource.com',
   'github_git': 'https://github.com',
