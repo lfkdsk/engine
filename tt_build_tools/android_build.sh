@@ -186,11 +186,11 @@ for liteMode in ${liteModes[@]}; do
               mapPlatform $platform
               echo $platformResult
               if [ $liteMode != 'normal' ]; then
-                bd_upload $androidDir/${platformResult}_${mode}_lite.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_lite/1.0.0-${tosDir}/${platformResult}_${mode}_lite-1.0.0-${tosDir}.jar
-                bd_upload $androidDir/${platformResult}_${mode}_lite.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_lite/1.0.0-${tosDir}/${platformResult}_${mode}_lite-1.0.0-${tosDir}.pom
+                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.jar
+                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.pom
                 if [ $platform = 'arm' ]; then
-                    bd_upload $androidDir/flutter_embedding_${mode}_lite.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_lite/1.0.0-${tosDir}/flutter_embedding_${mode}_lite-1.0.0-${tosDir}.jar
-                    bd_upload $androidDir/flutter_embedding_${mode}_lite.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_lite/1.0.0-${tosDir}/flutter_embedding_${mode}_lite-1.0.0-${tosDir}.pom
+                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.jar
+                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.pom
                 fi
               else
                 bd_upload $androidDir/${platformResult}_${mode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.jar
