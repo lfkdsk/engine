@@ -119,6 +119,8 @@ action("gen_android_build_config_java") {
 #embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
 if (enable_lite) {
     embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode" + "_lite"
+} else if(enable_lite_global) {
+    embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode" + "_liteg"
 } else {
     embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
 }
@@ -357,6 +359,9 @@ action("android_jar") {
   if (enable_lite) {
     engine_artifact_id =
           string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+  } else if (enable_lite_global) {
+    engine_artifact_id =
+          string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_liteg"
   } else {
     engine_artifact_id =
           string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
@@ -404,6 +409,9 @@ action("pom_libflutter") {
   if (enable_lite) {
     artifact_id =
               string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+  } else if (enable_lite_global) {
+    artifact_id =
+              string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_liteg"
   } else {
     artifact_id =
           string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
@@ -435,6 +443,8 @@ action("pom_embedding") {
   # artifact_id = "flutter_embedding_$flutter_runtime_mode"
   if (enable_lite) {
     artifact_id = "flutter_embedding_${flutter_runtime_mode}_lite"
+  } else if (enable_lite_global) {
+    artifact_id = "flutter_embedding_${flutter_runtime_mode}_liteg"
   } else {
     artifact_id = "flutter_embedding_$flutter_runtime_mode"
   }
