@@ -102,7 +102,7 @@ def to_gn_args(args):
         gn_args['dart_enable_opt_oz'] = True
         gn_args['skia_enable_ccpr'] = False
         gn_args['skialite_disable_pathop_apis'] = True
-        gn_args['skialite_disable_sksl_interpreter_and_codegenerators'] = True
+        gn_args['skialite_disable_sksl_codegenerators'] = True
         if args.enable_lite:
             # Use crop icudtl.dat
             gn_args['icu_use_lite_data_file'] = True

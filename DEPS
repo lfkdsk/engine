@@ -36,7 +36,7 @@ vars = {
   # 'skia_git': 'https://skia.googlesource.com',
   # 'skia_revision': 'a640745ce52ea6ac9c1b958f40c1d28c98ad16fc',
   'skia_git': 'git@code.byted.org:tech_client',
-  'skia_revision': 'fb2af21598593edc58c4935c4846ca7e9ce4774d',
+  'skia_revision': '9e5fde0d97f3157a1293db67a3d74132899f6731',
   # END
 
   # When updating the Dart revision, ensure that all entries that are
