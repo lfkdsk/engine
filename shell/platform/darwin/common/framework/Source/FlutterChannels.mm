@@ -9,7 +9,7 @@
  * getBinaryMessengerWeakPtr和getBinaryMessenger是为了避免MethodChannel直接持有FlutterEngine，因为FlutterEngine里面通过PlatformMessageRouter已经间接持有了Channel
  * 同时避免了因为plugin持有channel导致engine不能释放的问题，以及兼容macos
  */
-#include "flutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
+#include "flutter/shell/platform/darwin/common/framework/Source/FlutterBinaryMessengerProvider.h"
 
 @protocol FlutterBinaryMessengerChannel <NSObject>
 
@@ -417,17 +417,17 @@ static void SetStreamHandlerMessageHandlerOnChannel(NSObject<FlutterStreamHandle
 }
 
 - (void)setStreamHandler:(NSObject<FlutterStreamHandler>*)handler {
-    if (!handler) {
-        // BD MOD: QiuXinyue
-        // [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
-        [getBinaryMessenger(self) setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
-        // END
-        return;
-    }
+  if (!handler) {
     // BD MOD: QiuXinyue
-    //   SetStreamHandlerMessageHandlerOnChannel(handler, _name, _messenger, _codec);
-    SetStreamHandlerMessageHandlerOnChannel(handler, _name, getBinaryMessenger(self), _codec);
+    // [_messenger setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
+    [getBinaryMessenger(self) setMessageHandlerOnChannel:_name binaryMessageHandler:nil];
     // END
+    return;
+  }
+  // BD MOD: QiuXinyue
+  //   SetStreamHandlerMessageHandlerOnChannel(handler, _name, _messenger, _codec);
+  SetStreamHandlerMessageHandlerOnChannel(handler, _name, getBinaryMessenger(self), _codec);
+  // END
 }
 
 @end

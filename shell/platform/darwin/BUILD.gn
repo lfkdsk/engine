@@ -24,10 +24,11 @@ source_set("flutter_channels") {
     "common/buffer_conversions.h",
     "common/buffer_conversions.mm",
     "common/framework/Headers/FlutterBinaryMessenger.h",
-    "common/framework/Headers/FlutterBinaryMessengerProvider.h",
     "common/framework/Headers/FlutterChannels.h",
     "common/framework/Headers/FlutterCodecs.h",
     "common/framework/Headers/FlutterMacros.h",
+    # BD ADD:
+    "common/framework/Source/FlutterBinaryMessengerProvider.h",
     "common/framework/Source/FlutterChannels.mm",
     "common/framework/Source/FlutterCodecs.mm",
     "common/framework/Source/FlutterStandardCodec.mm",
