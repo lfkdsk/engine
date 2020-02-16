@@ -27,7 +27,7 @@
 #import "flutter/shell/platform/darwin/ios/ios_surface.h"
 #import "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 // BD ADD:
-#include "FlutterBinaryMessengerProvider.h"
+#import "flutter/shell/platform/darwin/common/framework/Source/FlutterBinaryMessengerProvider.h"
 
 NSString* const FlutterDefaultDartEntrypoint = nil;
 
