@@ -46,6 +46,9 @@ def get_out_dir(args):
     # BD ADD: START
     if args.enable_lite:
         target_dir.append('lite')
+
+    if args.dynamicart:
+        target_dir.append('dynamicart')
     # END
 
     if args.enable_metal and args.target_os == 'ios':
@@ -92,6 +95,11 @@ def to_gn_args(args):
     gn_args['enable_bitcode'] = args.bitcode
 
     # BD ADD: START
+    # check dynamicart arg
+    if args.dynamicart and runtime_mode not in ['profile', 'release']:
+        raise Exception('--dynamicart is only supported on --release or --profile')
+    gn_args['dynamicart'] = args.dynamicart # Enable dynamicart Mode.
+
     if args.enable_lite:
         print("enable lite mode.")
         gn_args['enable_lite'] = True
@@ -127,8 +135,11 @@ def to_gn_args(args):
     gn_args['flutter_enable_skshaper'] = args.enable_skshaper
     gn_args['is_official_build'] = True    # Disable Skia test utilities.
     gn_args['dart_component_kind'] = 'static_library' # Always link Dart in statically.
-    gn_args['is_debug'] = args.unoptimized
-    gn_args['android_full_debug'] = args.target_os == 'android' and args.unoptimized
+    # BD MOD: START
+    # this is a bug! is_debug != unoptimized
+    # gn_args['is_debug'] = args.unoptimized
+    gn_args['is_debug'] = args.runtime_mode == 'debug'
+    # END    gn_args['android_full_debug'] = args.target_os == 'android' and args.unoptimized
     gn_args['is_clang'] = not sys.platform.startswith(('cygwin', 'win'))
 
     if args.target_os == 'android' or args.target_os == 'ios':
@@ -213,7 +224,7 @@ def to_gn_args(args):
         gn_args['dart_use_fallback_root_certificates'] = True
 
 
-    gn_args['dart_custom_version_for_pub'] = 'flutter'
+    gn_args['dart_custom_version_for_pub'] = 'bdflutter'
 
     # Make sure host_cpu matches the bit width of target_cpu on x86.
     if gn_args['target_cpu'] == 'x86':
@@ -380,6 +391,8 @@ def parse_args(args):
   parser.add_argument('--ubsan', default=False, action='store_true')
 
   # BD ADD: START
+  parser.add_argument('--dynamicart', default=False, action='store_true')
+
   parser.add_argument('--lite', dest='enable_lite', action='store_const', const='true',
                       help='Enable lite mode.')
   # END

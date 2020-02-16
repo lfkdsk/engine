@@ -24,6 +24,10 @@
 #import "flutter/shell/platform/darwin/ios/framework/Source/platform_message_response_darwin.h"
 #import "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 
+// BD ADD:
+// 收到Memory Warning的时候重新创建Surface，模拟前后台切换过程，释放更多内存
+static BOOL FlutterRecreateSurfaceWhenReceiveMemorying = NO;
+
 NSNotificationName const FlutterSemanticsUpdateNotification = @"FlutterSemanticsUpdate";
 
 NSNotificationName const FlutterViewControllerWillDealloc = @"FlutterViewControllerWillDealloc";
@@ -73,6 +77,10 @@ typedef enum UIAccessibilityContrast : NSInteger {
 @synthesize displayingFlutterUI = _displayingFlutterUI;
 
 #pragma mark - Manage and override all designated initializers
+
++ (void)setRecreateSurfaceWhenReceiveMemorying:(BOOL)enabled {
+  FlutterRecreateSurfaceWhenReceiveMemorying = enabled;
+}
 
 - (instancetype)initWithEngine:(FlutterEngine*)engine
                        nibName:(nullable NSString*)nibName

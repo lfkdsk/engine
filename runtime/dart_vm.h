@@ -70,7 +70,8 @@ class DartVM {
   /// @return     If VM instances in the process run precompiled code.
   ///
   static bool IsRunningPrecompiledCode();
-
+  // BD ADD：
+  static bool IsRunningDynamicCode();
   //----------------------------------------------------------------------------
   /// @brief      The number of times the VM has been launched in the process.
   ///             This call is inherently racy because the VM could be in the

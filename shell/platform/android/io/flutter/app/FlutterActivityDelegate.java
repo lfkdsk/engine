@@ -19,6 +19,8 @@ import android.content.res.Resources.NotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+// BD ADD:
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -147,6 +149,14 @@ public final class FlutterActivityDelegate
         if (flutterView == null) {
             FlutterNativeView nativeView = viewFactory.createFlutterNativeView();
             flutterView = new FlutterView(activity, null, nativeView);
+
+            // BD ADD:
+            String path = activity.getIntent().getStringExtra("dynamic_dill_path");
+            if (!TextUtils.isEmpty(path)){
+                flutterView.getFlutterNativeView().updateNative(path);
+            }
+            // END
+
             flutterView.setLayoutParams(matchParent);
             activity.setContentView(flutterView);
             launchView = createLaunchView();

@@ -69,6 +69,9 @@ struct Settings {
   std::string isolate_snapshot_instr_path;  // deprecated
   MappingCallback isolate_snapshot_instr;
 
+  // BD ADD:
+  std::string dynamic_dill_path; // 本次启动所使用的动态包路径
+
   // Returns the Mapping to a kernel buffer which contains sources for dart:*
   // libraries.
   MappingCallback dart_library_sources_kernel;

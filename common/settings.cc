@@ -58,6 +58,8 @@ std::string Settings::ToString() const {
   stream << "assets_path: " << assets_path << std::endl;
   stream << "frame_rasterized_callback set: " << !!frame_rasterized_callback
          << std::endl;
+  // BD ADD:
+  stream << "dynamic_dill_path: " << dynamic_dill_path << std::endl;
   return stream.str();
 }
 

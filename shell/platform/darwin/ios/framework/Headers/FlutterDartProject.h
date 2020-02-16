@@ -59,16 +59,19 @@ FLUTTER_EXPORT
  */
 - (instancetype)initFromDefaultSourceForConfiguration FLUTTER_UNAVAILABLE("Use -init instead.");
 
+// BD ADD:
+/**
+ * dynamic settings
+ */
+- (void)setDynamicDillPath:(NSString*)path;    // 动态App压缩包路径
+- (void)setDynamicEnginePath:(NSString*)path;  // 动态Engine文件夹路径
+// END
+
 /**
  * BD ADD:
  * @param enabled FlutterEngine释放以后是否保留dart vm，默认是YES
  */
 - (void)setLeakDartVMEnabled:(BOOL)enabled;
-
-/**
- * Register the delegate for dynamic flutter
- */
-+ (void)registerDynamicDelegate:(id<DynamicFlutterDelegate>)delegate;
 
 /**
  * Returns the file name for the given asset. If the bundle with the identifier

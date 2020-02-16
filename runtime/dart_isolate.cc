@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <tuple>
+#include <flutter/shell/common/isolate_configuration.h>
 
 #include "flutter/fml/paths.h"
 #include "flutter/fml/trace_event.h"
@@ -283,6 +284,42 @@ bool DartIsolate::LoadLibraries() {
   return true;
 }
 
+// BD ADD:
+bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> mapping) {
+  TRACE_EVENT0("flutter", "DartIsolate::PrepareForRunningFromPrecompiledCode");
+  if (phase_ != Phase::LibrariesSetup) {
+    return false;
+  }
+
+  tonic::DartState::Scope scope(this);
+
+  TT_LOG() << "LoadKernelFromDyanmicartKernel.";
+  LoadKernelFromDyanmicartKernel(mapping);
+
+  if (Dart_IsNull(Dart_RootLibrary())) {
+    return false;
+  }
+
+  if (!MarkIsolateRunnable()) {
+    return false;
+  }
+
+  if (child_isolate_preparer_ == nullptr) {
+    child_isolate_preparer_ = [buffers = kernel_buffers_](DartIsolate* isolate) {
+      for (unsigned long i = 0; i < buffers.size(); i++) {
+        const std::shared_ptr<const fml::Mapping>& buffer = buffers.at(i);
+        if (!isolate->PrepareForRunningFromDynamicartKernel(buffer)) {
+          return false;
+        }
+      }
+      return true;
+    };
+  }
+
+  phase_ = Phase::Ready;
+  return true;
+}
+
 bool DartIsolate::PrepareForRunningFromPrecompiledCode() {
   TRACE_EVENT0("flutter", "DartIsolate::PrepareForRunningFromPrecompiledCode");
   if (phase_ != Phase::LibrariesSetup) {
@@ -335,6 +372,44 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
   if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
     return false;
   }
+  return true;
+}
+
+
+// BD ADD: 暂时只支持一个DyanmicartKernel好啦，先跑起来再说
+bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping) {
+  if (!DartVM::IsRunningDynamicCode()) {
+    return false;
+  }
+
+  FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: start loading..." << std::endl;
+  kernel_buffers_.push_back(mapping);
+
+  if (!mapping || mapping->GetSize() == 0) {
+    FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is NULL." << std::endl;
+    return false;
+  }
+  if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
+    FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is Invalid." << std::endl;
+    return false;
+  }
+
+  Dart_SetRootLibrary(Dart_Null());
+
+  Dart_Handle library =
+      Dart_LoadLibraryFromKernel2(mapping->GetMapping(), mapping->GetSize());
+  if (tonic::LogIfError(library)) {
+    FML_LOG(ERROR)<<"Kernel load failed"<<std::endl;
+    return false;
+  }
+
+  if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
+    FML_LOG(ERROR)<<"Kernel FinalizeLoading failed"<<std::endl;
+    return false;
+  }
+
+  Dart_SetRootLibrary(library);
+  FML_LOG(ERROR)<<"Kernel load success"<<std::endl;
   return true;
 }
 
@@ -497,6 +572,8 @@ bool DartIsolate::Run(const std::string& entrypoint_name,
 
   tonic::DartState::Scope scope(this);
 
+
+  TT_LOG() << "DartIsolate::Run entrypoint_name=" << entrypoint_name;
   auto user_entrypoint_function =
       Dart_GetField(Dart_RootLibrary(), tonic::ToDart(entrypoint_name.c_str()));
 
@@ -507,7 +584,7 @@ bool DartIsolate::Run(const std::string& entrypoint_name,
   }
 
   phase_ = Phase::Running;
-  FML_DLOG(INFO) << "New isolate is in the running state.";
+  FML_LOG(ERROR) << "New isolate is in the running state.";
 
   if (on_run) {
     on_run();
@@ -528,6 +605,7 @@ bool DartIsolate::RunFromLibrary(const std::string& library_name,
 
   tonic::DartState::Scope scope(this);
 
+  TT_LOG() << "DartIsolate::RunFromLibrary library_name="<< library_name << " entrypoint_name=" << entrypoint_name;
   auto user_entrypoint_function =
       Dart_GetField(Dart_LookupLibrary(tonic::ToDart(library_name.c_str())),
                     tonic::ToDart(entrypoint_name.c_str()));

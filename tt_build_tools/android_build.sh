@@ -20,12 +20,13 @@ fi
 
 isFast=$2
 
+# 现在fast和非fast相同
 if [ $isFast = 'fast' ]; then
     platforms=('arm' 'arm64' 'x64' 'x86')
-    dynamics=('normal')
+    dynamics=('normal' 'dynamicart')
 else
     platforms=('arm' 'x64' 'x86' 'arm64')
-    dynamics=('normal' 'dynamic')
+    dynamics=('normal' 'dynamicart')
 fi
 
 tosDir=$(git rev-parse HEAD)
@@ -121,18 +122,23 @@ for liteMode in ${liteModes[@]}; do
                   platformPostFix=_${platform}
               fi
 
-              # dynamic只打非debug
-              if [ $dynamic = 'dynamic' ]; then
-                  if [ $mode = 'debug' ]; then
-                      continue
-                  fi
-                  ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamic $liteModeComdSuffix
-                  androidDir=out/android_dynamic_${mode}${platformPostFix}
-                  modeDir=$modeDir-dynamic
-              else
-                  ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform $liteModeComdSuffix
-                  androidDir=out/android_${mode}${platformPostFix}
-              fi
+            # dynamicart只打release
+            if [ $dynamic = 'dynamicart' ]; then
+                # dynamicart与lite互斥
+                if [ "$liteMode" != 'normal' ]; then
+                    continue
+                fi
+                if [ $mode = 'release' -o $mode = 'profile' ]; then
+                    ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamicart $liteModeComdSuffix
+                    androidDir=out/android_${mode}${platformPostFix}_dynamicart
+                    modeDir=$modeDir-dynamicart
+                else
+                    continue
+                fi
+            else
+                ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform $liteModeComdSuffix
+                androidDir=out/android_${mode}${platformPostFix}
+            fi
 
               if [ "$liteMode" != 'normal' ]; then
                   androidDir=${androidDir}_${liteMode}

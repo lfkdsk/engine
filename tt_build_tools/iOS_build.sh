@@ -47,10 +47,19 @@ function checkResult() {
 
 cd ..
 for liteMode in ${liteModes[@]}; do
-  for mode in 'debug' 'profile' 'release'; do
+  for mode in 'debug' 'profile' 'release' 'release_dynamicart' 'profile_dynamicart'; do
 #		hostDir=out/host_${mode}
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
+		real_mode=${mode%_dynamicart}
+		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
+		then
+            # dynamicart与lite互斥
+            if [ "$liteMode" != 'normal' ]; then
+                continue
+            fi
+		   iOSArmV7Dir=out/ios_${real_mode}_arm_dynamicart
+		fi
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
 
@@ -71,21 +80,35 @@ for liteMode in ${liteModes[@]}; do
 #		./flutter/tools/gn --runtime-mode=$mode
 #		ninja -C $hostDir -j $jcount
 
-    ./flutter/tools/gn --ios --runtime-mode=$mode $modeSuffix
-    ninja -C $iOSArm64Dir -j $jcount
-    checkResult
+		# 编译各种架构引擎
+        if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
+        then
+            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --dynamicart
+            ninja -C $iOSArm64Dir -j $jcount
+            checkResult
 
-    ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm $modeSuffix
-    ninja -C $iOSArmV7Dir -j $jcount
-    checkResult
+            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --ios-cpu=arm --dynamicart
+            ninja -C $iOSArmV7Dir -j $jcount
+            checkResult
+        else
+            ./flutter/tools/gn --ios --runtime-mode=$mode $modeSuffix
+            ninja -C $iOSArm64Dir -j $jcount
+            checkResult
+
+            ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm $modeSuffix
+            ninja -C $iOSArmV7Dir -j $jcount
+            checkResult
+        fi
 
     ./flutter/tools/gn --ios --runtime-mode=debug --simulator $modeSuffix
     ninja -C $iOSSimDir -j $jcount
     checkResult
 
+		# 多种引擎架构合成一个
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
 
-		if [ "$mode" == "release" ]
+		# release模式引擎裁剪符号表
+		if [ "$mode" == "release" -o "$mode" == "release_dynamicart" ]
 		then
 			echo "Generate dSYM"
 			cd $cacheDir
@@ -134,6 +157,9 @@ for liteMode in ${liteModes[@]}; do
 		elif [ "$mode" == "release" ]
 		then
 			modeDir=ios-release
+		elif [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
+		then
+			modeDir=ios-dynamicart-${real_mode}
 		else
 			modeDir=ios
 		fi
@@ -144,7 +170,7 @@ for liteMode in ${liteModes[@]}; do
 
 		bd_upload $cacheDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 
-		if [ "$mode" == "release" ]
+		if [ "$mode" == "release" -o "$mode" == "release_dynamicart" ]
 		then
 			bd_upload $cacheDir/Flutter.dSYM.zip flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
 			upload_dsym_to_slardar "${cacheDir}/Flutter.dSYM.zip"

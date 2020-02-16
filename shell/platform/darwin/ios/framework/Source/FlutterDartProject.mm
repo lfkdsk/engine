@@ -29,7 +29,6 @@ extern const intptr_t kPlatformStrongDillSize;
 #endif
 }
 
-static id<DynamicFlutterDelegate> dynamicDelegate;
 static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
 // BD ADD: START
 NSString* const FlutterCompressSizeModeErrorDomain = @"FlutterCompressSizeModeErrorDomain";
@@ -119,21 +118,6 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
     NSFileManager* fileManager = [NSFileManager defaultManager];
     NSString* assetsName = [FlutterDartProject flutterAssetsName:bundle];
     NSString* assetsPath = nil;
-    // check dynamic settings first
-    if (dynamicDelegate && [dynamicDelegate respondsToSelector:@selector(assetsPath)]) {
-      NSString* dynamicAssetsPath = [dynamicDelegate assetsPath];
-      if (dynamicAssetsPath && [dynamicAssetsPath isKindOfClass:[NSString class]]) {
-        BOOL isDirectory = NO;
-        BOOL isExist = [fileManager fileExistsAtPath:dynamicAssetsPath isDirectory:&isDirectory];
-        if (isDirectory && isExist) {
-          NSURL* kernelURL = [NSURL URLWithString:@(kApplicationKernelSnapshotFileName)
-                                    relativeToURL:[NSURL fileURLWithPath:dynamicAssetsPath]];
-          if ([fileManager fileExistsAtPath:kernelURL.path]) {
-            assetsPath = dynamicAssetsPath;
-          }
-        }
-      }
-    }
 
     if (!assetsPath || assetsPath.length == 0) {
       assetsPath = [bundle pathForResource:assetsName ofType:@""];
@@ -217,12 +201,6 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 }
 // END
 
-#pragma mark - Dynamic
-
-+ (void)registerDynamicDelegate:(id<DynamicFlutterDelegate>)delegate {
-  dynamicDelegate = delegate;
-}
-
 #pragma mark - Settings accessors
 
 - (const flutter::Settings&)settings {
@@ -249,6 +227,33 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   }
   return config;
 }
+
+// BD ADD: START
+- (void)setDynamicDillPath:(NSString*)path {
+  if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
+    return;
+  }
+  if (flutter::DartVM::IsRunningDynamicCode()) {
+    _settings.dynamic_dill_path = path.UTF8String;
+  }
+}
+
+- (void)setDynamicEnginePath:(NSString*)path {
+  if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
+    return;
+  }
+
+  if (flutter::DartVM::IsRunningDynamicCode()) {
+    _settings.icu_data_path = [path stringByAppendingPathComponent:@"icudtl.dat"].UTF8String;
+    _settings.assets_path = [path stringByAppendingPathComponent:@"flutter_assets"].UTF8String;
+    _settings.isolate_snapshot_data_path =
+        [path stringByAppendingPathComponent:@"isolate_snapshot_data"].UTF8String;
+    _settings.vm_snapshot_data_path =
+        [path stringByAppendingPathComponent:@"vm_snapshot_data"].UTF8String;
+  }
+}
+
+// END
 
 #pragma mark - Assets-related utilities
 

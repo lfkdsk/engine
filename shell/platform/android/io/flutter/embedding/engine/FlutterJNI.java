@@ -620,6 +620,14 @@ public class FlutterJNI {
   }
 
   private native void nativeNotifyLowMemory(long nativePlatformViewId);
+
+  @UiThread
+  public void updateNative(String assetsPath) {
+    ensureAttachedToNative();
+    nativeUpdateSettings(nativePlatformViewId, assetsPath);
+  }
+
+  private native void nativeUpdateSettings(long nativePlatformViewId, String assetsPath);
   // END
   /**
    * Executes a Dart entrypoint.

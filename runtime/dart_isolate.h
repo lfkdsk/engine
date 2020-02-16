@@ -228,6 +228,10 @@ class DartIsolate : public UIDartState {
   ///
   Phase GetPhase() const;
 
+  // BD ADD:
+  FML_WARN_UNUSED_RESULT
+  bool PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> kernel);
+
   //----------------------------------------------------------------------------
   /// @brief      Returns the ID for an isolate which is used to query the
   ///             service protocol.
@@ -410,6 +414,9 @@ class DartIsolate : public UIDartState {
 
  private:
   using ChildIsolatePreparer = std::function<bool(DartIsolate*)>;
+
+  // BD ADD:
+  bool LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping);
 
   class AutoFireClosure {
    public:

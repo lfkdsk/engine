@@ -346,10 +346,17 @@ static jlong AttachJNI(JNIEnv* env,
   }
 }
 
+// BD ADD:
+static void UpdateSettings(JNIEnv *env, jobject jcaller, jlong shell_holder, jstring dynamic_dill_path) {
+  // 每个Holder都拥有自己的Settings，需要设置不同的dynamic_dill_path
+  ANDROID_SHELL_HOLDER->UpdateSettings(fml::jni::JavaStringToString(env, dynamic_dill_path));
+}
+// END
+
 static void DestroyJNI(JNIEnv *env, jobject jcaller, jlong shell_holder) {
-    // BD MOD
-    // delete ANDROID_SHELL_HOLDER;
-    ANDROID_SHELL_HOLDER->ExitApp([holder = ANDROID_SHELL_HOLDER]() { delete holder; });
+  // BD MOD
+  // delete ANDROID_SHELL_HOLDER;
+  ANDROID_SHELL_HOLDER->ExitApp([holder = ANDROID_SHELL_HOLDER]() { delete holder; });
 }
 
 /**
@@ -385,6 +392,40 @@ static void SurfaceDestroyed(JNIEnv* env, jobject jcaller, jlong shell_holder) {
   ANDROID_SHELL_HOLDER->GetPlatformView()->NotifyDestroyed();
 }
 
+std::unique_ptr<IsolateConfiguration> CreateIsolateConfiguration(
+    const flutter::AssetManager& asset_manager) {
+  if (flutter::DartVM::IsRunningPrecompiledCode()) {
+    return IsolateConfiguration::CreateForAppSnapshot();
+  }
+
+  const auto configuration_from_blob =
+      [&asset_manager](const std::string& snapshot_name)
+      -> std::unique_ptr<IsolateConfiguration> {
+    auto blob = asset_manager.GetAsMapping(snapshot_name);
+    auto delta = asset_manager.GetAsMapping("kernel_delta.bin");
+    if (blob && delta) {
+      std::vector<std::unique_ptr<const fml::Mapping>> kernels;
+      kernels.emplace_back(std::move(blob));
+      kernels.emplace_back(std::move(delta));
+      return IsolateConfiguration::CreateForKernelList(std::move(kernels));
+    }
+    if (blob) {
+      return IsolateConfiguration::CreateForKernel(std::move(blob));
+    }
+    if (delta) {
+      return IsolateConfiguration::CreateForKernel(std::move(delta));
+    }
+    return nullptr;
+  };
+
+  if (auto kernel = configuration_from_blob("kernel_blob.bin")) {
+    return kernel;
+  }
+
+  // This happens when starting isolate directly from CoreJIT snapshot.
+  return IsolateConfiguration::CreateForAppSnapshot();
+}
+
 static void RunBundleAndSnapshotFromLibrary(JNIEnv* env,
                                             jobject jcaller,
                                             jlong shell_holder,
@@ -401,7 +442,13 @@ static void RunBundleAndSnapshotFromLibrary(JNIEnv* env,
   );
 
   std::unique_ptr<IsolateConfiguration> isolate_configuration;
-  if (flutter::DartVM::IsRunningPrecompiledCode()) {
+  // BD ADD: START
+  // Running in Dynamicart mode. 注意：仅Android调用
+  if (DartVM::IsRunningDynamicCode() && !ANDROID_SHELL_HOLDER->GetSettings().dynamic_dill_path.empty()) {
+    isolate_configuration = IsolateConfiguration::CreateForDynamicart(ANDROID_SHELL_HOLDER->GetSettings(), *asset_manager);
+  }
+  // END
+  else if (flutter::DartVM::IsRunningPrecompiledCode()) {
     isolate_configuration = IsolateConfiguration::CreateForAppSnapshot();
   } else {
     std::unique_ptr<fml::Mapping> kernel_blob =
@@ -742,6 +789,13 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(Lio/flutter/embedding/engine/FlutterJNI;Z)J",
           .fnPtr = reinterpret_cast<void*>(&AttachJNI),
       },
+      // BD ADD: START
+      {
+          .name = "nativeUpdateSettings",
+          .signature = "(JLjava/lang/String;)V",
+          .fnPtr = reinterpret_cast<void*>(&UpdateSettings),
+      },
+      // END
       {
           .name = "nativeDestroy",
           .signature = "(J)V",

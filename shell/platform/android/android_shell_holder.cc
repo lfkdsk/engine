@@ -191,6 +191,13 @@ void AndroidShellHolder::ExitApp(fml::closure closure) {
   shell_->ExitApp(std::move(closure));
 }
 
+void AndroidShellHolder::UpdateSettings(const std::string& dynamic_dill_path) {
+  if (!IsValid()) {
+    return;
+  }
+  settings_.dynamic_dill_path = dynamic_dill_path;
+}
+
 void AndroidShellHolder::NotifyLowMemory() {
   if (!IsValid()) {
     return;

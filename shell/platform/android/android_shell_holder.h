@@ -39,14 +39,20 @@ class AndroidShellHolder {
 
   void UpdateAssetManager(fml::RefPtr<flutter::AssetManager> asset_manager);
 
-  // BD ADD:START
+  // BD ADD: START
   void ExitApp(fml::closure closure);
+
+  void UpdateSettings(const std::string& dynamic_dill_path);
 
   void NotifyLowMemory();
   // END
 
  private:
-  const flutter::Settings settings_;
+  // BD MOD:
+  // BEFORE: const flutter::Settings settings_;
+  // UpdateSettings中需要对每个Holder设置动态化path所以不能是const
+  flutter::Settings settings_;
+  // END
   const fml::jni::JavaObjectWeakGlobalRef java_object_;
   fml::WeakPtr<PlatformViewAndroid> platform_view_;
   ThreadHost thread_host_;
