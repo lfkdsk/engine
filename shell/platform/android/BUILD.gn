@@ -8,6 +8,9 @@ import("$flutter_root/common/config.gni")
 import("$flutter_root/shell/config.gni")
 import("$flutter_root/shell/gpu/gpu.gni")
 import("$flutter_root/shell/version/version.gni")
+# BD ADD: START
+import("//third_party/dart/runtime/runtime_args.gni")
+# END
 
 shell_gpu_configuration("android_gpu_configuration") {
   enable_software = true
@@ -119,6 +122,8 @@ action("gen_android_build_config_java") {
 #embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
 if (enable_lite) {
     embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode" + "_lite"
+} else if(dynamicart){
+    embedding_artifact_id = "flutter_embedding_"+"dynamicart"+"_$flutter_runtime_mode"
 } else {
     embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
 }
@@ -365,6 +370,9 @@ action("android_jar") {
   if (enable_lite) {
     engine_artifact_id =
           string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+  } else if(dynamicart){
+    engine_artifact_id =
+              string_replace(android_app_abi, "-", "_") + "_dynamicart_" + flutter_runtime_mode
   } else {
     engine_artifact_id =
           string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
@@ -412,6 +420,9 @@ action("pom_libflutter") {
   if (enable_lite) {
     artifact_id =
               string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+  } else if(dynamicart){
+    artifact_id =
+            string_replace(android_app_abi, "-", "_") + "_dynamicart_" + flutter_runtime_mode
   } else {
     artifact_id =
           string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
@@ -443,6 +454,8 @@ action("pom_embedding") {
   # artifact_id = "flutter_embedding_$flutter_runtime_mode"
   if (enable_lite) {
     artifact_id = "flutter_embedding_${flutter_runtime_mode}_lite"
+  } else if(dynamicart){
+    artifact_id = "flutter_embedding_"+"dynamicart"+"_$flutter_runtime_mode"
   } else {
     artifact_id = "flutter_embedding_$flutter_runtime_mode"
   }
