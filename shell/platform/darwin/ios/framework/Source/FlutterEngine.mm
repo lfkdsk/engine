@@ -33,7 +33,7 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
 
 // BD MOD:
 // @interface FlutterEngine () <FlutterTextInputDelegate>
-@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessengerProvider>// Maintains a dictionary of plugin names that have registered with the engine.  Used by
+@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessengerProvider, FlutterBinaryMessenger>// Maintains a dictionary of plugin names that have registered with the engine.  Used by
 // FlutterEngineRegistrar to implement a FlutterPluginRegistrar.
 @property(nonatomic, readonly) NSMutableDictionary* pluginPublications;
 
@@ -50,7 +50,7 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
   flutter::ThreadHost _threadHost;
   std::unique_ptr<flutter::Shell> _shell;
   NSString* _labelPrefix;
-  std::unique_ptr<fml::WeakPtrFactory<FlutterEngine>> _weakFactory;
+  std::unique_ptr<fml::WeakPtrFactory<FlutterEngine> > _weakFactory;
   // BD ADD: START
   std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>
       _weakBinaryMessengerFactory;
