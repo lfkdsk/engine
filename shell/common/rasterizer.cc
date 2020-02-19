@@ -63,16 +63,10 @@ fml::WeakPtr<SnapshotDelegate> Rasterizer::GetSnapshotDelegate() const {
 
 void Rasterizer::Setup(std::unique_ptr<Surface> surface) {
   surface_ = std::move(surface);
-  // BD MOD: START
-  // if (max_cache_bytes_.has_value()) {
-  //   SetResourceCacheMaxBytes(max_cache_bytes_.value(),
-  //                            user_override_resource_cache_bytes_);
-  // }
-  if (max_cache_bytes_ > 0) {
-    SetResourceCacheMaxBytes(max_cache_bytes_,
+  if (max_cache_bytes_.has_value()) {
+    SetResourceCacheMaxBytes(max_cache_bytes_.value(),
                              user_override_resource_cache_bytes_);
   }
-  // END
   compositor_context_->OnGrContextCreated();
   if (surface_->GetExternalViewEmbedder()) {
     const auto platform_id =
@@ -289,8 +283,10 @@ RasterStatus Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
   compositor_context_->ui_time().SetLapTime(layer_tree.build_time());
   // BD ADD: START
   fml::TimeDelta construction_time = layer_tree.build_time();
-  int miss_count = (int) (construction_time.ToMillisecondsF() / delegate_.GetFrameBudget().count());
-  FpsRecorder::Current()->AddFrameCount(max(0, miss_count - 1), construction_time);
+  int miss_count = (int)(construction_time.ToMillisecondsF() /
+                         delegate_.GetFrameBudget().count());
+  FpsRecorder::Current()->AddFrameCount(max(0, miss_count - 1),
+                                        construction_time);
   // END
 
   auto* external_view_embedder = surface_->GetExternalViewEmbedder();

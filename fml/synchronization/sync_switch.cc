@@ -23,9 +23,7 @@ SyncSwitch::SyncSwitch() : SyncSwitch(false) {}
 SyncSwitch::SyncSwitch(bool value) : value_(value) {}
 
 void SyncSwitch::Execute(const SyncSwitch::Handlers& handlers) {
-  // BD MOD:
-  // std::scoped_lock guard(mutex_);
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::scoped_lock guard(mutex_);
   if (value_) {
     handlers.true_handler();
   } else {
@@ -34,9 +32,7 @@ void SyncSwitch::Execute(const SyncSwitch::Handlers& handlers) {
 }
 
 void SyncSwitch::SetSwitch(bool value) {
-  // BD MOD:
-  // std::scoped_lock guard(mutex_);
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::scoped_lock guard(mutex_);
   value_ = value;
 }
 

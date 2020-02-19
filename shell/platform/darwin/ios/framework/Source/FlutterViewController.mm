@@ -436,13 +436,6 @@ typedef enum UIAccessibilityContrast : NSInteger {
   if (!weak_platform_view) {
     return;
   }
-
-  // BD ADD: START
-  if (![_engine.get() platformTaskRunner]) {
-    return;
-  }
-  // END
-
   __unsafe_unretained auto weak_flutter_view_controller = self;
   // This is on the platform thread.
   weak_platform_view->SetNextFrameCallback([weak_platform_view, weak_flutter_view_controller,
@@ -976,11 +969,6 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 
 - (void)onAccessibilityStatusChanged:(NSNotification*)notification {
   auto platformView = [_engine.get() platformView];
-  // BD ADD: START
-  if (!platformView) {
-    return;
-  }
-  // END
   int32_t flags = 0;
   if (UIAccessibilityIsInvertColorsEnabled())
     flags |= static_cast<int32_t>(flutter::AccessibilityFeatureFlag::kInvertColors);
