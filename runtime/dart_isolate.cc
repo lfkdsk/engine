@@ -315,7 +315,9 @@ bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fm
       return true;
     };
   }
-
+    if (isolate_create_callback_) {
+        isolate_create_callback_();
+    }
   phase_ = Phase::Ready;
   return true;
 }
@@ -381,14 +383,15 @@ bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapp
   if (!DartVM::IsRunningDynamicCode()) {
     return false;
   }
+  if (!mapping || mapping->GetSize() == 0) {
+        FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is NULL." << std::endl;
+        return false;
+  }
 
   FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: start loading..." << std::endl;
   kernel_buffers_.push_back(mapping);
 
-  if (!mapping || mapping->GetSize() == 0) {
-    FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is NULL." << std::endl;
-    return false;
-  }
+
   if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
     FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is Invalid." << std::endl;
     return false;
@@ -403,12 +406,13 @@ bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapp
     return false;
   }
 
+  Dart_SetRootLibrary(library);
+
   if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
     FML_LOG(ERROR)<<"Kernel FinalizeLoading failed"<<std::endl;
     return false;
   }
 
-  Dart_SetRootLibrary(library);
   FML_LOG(ERROR)<<"Kernel load success"<<std::endl;
   return true;
 }

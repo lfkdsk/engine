@@ -7,6 +7,7 @@ package io.flutter.embedding.engine;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import java.util.*;
 
@@ -100,6 +101,13 @@ public class FlutterShellArgs {
     if (intent.hasExtra(ARG_KEY_DART_FLAGS)) {
       args.add(ARG_DART_FLAGS + "=" + intent.getStringExtra(ARG_KEY_DART_FLAGS));
     }
+
+    // BD ADD:
+    String path = intent.getStringExtra("dynamic_dill_path");
+    if (!TextUtils.isEmpty(path)){
+      args.add("--dynamic_dill_path="+path);
+    }
+    // END
 
     return new FlutterShellArgs(args);
   }
