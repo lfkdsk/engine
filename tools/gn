@@ -96,10 +96,15 @@ def to_gn_args(args):
     gn_args['enable_bitcode'] = args.bitcode
 
     # BD ADD: START
+    if args.enable_lite:
+        gn_args['lite_suffix'] = 'lite'
+    elif args.enable_lite_global:
+        gn_args['lite_suffix'] = 'liteg'
+    elif args.enable_lite_share_skia:
+        gn_args['lite_suffix'] = 'lites'
+
     if args.enable_lite or args.enable_lite_global or args.enable_lite_share_skia:
         print("enable lite mode.")
-        gn_args['enable_lite'] = args.enable_lite == 'true'
-        gn_args['enable_lite_global'] = args.enable_lite_global == 'true'
         gn_args['dart_disable_boringssl'] = True
         gn_args['dart_enable_opt_oz'] = True
         gn_args['skia_enable_ccpr'] = False

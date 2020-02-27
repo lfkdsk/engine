@@ -103,6 +103,10 @@ for liteMode in ${liteModes[@]}; do
   if [ ${liteMode} != 'normal' ]; then
       liteModeComdSuffix=--${liteMode}
   fi
+  if [ $liteMode == 'lites' ];then
+     echo 'lites is lite & share skia mode, now only for ios release !'
+     continue
+  fi
   for mode in 'debug' 'profile' 'release'; do
       for platform in ${platforms[@]}; do
           # x64和x86只打debug
