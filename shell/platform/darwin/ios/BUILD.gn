@@ -171,6 +171,11 @@ shared_library("create_flutter_framework_dylib") {
     "AudioToolbox.framework",
     "QuartzCore.framework",
   ]
+  # BD ADD:
+  if (is_skia_component_build) {
+    libs += ["CoreGraphics.framework",]
+  }
+  # END
 }
 
 copy("copy_dylib") {
@@ -187,6 +192,35 @@ copy("copy_dylib") {
     ":create_flutter_framework_dylib",
   ]
 }
+
+# BD ADD: START
+action("update_skia_framework_install_name") {
+  visibility = [ ":*" ]
+  stamp_file = "$root_out_dir/skia_install_name_stamp"
+  script = "$flutter_root/sky/tools/change_install_name.py"
+  inputs = [
+    "$_flutter_framework_dir/Flutter",
+  ]
+  outputs = [
+    stamp_file,
+  ]
+
+  args = [
+    "--dylib",
+    rebase_path("$_flutter_framework_dir/Flutter"),
+    "--old_install_name",
+    "./libskia.dylib",
+    "--install_name",
+    "@rpath/skialite.framework/skialite",
+    "--stamp",
+    rebase_path(stamp_file),
+  ]
+
+  deps = [
+    ":copy_dylib",
+  ]
+}
+# END
 
 action("copy_framework_info_plist") {
   script = "$flutter_root/build/copy_info_plist.py"
@@ -315,4 +349,9 @@ group("flutter_framework") {
     ":copy_framework_podspec",
     ":copy_license",
   ]
+  # BD ADD: START
+  if (is_skia_component_build) {
+    deps += [":update_skia_framework_install_name"]
+  }
+  # END
 }
