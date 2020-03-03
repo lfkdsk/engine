@@ -307,6 +307,10 @@ void GetNativeImage(Dart_NativeArguments args) {
   fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
   std::shared_ptr<flutter::ImageLoader> imageLoader =
       io_manager.get()->GetImageLoader();
+  if (!imageLoader) {
+    TT_LOG() << "ImageLoader is Null!";
+    return;
+  }
   imageLoader->Load(
       url, width, height, scale, dart_state,
       fml::MakeCopyable([context = dart_state->GetResourceContext(),
