@@ -62,7 +62,8 @@ IMPLEMENT_WRAPPERTYPEINFO(ui, Canvas);
   V(Canvas, drawPoints)             \
   V(Canvas, drawVertices)           \
   V(Canvas, drawAtlas)              \
-  V(Canvas, drawShadow)
+  V(Canvas, drawShadow)             \
+  V(Canvas, isSkewOrRotate)
 
 FOR_EACH_BINDING(DART_NATIVE_CALLBACK)
 
@@ -439,5 +440,11 @@ void Canvas::Clear() {
 bool Canvas::IsRecording() const {
   return !!canvas_;
 }
+
+// BD ADD: START
+bool Canvas::isSkewOrRotate() {
+  return canvas_ ? canvas_->isSkewOrRotate() : false;
+}
+// END
 
 }  // namespace flutter
