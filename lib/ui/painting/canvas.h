@@ -167,6 +167,8 @@ class Canvas : public RefCountedDartWrappable<Canvas> {
   SkCanvas* canvas() const { return canvas_; }
   void Clear();
   bool IsRecording() const;
+  // BD ADD:
+  bool isSkewOrRotate();
 
   // BD ADD:
   void ensureAntiAlias(const Paint* paint) const;

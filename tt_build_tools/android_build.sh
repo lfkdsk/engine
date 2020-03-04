@@ -104,6 +104,10 @@ for liteMode in ${liteModes[@]}; do
   if [ ${liteMode} != 'normal' ]; then
       liteModeComdSuffix=--${liteMode}
   fi
+  if [ $liteMode == 'lites' ];then
+     echo 'lites is lite & share skia mode, now only for ios release !'
+     continue
+  fi
   for mode in 'debug' 'profile' 'release'; do
       for platform in ${platforms[@]}; do
           # x64和x86只打debug
@@ -192,11 +196,11 @@ for liteMode in ${liteModes[@]}; do
               mapPlatform $platform
               echo $platformResult
               if [ $liteMode != 'normal' ]; then
-                bd_upload $androidDir/${platformResult}_${mode}_lite.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_lite/1.0.0-${tosDir}/${platformResult}_${mode}_lite-1.0.0-${tosDir}.jar
-                bd_upload $androidDir/${platformResult}_${mode}_lite.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_lite/1.0.0-${tosDir}/${platformResult}_${mode}_lite-1.0.0-${tosDir}.pom
+                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.jar
+                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.pom
                 if [ $platform = 'arm' ]; then
-                    bd_upload $androidDir/flutter_embedding_${mode}_lite.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_lite/1.0.0-${tosDir}/flutter_embedding_${mode}_lite-1.0.0-${tosDir}.jar
-                    bd_upload $androidDir/flutter_embedding_${mode}_lite.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_lite/1.0.0-${tosDir}/flutter_embedding_${mode}_lite-1.0.0-${tosDir}.pom
+                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.jar
+                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.pom
                 fi
               elif [ $dynamic = 'dynamicart' ]; then
                 bd_upload $androidDir/${platformResult}_dynamicart_${mode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_dynamicart_${mode}/1.0.0-${tosDir}/${platformResult}_dynamicart_${mode}-1.0.0-${tosDir}.jar

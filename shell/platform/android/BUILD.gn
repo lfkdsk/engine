@@ -120,8 +120,8 @@ action("gen_android_build_config_java") {
 
 # BD MOD: START
 #embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode"
-if (enable_lite) {
-    embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode" + "_lite"
+if (lite_suffix != "") {
+    embedding_artifact_id = "flutter_embedding_$flutter_runtime_mode" + "_$lite_suffix"
 } else if(dynamicart){
     embedding_artifact_id = "flutter_embedding_"+"dynamicart"+"_$flutter_runtime_mode"
 } else {
@@ -313,14 +313,11 @@ action("flutter_shell_java") {
 action("icudtl_object") {
   script = "$flutter_root/sky/tools/objcopy.py"
 
-  # BD MOD: START
-  # icudtl_input = "//third_party/icu/flutter/${icu_data_name}"
-  icu_data_name = "icudtl.dat"
+  icudtl_input = "//third_party/icu/flutter/icudtl.dat"
+  # BD ADD:
   if (icu_use_lite_data_file) {
-    icu_data_origin_name = icu_data_name
-    icu_data_name = "icudtl_lite.dat"
+    icudtl_input = "//third_party/icu/flutter_lite/icudtl.dat"
   }
-  icudtl_input = "//third_party/icu/flutter/${icu_data_name}"
   # END
 
   icudtl_output = "$root_build_dir/flutter_icu/icudtl.o"
@@ -343,11 +340,6 @@ action("icudtl_object") {
     "--arch",
     current_cpu,
   ]
-  # BD ADD: START
-  if (icu_use_lite_data_file) {
-    args += ["--input_name", icu_data_origin_name]
-  }
-  # END
 }
 
 action("android_jar") {
@@ -367,9 +359,9 @@ action("android_jar") {
   # BD MOD: START
   # engine_artifact_id =
   #       string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
-  if (enable_lite) {
+  if (lite_suffix != "") {
     engine_artifact_id =
-          string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+          string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_$lite_suffix"
   } else if(dynamicart){
     engine_artifact_id =
               string_replace(android_app_abi, "-", "_") + "_dynamicart_" + flutter_runtime_mode
@@ -417,9 +409,9 @@ action("pom_libflutter") {
   # BD MOD: START
   #artifact_id =
   #    string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode
-  if (enable_lite) {
+  if (lite_suffix != "") {
     artifact_id =
-              string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_lite"
+              string_replace(android_app_abi, "-", "_") + "_" + flutter_runtime_mode + "_$lite_suffix"
   } else if(dynamicart){
     artifact_id =
             string_replace(android_app_abi, "-", "_") + "_dynamicart_" + flutter_runtime_mode
@@ -452,8 +444,8 @@ action("pom_embedding") {
 
   # BD MOD: START
   # artifact_id = "flutter_embedding_$flutter_runtime_mode"
-  if (enable_lite) {
-    artifact_id = "flutter_embedding_${flutter_runtime_mode}_lite"
+  if (lite_suffix != "") {
+    artifact_id = "flutter_embedding_${flutter_runtime_mode}_$lite_suffix"
   } else if(dynamicart){
     artifact_id = "flutter_embedding_"+"dynamicart"+"_$flutter_runtime_mode"
   } else {

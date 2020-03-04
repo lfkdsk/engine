@@ -41,7 +41,9 @@ source_set("framework_shared") {
     "framework/Source/FlutterStandardCodec_Internal.h",
   ]
 
-  public = framework_shared_headers
+  # BD MOD:
+  # public = framework_shared_headers
+  public = framework_shared_headers + get_path_info(["framework/Source/FlutterBinaryMessengerProvider.h"], "abspath")
 
   defines = [ "FLUTTER_FRAMEWORK" ]
 

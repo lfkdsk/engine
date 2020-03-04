@@ -1,10 +1,12 @@
 package io.flutter.view;
 
+import android.support.annotation.Keep;
 import io.flutter.view.NativeLoadCallback;
 
 /**
  * BD ADD: android image loader
  */
+@Keep
 public class AndroidImageLoader {
   /**
    * Interface for those objects that load a image

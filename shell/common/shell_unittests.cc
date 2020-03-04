@@ -121,15 +121,15 @@ TEST_F(ShellTest,
                            thread_host.gpu_thread->GetTaskRunner(),
                            thread_host.ui_thread->GetTaskRunner(),
                            thread_host.io_thread->GetTaskRunner());
-  auto shell = Shell::Create(
-      std::move(task_runners), settings,
-      [](Shell& shell) {
-        return std::make_unique<ShellTestPlatformView>(shell,
-                                                       shell.GetTaskRunners());
-      },
-      [](Shell& shell) {
-        return std::make_unique<Rasterizer>(shell, shell.GetTaskRunners());
-      });
+  auto shell = Shell::Create(std::move(task_runners), settings,
+                             [](Shell& shell) {
+                               return std::make_unique<ShellTestPlatformView>(
+                                   shell, shell.GetTaskRunners());
+                             },
+                             [](Shell& shell) {
+                               return std::make_unique<Rasterizer>(
+                                   shell, shell.GetTaskRunners());
+                             });
   ASSERT_TRUE(ValidateShell(shell.get()));
   ASSERT_TRUE(DartVMRef::IsInstanceRunning());
   DestroyShell(std::move(shell), std::move(task_runners));
@@ -976,8 +976,14 @@ TEST_F(ShellTest, Screenshot) {
     recording_canvas->drawRect(SkRect::MakeXYWH(0, 0, 80, 80),
                                SkPaint(SkColor4f::FromColor(SK_ColorRED)));
     auto sk_picture = recorder.finishRecordingAsPicture();
+    // BD MOD: START
+    // fml::RefPtr<SkiaUnrefQueue> queue = fml::MakeRefCounted<SkiaUnrefQueue>(
+    //   this->GetCurrentTaskRunner(), fml::TimeDelta::FromSeconds(0));
+    sk_sp<GrContext> resource_context;
     fml::RefPtr<SkiaUnrefQueue> queue = fml::MakeRefCounted<SkiaUnrefQueue>(
-        this->GetCurrentTaskRunner(), fml::TimeDelta::FromSeconds(0));
+        this->GetCurrentTaskRunner(), fml::TimeDelta::FromSeconds(0),
+        resource_context);
+    // END
     auto picture_layer = std::make_shared<PictureLayer>(
         SkPoint::Make(10, 10),
         flutter::SkiaGPUObject<SkPicture>({sk_picture, queue}), false, false);

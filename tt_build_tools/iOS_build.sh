@@ -48,6 +48,10 @@ function checkResult() {
 cd ..
 for liteMode in ${liteModes[@]}; do
   for mode in 'debug' 'profile' 'release' 'release_dynamicart' 'profile_dynamicart'; do
+    if [ $liteMode == 'lites' -a $mode != 'release' ];then
+       echo 'lites is lite & share skia mode, now only for ios release !'
+       continue
+    fi
 #		hostDir=out/host_${mode}
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm

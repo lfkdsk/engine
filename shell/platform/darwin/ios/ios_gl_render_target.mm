@@ -62,10 +62,7 @@ IOSGLRenderTarget::IOSGLRenderTarget(fml::scoped_nsobject<CAEAGLLayer> layer,
 }
 
 IOSGLRenderTarget::~IOSGLRenderTarget() {
-  // BD ADD: QiuXinyue
-  EAGLContext* lastContext = [EAGLContext currentContext];
-  // END
-
+  EAGLContext* context = EAGLContext.currentContext;
   [EAGLContext setCurrentContext:context_];
   FML_DCHECK(glGetError() == GL_NO_ERROR);
 
@@ -74,14 +71,7 @@ IOSGLRenderTarget::~IOSGLRenderTarget() {
   glDeleteRenderbuffers(1, &colorbuffer_);
 
   FML_DCHECK(glGetError() == GL_NO_ERROR);
-
-  // BD ADD: QiuXinyue
-  if (lastContext == context_) {
-    [EAGLContext setCurrentContext:nil];
-  } else {
-    [EAGLContext setCurrentContext:lastContext];
-  }
-  // END
+  [EAGLContext setCurrentContext:context];
 }
 
 bool IOSGLRenderTarget::IsValid() const {

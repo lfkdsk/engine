@@ -1,10 +1,12 @@
 package io.flutter.view;
 
 import android.graphics.Bitmap;
+import android.support.annotation.Keep;
 
 /**
  * BD ADD: Interface for image load callback
  */
+@Keep
 public class NativeLoadCallback {
 
     public native void nativeSuccessCallback(String key, Bitmap bitmap);

@@ -12,7 +12,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterViewController.h"
 #include "flutter/shell/platform/darwin/ios/framework/Source/FlutterPlatformViews_Internal.h"
 // BD ADD:
-#import "flutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
+#include "flutter/shell/platform/darwin/common/framework/Source/FlutterBinaryMessengerProvider.h"
 
 FLUTTER_EXPORT
 extern NSNotificationName const FlutterViewControllerWillDealloc;

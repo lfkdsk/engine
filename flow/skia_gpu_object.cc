@@ -9,10 +9,14 @@
 namespace flutter {
 
 SkiaUnrefQueue::SkiaUnrefQueue(fml::RefPtr<fml::TaskRunner> task_runner,
-                               fml::TimeDelta delay)
+                               fml::TimeDelta delay,
+                               // BD ADD:
+                               sk_sp<GrContext>& resource_context)
     : task_runner_(std::move(task_runner)),
       drain_delay_(delay),
-      drain_pending_(false) {}
+      drain_pending_(false),
+      // BD ADD:
+      resource_context_(sk_sp<GrContext>(resource_context)) {}
 
 SkiaUnrefQueue::~SkiaUnrefQueue() {
   FML_DCHECK(objects_.empty());
@@ -40,5 +44,11 @@ void SkiaUnrefQueue::Drain() {
     skia_object->unref();
   }
 }
+
+// BD ADD: START
+void SkiaUnrefQueue::UpdateResourceContext(sk_sp<GrContext>& resource_context) {
+  resource_context_ = sk_sp<GrContext>(resource_context);
+}
+// END
 
 }  // namespace flutter

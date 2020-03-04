@@ -188,6 +188,7 @@ struct Settings {
   // BD ADD: START
   std::string zip_assets_file_path;
   std::string zip_assets_directory;
+  bool high_qos = false;
   // END
 
   // This data will be available to the isolate immediately on launch via the

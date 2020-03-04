@@ -127,13 +127,16 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
                  name:UIApplicationWillResignActiveNotification
                object:nil];
 
+  // BD ADD:
+  _isGpuDisabled = ([UIApplication sharedApplication].applicationState != UIApplicationStateActive);
+
   return self;
 }
 
 - (void)dealloc {
   [_pluginPublications release];
-    _binaryMessenger.parent = nil;
-    [_binaryMessenger release];
+  _binaryMessenger.parent = nil;
+  [_binaryMessenger release];
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
   if (_flutterViewControllerWillDeallocObserver) {
@@ -170,38 +173,17 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
 
 - (fml::WeakPtr<flutter::PlatformView>)platformView {
   FML_DCHECK(_shell);
-  // BD MOD: START
-  // return _shell->GetPlatformView();
-  if (_shell != nullptr) {
-    return _shell->GetPlatformView();
-  } else {
-    return fml::WeakPtr<flutter::PlatformView>();
-  }
-  // END
+  return _shell->GetPlatformView();
 }
 
 - (flutter::PlatformViewIOS*)iosPlatformView {
   FML_DCHECK(_shell);
-  // BD MOD: START
-  // return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
-  if (_shell != nullptr) {
-    return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
-  } else {
-    return nullptr;
-  }
-  // END
+  return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
 }
 
 - (fml::RefPtr<fml::TaskRunner>)platformTaskRunner {
   FML_DCHECK(_shell);
-  // BD MOD: START
-  // return _shell->GetTaskRunners().GetPlatformTaskRunner();
-  if (_shell != nullptr) {
-    return _shell->GetTaskRunners().GetPlatformTaskRunner();
-  } else {
-    return nullptr;
-  }
-  // END
+  return _shell->GetTaskRunners().GetPlatformTaskRunner();
 }
 
 - (fml::RefPtr<fml::TaskRunner>)GPUTaskRunner {
@@ -210,11 +192,6 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
 }
 
 - (void)ensureSemanticsEnabled {
-  // BD ADD: START
-  if (self.iosPlatformView == nullptr) {
-    return;
-  }
-  // END
   self.iosPlatformView->SetSemanticsEnabled(true);
 }
 
@@ -273,9 +250,9 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
   _shell->ExitApp([scoped_engine = fml::scoped_nsobject<FlutterEngine>([self retain])] {
     [scoped_engine.get() resetChannels];
     scoped_engine.get().isolateId = nil;
-    scoped_engine.get()->_platformViewsController.reset();
     scoped_engine.get()->_shell.reset();
     scoped_engine.get()->_threadHost.Reset();
+    scoped_engine.get()->_platformViewsController.reset();
   });
   // END
 }
@@ -404,25 +381,13 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
     [_textInputChannel.get() setMethodCallHandler:^(FlutterMethodCall* call, FlutterResult result) {
       [_textInputPlugin.get() handleMethodCall:call result:result];
     }];
-    // BD MOD: START
-    // self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
-    if (self.iosPlatformView != nullptr) {
-      self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
-    }
-    // END
+    self.iosPlatformView->SetTextInputPlugin(_textInputPlugin);
   }
 }
 
 - (flutter::Rasterizer::Screenshot)screenshot:(flutter::Rasterizer::ScreenshotType)type
                                  base64Encode:(bool)base64Encode {
-  // BD MOD: START
-  // return self.shell.Screenshot(type, base64Encode);
-  if (_shell != nullptr) {
-    return self.shell.Screenshot(type, base64Encode);
-  } else {
-    return flutter::Rasterizer::Screenshot();
-  }
-  // END
+  return self.shell.Screenshot(type, base64Encode);
 }
 
 - (void)launchEngine:(NSString*)entrypoint libraryURI:(NSString*)libraryOrNil {
@@ -475,6 +440,7 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
       [](flutter::Shell& shell) {
         return std::make_unique<flutter::Rasterizer>(shell, shell.GetTaskRunners());
       };
+
   if (flutter::IsIosEmbeddedViewsPreviewEnabled()) {
     // Embedded views requires the gpu and the platform views to be the same.
     // The plan is to eventually dynamically merge the threads when there's a
@@ -490,6 +456,10 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
                                       _threadHost.ui_thread->GetTaskRunner(),          // ui
                                       _threadHost.io_thread->GetTaskRunner()           // io
     );
+
+    // BD ADD:
+    [self setupQualityOfService:task_runners];
+
     // Create the shell. This is a blocking operation.
     _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
                                     std::move(settings),      // settings
@@ -503,6 +473,10 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
                                       _threadHost.ui_thread->GetTaskRunner(),          // ui
                                       _threadHost.io_thread->GetTaskRunner()           // io
     );
+
+    // BD ADD:
+    [self setupQualityOfService:task_runners];
+
     // Create the shell. This is a blocking operation.
     _shell = flutter::Shell::Create(std::move(task_runners),  // task runners
                                     std::move(settings),      // settings
@@ -512,12 +486,8 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
   }
 
   if (_shell == nullptr) {
-    // BD MOD: START
-    // FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
-    //                   << entrypoint.UTF8String;
     FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
-                   << (entrypoint != nil ? entrypoint.UTF8String : "");
-    // END
+                   << entrypoint.UTF8String;
   } else {
     [self setupChannels];
     if (!_platformViewsController) {
@@ -623,14 +593,7 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
 - (flutter::Rasterizer::Screenshot)takeScreenshot:(flutter::Rasterizer::ScreenshotType)type
                                   asBase64Encoded:(BOOL)base64Encode {
   FML_DCHECK(_shell) << "Cannot takeScreenshot without a shell";
-  // BD MOD: START
-  // return _shell->Screenshot(type, base64Encode);
-  if (_shell != nullptr) {
-    return _shell->Screenshot(type, base64Encode);
-  } else {
-    return flutter::Rasterizer::Screenshot();
-  }
-  // END
+  return _shell->Screenshot(type, base64Encode);
 }
 
 - (NSObject<FlutterBinaryMessenger>*)binaryMessenger {
@@ -676,30 +639,15 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
 
 - (int64_t)registerTexture:(NSObject<FlutterTexture>*)texture {
   int64_t textureId = _nextTextureId++;
-  // BD MOD: START
-  // self.iosPlatformView->RegisterExternalTexture(textureId, texture);
-  if (self.iosPlatformView != nullptr) {
-    self.iosPlatformView->RegisterExternalTexture(textureId, texture);
-  }
-  // END
+  self.iosPlatformView->RegisterExternalTexture(textureId, texture);
   return textureId;
 }
 
 - (void)unregisterTexture:(int64_t)textureId {
-  // BD ADD: START
-  if (_shell == nullptr) {
-    return;
-  }
-  // END
   _shell->GetPlatformView()->UnregisterTexture(textureId);
 }
 
 - (void)textureFrameAvailable:(int64_t)textureId {
-  // BD ADD: START
-  if (_shell == nullptr) {
-    return;
-  }
-  // END
   _shell->GetPlatformView()->MarkTextureFrameAvailable(textureId);
 }
 
@@ -776,13 +724,28 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
   // END
 }
 
-
 - (void)setIsGpuDisabled:(BOOL)value {
   if (_shell) {
     _shell->GetIsGpuDisabledSyncSwitch()->SetSwitch(value ? true : false);
   }
   _isGpuDisabled = value;
 }
+
+// BD ADD: START
+- (void)setupQualityOfService:(flutter::TaskRunners&)task_runners {
+  auto settings = [_dartProject.get() settings];
+
+  if (!settings.high_qos) {
+    return;
+  }
+
+  task_runners.GetUITaskRunner()->PostTask(
+      [] { pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0); });
+
+  task_runners.GetGPUTaskRunner()->PostTask(
+      [] { pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0); });
+}
+// END
 
 @end
 

@@ -24,9 +24,9 @@ vars = {
   # BD ADD: START
   'tt_dart_git': 'ssh://git@code.byted.org/tech_client/dart',
   'tt_icu_git': 'ssh://git@code.byted.org/tech_client/icu',
-  'tt_icu_revision': 'd7a5950de1b5d876338f21f3eaaa8094556c6323',
+  'tt_icu_revision': 'f7fe0f4be025b410035ea17c28ef843d52e1aaa7',
   'tt_harfbuzz_git': 'ssh://git@code.byted.org/tech_client/harfbuzz',
-  'tt_harfbuzz_revision': 'aed2b6829edca0bdaf3c07662c82464e269110a8',
+  'tt_harfbuzz_revision': 'dd664b3c35d25e06729c24479592fc9dcffb1cb7',
   # END
   'fuchsia_git': 'https://fuchsia.googlesource.com',
   'github_git': 'https://github.com',
@@ -34,9 +34,9 @@ vars = {
   'ocmock_git': 'https://github.com/erikdoe/ocmock.git',
   # BD MOD: START
   # 'skia_git': 'https://skia.googlesource.com',
-  # 'skia_revision': 'c3ff97a98b74554854b5822797c6b7b431f4d8d2',
+  # 'skia_revision': 'a640745ce52ea6ac9c1b958f40c1d28c98ad16fc',
   'skia_git': 'git@code.byted.org:tech_client',
-  'skia_revision': 'e2254ca3fb6fc33477afa5af7148e6a358c189a2',
+  'skia_revision': '8bdea9800ece360c213a3e721949c92a00f7b97f',
   # END
 
   # When updating the Dart revision, ensure that all entries that are
@@ -152,7 +152,7 @@ allowed_hosts = [
 deps = {
    # BD MOD: YuShijia
    # 'src': 'https://github.com/flutter/buildroot.git' + '@' + 'db6869d0d1c3eed7c065c60a566aa063fbcb5b45',
-  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + '8d7b874130c9461d6491bb21189ab5df1a8d781e',
+  'src': 'ssh://git@code.byted.org/tech_client/buildroot' + '@' + '4a09909c4e6c00938fcf9321504592d92b24a20f',
 
    # Fuchsia compatibility
    #
