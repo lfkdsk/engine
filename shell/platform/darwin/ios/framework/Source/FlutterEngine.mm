@@ -27,13 +27,12 @@
 #import "flutter/shell/platform/darwin/ios/ios_surface.h"
 #import "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 // BD ADD:
-#import "flutter/shell/platform/darwin/common/framework/Source/FlutterBinaryMessengerProvider.h"
 
 NSString* const FlutterDefaultDartEntrypoint = nil;
 
 // BD MOD:
 // @interface FlutterEngine () <FlutterTextInputDelegate>
-@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessengerProvider, FlutterBinaryMessenger>// Maintains a dictionary of plugin names that have registered with the engine.  Used by
+@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger>// Maintains a dictionary of plugin names that have registered with the engine.  Used by
 // FlutterEngineRegistrar to implement a FlutterPluginRegistrar.
 @property(nonatomic, readonly) NSMutableDictionary* pluginPublications;
 
