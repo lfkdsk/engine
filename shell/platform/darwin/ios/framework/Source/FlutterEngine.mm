@@ -29,8 +29,6 @@
 #import "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 #include "flutter/shell/platform/darwin/ios/rendering_api_selection.h"
 #include "flutter/shell/profiling/sampling_profiler.h"
-// BD ADD:
-#include "flutter/bdflutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
 
 NSString* const FlutterDefaultDartEntrypoint = nil;
 static constexpr int kNumProfilerSamplesPerSec = 5;
@@ -40,9 +38,7 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 - (instancetype)initWithPlugin:(NSString*)pluginKey flutterEngine:(FlutterEngine*)flutterEngine;
 @end
 
-// BD MOD:
-// @interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger>
-@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger, FlutterBinaryMessengerProvider>
+@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger>
 // Maintains a dictionary of plugin names that have registered with the engine.  Used by
 // FlutterEngineRegistrar to implement a FlutterPluginRegistrar.
 @property(nonatomic, readonly) NSMutableDictionary* pluginPublications;
@@ -544,8 +540,7 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
     threadHostType = threadHostType | flutter::ThreadHost::Type::Profiler;
   }
   _threadHost = {threadLabel.UTF8String,  // label
-                 flutter::ThreadHost::Type::UI | flutter::ThreadHost::Type::GPU |
-                     flutter::ThreadHost::Type::IO};
+                 threadHostType};
 
   // Lambda captures by pointers to ObjC objects are fine here because the
   // create call is
