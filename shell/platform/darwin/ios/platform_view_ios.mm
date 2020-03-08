@@ -29,7 +29,13 @@ PlatformViewIOS::PlatformViewIOS(PlatformView::Delegate& delegate,
 #endif  // !TARGET_IPHONE_SIMULATOR
 }
 
-PlatformViewIOS::~PlatformViewIOS() = default;
+PlatformViewIOS::~PlatformViewIOS() {
+  // BD ADD: START
+  if (gl_context_) {
+    gl_context_->MakeCurrent();
+  }
+  // END
+}
 
 PlatformMessageRouter& PlatformViewIOS::GetPlatformMessageRouter() {
   return platform_message_router_;
@@ -93,7 +99,7 @@ void PlatformViewIOS::RegisterExternalTexture(int64_t texture_id,
                                               NSObject<FlutterTexture>* texture) {
   RegisterTexture(std::make_shared<IOSExternalTextureGL>(texture_id, texture));
 }
-  
+
 /**
  * BD ADD:
  *
