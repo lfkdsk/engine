@@ -53,7 +53,13 @@ PlatformViewIOS::PlatformViewIOS(PlatformView::Delegate& delegate,
       ios_context_(IOSContext::Create(rendering_api)),
       accessibility_bridge_([this](bool enabled) { PlatformView::SetSemanticsEnabled(enabled); }) {}
 
-PlatformViewIOS::~PlatformViewIOS() = default;
+PlatformViewIOS::~PlatformViewIOS() {
+  // BD ADD: START
+  if (ios_context_) {
+    ios_context_->MakeCurrent();
+  }
+  // END
+}
 
 PlatformMessageRouter& PlatformViewIOS::GetPlatformMessageRouter() {
   return platform_message_router_;
@@ -126,7 +132,7 @@ void PlatformViewIOS::RegisterExternalTexture(int64_t texture_id,
   RegisterTexture(ios_context_->CreateExternalTexture(
       texture_id, fml::scoped_nsobject<NSObject<FlutterTexture>>{[texture retain]}));
 }
-  
+
 /**
  * BD ADD:
  *
