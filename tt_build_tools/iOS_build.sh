@@ -47,14 +47,19 @@ function checkResult() {
 
 cd ..
 for liteMode in ${liteModes[@]}; do
-  for mode in 'debug' 'profile' 'release' 'release_dynamicart' 'profile_dynamicart'; do
-#		hostDir=out/host_${mode}
+	for mode in 'debug' 'profile' 'release' 'release_dynamicart' 'profile_dynamicart'; do
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
 		real_mode=${mode%_dynamicart}
-		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
-		then
-            # dynamicart与lite互斥
+		echo "iOS build mode = ${mode} liteMode = ${liteMode}"
+
+		if [ $liteMode == 'lites' -a $mode != 'release' ];then
+       		echo 'lites is lite & share skia mode, now only for ios release !'
+       		continue
+    	fi
+
+    	# dynamicart与lite互斥
+		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]; then
             if [ "$liteMode" != 'normal' ]; then
                 continue
             fi
@@ -62,15 +67,16 @@ for liteMode in ${liteModes[@]}; do
 		fi
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
+		echo "iOS build start mode = ${mode} liteMode = ${liteMode}"
 
-    modeSuffix=''
+    	modeSuffix=''
 		if [ "$liteMode" != "normal" ]; then
-        iOSArm64Dir=${iOSArm64Dir}_${liteMode}
-        iOSArmV7Dir=${iOSArmV7Dir}_${liteMode}
-        iOSSimDir=${iOSSimDir}_${liteMode}
-        cacheDir=${cacheDir}_${liteMode}
-        modeSuffix=--${liteMode}
-    fi
+        	iOSArm64Dir=${iOSArm64Dir}_${liteMode}
+        	iOSArmV7Dir=${iOSArmV7Dir}_${liteMode}
+        	iOSSimDir=${iOSSimDir}_${liteMode}
+        	cacheDir=${cacheDir}_${liteMode}
+        	modeSuffix=--${liteMode}
+    	fi
 
 		dSYMInfoPlist=flutter/tt_build_tools/Info.plist
 
@@ -100,9 +106,9 @@ for liteMode in ${liteModes[@]}; do
             checkResult
         fi
 
-    ./flutter/tools/gn --ios --runtime-mode=debug --simulator $modeSuffix
-    ninja -C $iOSSimDir -j $jcount
-    checkResult
+	    ./flutter/tools/gn --ios --runtime-mode=debug --simulator $modeSuffix
+	    ninja -C $iOSSimDir -j $jcount
+	    checkResult
 
 		# 多种引擎架构合成一个
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
@@ -165,8 +171,8 @@ for liteMode in ${liteModes[@]}; do
 		fi
 
 		if [ "$liteMode" != "normal" ]; then
-        modeDir=${modeDir}-${liteMode}
-    fi
+        	modeDir=${modeDir}-${liteMode}
+    	fi
 
 		bd_upload $cacheDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 
@@ -175,5 +181,6 @@ for liteMode in ${liteModes[@]}; do
 			bd_upload $cacheDir/Flutter.dSYM.zip flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
 			upload_dsym_to_slardar "${cacheDir}/Flutter.dSYM.zip"
 		fi
+		echo "iOS build success mode = ${mode} liteMode = ${liteMode}"
 	done
 done
