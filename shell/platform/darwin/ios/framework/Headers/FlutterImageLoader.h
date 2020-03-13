@@ -21,6 +21,7 @@ FLUTTER_EXPORT
 @protocol FlutterImageLoader <NSObject>
 typedef void(^callback)(IOSImageInfo);
 - (void)loadImage:(NSString*)url complete:(callback)complete;
+- (void)loadImage:(NSString*)url width:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale complete:(callback)complete;
 @end
 
 FLUTTER_EXPORT
