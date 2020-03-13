@@ -20,7 +20,7 @@ namespace flutter {
 
     struct ImageLoaderCallbackContext {
         std::function<void(sk_sp<SkImage> image)> callback;
-        const TaskRunners& task_runners;
+        const TaskRunners task_runners;
         ImageLoaderCallbackContext(const TaskRunners& task_runners) : callback(nullptr), task_runners(task_runners){}
         ~ ImageLoaderCallbackContext() {
             if (callback != nullptr) {
@@ -31,7 +31,7 @@ namespace flutter {
             }
         }
     };
-//
+
     IOSExternalImageLoader::IOSExternalImageLoader(NSObject<FlutterImageLoader>* imageLoader): imageLoader_(imageLoader) {
         FML_DCHECK(imageLoader_);
     }
@@ -50,9 +50,9 @@ namespace flutter {
         const auto& task_runners = dart_state->GetTaskRunners();
         fml::WeakPtr<GrContext> context = dart_state->GetResourceContext();
         std::shared_ptr<ImageLoaderCallbackContext> imageLoaderCallbackContext = std::make_shared<ImageLoaderCallbackContext>(task_runners);
-        imageLoaderCallbackContext->callback = callback;
+        imageLoaderCallbackContext->callback = std::move(callback);
         void(^complete)(IOSImageInfo) = ^(IOSImageInfo imageInfo) {
-            std::function<void(sk_sp<SkImage> image)> callback = imageLoaderCallbackContext->callback;
+            std::function<void(sk_sp<SkImage> image)> callback = std::move(imageLoaderCallbackContext->callback);
             imageLoaderCallbackContext->callback = nullptr;
             if (!cache_ref_) {
                 CVOpenGLESTextureCacheRef cache;
