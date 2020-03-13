@@ -62,6 +62,8 @@ AndroidShellHolder::AndroidShellHolder(
   thread_host_.ui_thread->GetTaskRunner()->PostTask(jni_exit_task);
   if (!is_background_view) {
     thread_host_.raster_thread->GetTaskRunner()->PostTask(jni_exit_task);
+  // BD ADD:
+    thread_host_.io_thread->GetTaskRunner()->PostTask(jni_exit_task);
   }
 
   fml::WeakPtr<PlatformViewAndroid> weak_platform_view;
