@@ -17,7 +17,21 @@
 
 // BD ADD: START
 namespace flutter {
-    
+
+    struct ImageLoaderCallbackContext {
+        std::function<void(sk_sp<SkImage> image)> callback;
+        const TaskRunners& task_runners;
+        ImageLoaderCallbackContext(const TaskRunners& task_runners) : callback(nullptr), task_runners(task_runners){}
+        ~ ImageLoaderCallbackContext() {
+            if (callback != nullptr) {
+                task_runners.GetUITaskRunner()->PostTask(fml::MakeCopyable(
+                    [callback = callback]() mutable {
+                      callback(nullptr);
+                    }));
+            }
+        }
+    };
+//
     IOSExternalImageLoader::IOSExternalImageLoader(NSObject<FlutterImageLoader>* imageLoader): imageLoader_(imageLoader) {
         FML_DCHECK(imageLoader_);
     }
@@ -32,7 +46,14 @@ namespace flutter {
     
     void IOSExternalImageLoader::Load(const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
         NSString* URL = [NSString stringWithCString:url.c_str() encoding:[NSString defaultCStringEncoding]];
-        [imageLoader_ loadImage:URL complete: ^(IOSImageInfo imageInfo) {
+        auto* dart_state = UIDartState::Current();
+        const auto& task_runners = dart_state->GetTaskRunners();
+        fml::WeakPtr<GrContext> context = dart_state->GetResourceContext();
+        std::shared_ptr<ImageLoaderCallbackContext> imageLoaderCallbackContext = std::make_shared<ImageLoaderCallbackContext>(task_runners);
+        imageLoaderCallbackContext->callback = callback;
+        void(^complete)(IOSImageInfo) = ^(IOSImageInfo imageInfo) {
+            std::function<void(sk_sp<SkImage> image)> callback = imageLoaderCallbackContext->callback;
+            imageLoaderCallbackContext->callback = nullptr;
             if (!cache_ref_) {
                 CVOpenGLESTextureCacheRef cache;
                 CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL,
@@ -41,7 +62,6 @@ namespace flutter {
                     cache_ref_.Reset(cache);
                 } else {
                     FML_LOG(WARNING) << "Failed to create GLES texture cache: " << err;
-//                    return;
                 }
             }
             fml::CFRef<CVPixelBufferRef> bufferRef;
@@ -56,14 +76,11 @@ namespace flutter {
                         &texture);
                     if (err != noErr) {
                         FML_LOG(WARNING) << "Could not create texture from pixel buffer: " << err;
-//                        return;
                     }
                 }
             }
           
-            UIDartState* dartState = static_cast<UIDartState*>(contextPtr);
-            fml::WeakPtr<GrContext> context = dartState->GetResourceContext();
-            auto io_task_runner = dartState->GetTaskRunners().GetIOTaskRunner();
+            auto io_task_runner = task_runners.GetIOTaskRunner();
             if (!texture) {
                 io_task_runner->PostTask(fml::MakeCopyable(
                     [callback = std::move(callback)]() mutable {
@@ -92,7 +109,12 @@ namespace flutter {
                       callback(std::move(image));
                     }));
             }
-        }];
+        };
+        if ([imageLoader_ respondsToSelector:@selector(loadImage:width:height:scale:complete:)]) {
+            [imageLoader_ loadImage:URL width:width height:height scale:scale complete:complete];
+        } else if ([imageLoader_ respondsToSelector:@selector(loadImage:complete:)]) {
+            [imageLoader_ loadImage:URL complete:complete];
+        }
     }
     
 }  // namespace flutter
