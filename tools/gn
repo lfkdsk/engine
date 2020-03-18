@@ -148,8 +148,9 @@ def to_gn_args(args):
     # BD MOD: START
     # this is a bug! is_debug != unoptimized
     # gn_args['is_debug'] = args.unoptimized
-    gn_args['is_debug'] = args.runtime_mode == 'debug'
-    # END    gn_args['android_full_debug'] = args.target_os == 'android' and args.unoptimized
+    gn_args['is_debug'] = args.runtime_mode == 'debug' and args.unoptimized
+# END
+    gn_args['android_full_debug'] = args.target_os == 'android' and args.unoptimized
     gn_args['is_clang'] = not sys.platform.startswith(('cygwin', 'win'))
 
     if args.target_os == 'android' or args.target_os == 'ios':
