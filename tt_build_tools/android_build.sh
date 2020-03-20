@@ -116,6 +116,10 @@ for liteMode in ${liteModes[@]}; do
           #        continue
           #    fi
           #fi
+          if [ $mode != 'release' -a $liteMode != 'normal' ]; then
+            echo 'lite mode only build for release!'
+            continue
+          fi
           for dynamic in ${dynamics[@]}; do
               modeDir=android-$platform
               # lite 不支持 dynamic

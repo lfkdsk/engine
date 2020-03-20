@@ -64,6 +64,10 @@ for liteMode in ${liteModes[@]}; do
 		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]; then
 		   iOSArmV7Dir=out/ios_${real_mode}_arm_dynamicart
 		fi
+		if [ $mode != 'release' -a $liteMode != 'normal' ]; then
+		  echo 'lite mode only build for release!'
+		  continue
+		 fi
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
 		echo "iOS build start mode = ${mode} liteMode = ${liteMode}"
