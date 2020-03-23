@@ -118,7 +118,23 @@ for liteMode in ${liteModes[@]}; do
           #fi
           for dynamic in ${dynamics[@]}; do
               modeDir=android-$platform
-
+              # lite 不支持 dynamic
+              if [ $liteMode != 'normal' ]; then
+                  if [ $dynamic != 'normal' ]; then
+                      echo 'lite can not support for dynamic!'
+                      continue
+                  fi
+                  # lite 模式只支持 release 模式
+                  if [ $mode == 'debug' ] || [ $mode == 'profile' ]; then
+                      echo 'lite mode only build for release!'
+                      continue
+                  fi
+                  # lite 模式不支持 x64 和 x86 模式
+                  if [ $platform = 'x64' -o $platform = 'x86' ]; then
+                      echo 'lite can not support for x86 and x64!'
+                      continue
+                  fi
+              fi
               # arm不带后缀
               if [ $platform = 'arm' ]; then
                   platformPostFix=''
@@ -128,10 +144,6 @@ for liteMode in ${liteModes[@]}; do
 
             # dynamicart只打release
             if [ $dynamic = 'dynamicart' ]; then
-                # dynamicart与lite互斥
-                if [ "$liteMode" != 'normal' ]; then
-                    continue
-                fi
                 if [ $mode = 'release' -o $mode = 'profile' ]; then
                     ./flutter/tools/gn --android --runtime-mode=$mode --android-cpu=$platform --dynamicart $liteModeComdSuffix
                     androidDir=out/android_${mode}${platformPostFix}_dynamicart

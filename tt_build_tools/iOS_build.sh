@@ -48,21 +48,20 @@ function checkResult() {
 cd ..
 for liteMode in ${liteModes[@]}; do
 	for mode in 'debug' 'profile' 'release' 'release_dynamicart' 'profile_dynamicart'; do
+		# lite only build for release mode
+		if [ $mode == 'debug' ] || [ $mode == 'profile' ] || [[ $mode == *"dynamicart"* ]]; then
+		  if [ $liteMode != 'normal' ]; then
+		    echo 'lite mode only build for release!'
+		    continue
+		  fi
+		fi
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
 		real_mode=${mode%_dynamicart}
 		echo "iOS build mode = ${mode} liteMode = ${liteMode}"
 
-		if [ $liteMode == 'lites' -a $mode != 'release' ];then
-       		echo 'lites is lite & share skia mode, now only for ios release !'
-       		continue
-    	fi
-
     	# dynamicart与lite互斥
 		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]; then
-            if [ "$liteMode" != 'normal' ]; then
-                continue
-            fi
 		   iOSArmV7Dir=out/ios_${real_mode}_arm_dynamicart
 		fi
 		iOSSimDir=out/ios_debug_sim
