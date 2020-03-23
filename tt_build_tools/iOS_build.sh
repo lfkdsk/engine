@@ -48,10 +48,13 @@ function checkResult() {
 cd ..
 for liteMode in ${liteModes[@]}; do
   for mode in 'debug' 'profile' 'release'; do
-    if [ $liteMode == 'lites' -a $mode != 'release' ];then
-       echo 'lites is lite & share skia mode, now only for ios release !'
-       continue
-    fi
+		# lite only build for release mode
+		if [ $mode == 'debug' ] || [ $mode == 'profile' ]; then
+		  if [ $liteMode != 'normal' ]; then
+		    echo 'lite mode only build for release!'
+		    continue
+		  fi
+		fi
 #		hostDir=out/host_${mode}
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
