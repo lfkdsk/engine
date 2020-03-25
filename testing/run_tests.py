@@ -13,6 +13,8 @@ import os
 import re
 import subprocess
 import sys
+# BD ADD:
+import time
 
 buildroot_dir = os.path.abspath(os.path.join(os.path.realpath(__file__), '..', '..', '..'))
 out_dir = os.path.join(buildroot_dir, 'out')
@@ -22,9 +24,39 @@ roboto_font_path = os.path.join(fonts_dir, 'Roboto-Regular.ttf')
 dart_tests_dir = os.path.join(buildroot_dir, 'flutter', 'testing', 'dart',)
 
 fml_unittests_filter = '--gtest_filter=-*TimeSensitiveTest*:*GpuThreadMerger*'
+# BD MOD: START
+# cherry-pick from e59543708dee9fa1973bd4ed87b67d36ddcfc848
+# def RunCmd(cmd, **kwargs):
+#   print(subprocess.check_output(cmd, **kwargs))
+def PrintDivider(char='='):
+  print '\n'
+  for _ in xrange(4):
+    print(''.join([char for _ in xrange(80)]))
+  print '\n'
+
 
 def RunCmd(cmd, **kwargs):
-  print(subprocess.check_output(cmd, **kwargs))
+  command_string = ' '.join(cmd)
+
+  PrintDivider('>')
+  print 'Running command "%s"' % command_string
+
+  start_time = time.time()
+  process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kwargs)
+  (output, _) = process.communicate()
+  end_time = time.time()
+
+  # Print the result no matter what.
+  for line in output.splitlines():
+    print line
+
+  if process.returncode != 0:
+    PrintDivider('!')
+    raise Exception('Command "%s" exited with code %d' % (command_string, process.returncode))
+
+  PrintDivider('<')
+  print 'Command run successfully in %.2f seconds: %s' % (end_time - start_time, command_string)
+# END
 
 def IsMac():
   return sys.platform == 'darwin'
@@ -77,6 +109,9 @@ def RunCCTests(build_dir, filter):
     "--gtest_shuffle",
     "--gtest_repeat=2",
   ]
+
+  # BD ADD:
+  RunEngineExecutable(build_dir, 'fps_recorder_unittests', filter, shuffle_flags)
 
   RunEngineExecutable(build_dir, 'client_wrapper_glfw_unittests', filter, shuffle_flags)
 
