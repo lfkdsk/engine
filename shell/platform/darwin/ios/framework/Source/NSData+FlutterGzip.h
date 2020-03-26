@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable NSData*)flutter_gunzippedData;
 
+
+- (nullable NSString *)MD5;
+
 @end
 
 NS_ASSUME_NONNULL_END

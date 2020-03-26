@@ -49,6 +49,7 @@ void ext_executeCleanupBlock(__strong ext_cleanupBlock_t* block) {
 static const char* kSegmentName = "__BD_DATA";
 static const char* kIsolateDataSectionName = "__isolate_data";
 static const char* kVMDataSectionName = "__vm_data";
+static const char* kValidateSectionName = "__validate_data";
 static NSString* const kDecompressedDataCacheDirectory = @"com.bytedance.flutter/decompressed_data";
 static NSString* const kVMDataFileName = @"vm_snapshot_data";
 static NSString* const kIsolateDataFileName = @"isolate_snapshot_data";
@@ -118,6 +119,9 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 @property(nonatomic) NSString* cacheDirectoryForCurrentUUID;
 @property(nonatomic) NSString* vmDataPath;
 @property(nonatomic) NSString* isolateDataPath;
+@property(nonatomic) NSString* validateMD5;
+@property(nonatomic) NSString* unzipVmDataMD5;
+@property(nonatomic) NSString* unzipIsolateValidateMD5;
 @property(nonatomic) NSString* icudtlDataPath;
 @property(nonatomic) NSString* assetsPath;
 @property(nonatomic) NSString* assetsFlagPath;
@@ -161,6 +165,9 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   [_flutterAssets release];
   [_zipIcudtlFilePath release];
   [_zipAssetsFilePath release];
+  [_validateMD5 release];
+  [_unzipVmDataMD5 release];
+  [_unzipIsolateValidateMD5 release];
   pthread_mutex_destroy(&_mutexLock);
   dispatch_release(_serialDecompressQueue);
   [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -306,7 +313,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   }
 
   // 解压缩vm_data
-  if (![self isVMDataDecompressedFileValid]) {
+  if (![self isVMDataStable]) {
     succeeded = [self decompressVMData:error];
     if (!succeeded) {
       return NO;
@@ -314,7 +321,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   }
 
   // 解压缩isolate_data
-  if (![self isIsolateDataDecompressedFileValid]) {
+  if (![self isIsolateDataStable]) {
     succeeded = [self decompressIsolateData:error];
     if (!succeeded) {
       return NO;
@@ -352,7 +359,11 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     }
     return NO;
   } else {
-    return YES;
+    NSString* fileMD5 = [self MD5WithContentsOfFile:self.vmDataPath];
+    {
+      FlutterCompressSizeModeManagerLock(self->_mutexLock);
+      self.unzipVmDataMD5 = [fileMD5 copy];
+    }
   }
 }
 
@@ -368,6 +379,11 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
     }
     return NO;
   } else {
+    NSString* fileMD5 = [self MD5WithContentsOfFile:self.isolateDataPath];
+    {
+      FlutterCompressSizeModeManagerLock(self->_mutexLock);
+      self.unzipIsolateValidateMD5 = [fileMD5 copy];
+    }
     return YES;
   }
 }
@@ -497,23 +513,94 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   _isolateData.reset([data retain]);
 }
 
+- (NSString*)validateMD5 {
+  NSString* validateMD5 = nil;
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    validateMD5 = _validateMD5;
+  }
+  if (!validateMD5) {
+    unsigned long size = 0;
+    uint8_t* sectionData = getsectiondata((flutter_mach_header*)kMachHeader, kSegmentName,
+                                          kValidateSectionName, &size);
+    NSData* validateData = [[[NSData alloc] initWithBytes:sectionData length:size] autorelease];
+    validateMD5 = [[[NSString alloc] initWithData:validateData
+                                         encoding:NSUTF8StringEncoding] autorelease];
+  }
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    if (!_validateMD5) {
+      _validateMD5 = [validateMD5 copy];
+    }
+  }
+  return _validateMD5;
+}
+
 #pragma mark - 判断各项压缩数据是否需要解压到磁盘
 
 - (BOOL)needDecompressData {
   if (self.isCompressSizeMode) {
-    return !([self isVMDataDecompressedFileValid] && [self isIsolateDataDecompressedFileValid] &&
+    return !([self isVMDataStable] && [self isIsolateDataStable] &&
              [self isIcudtlDecompressedFileValid] && [self isAssetsDecompressedFileValid]);
   } else {
     return NO;
   }
 }
 
-- (BOOL)isVMDataDecompressedFileValid {
-  return [[NSFileManager defaultManager] fileExistsAtPath:self.vmDataPath];
+- (BOOL)isIsolateDataStable {
+  NSArray* parts = [self.validateMD5 componentsSeparatedByString:@"_"];
+  NSString* isolateMD5 = parts.firstObject;
+  return [isolateMD5 isEqualToString:self.unzipIsolateValidateMD5];
 }
 
-- (BOOL)isIsolateDataDecompressedFileValid {
-  return [[NSFileManager defaultManager] fileExistsAtPath:self.isolateDataPath];
+- (BOOL)isVMDataStable {
+  NSArray* parts = [self.validateMD5 componentsSeparatedByString:@"_"];
+  NSString* vmMD5 = parts.lastObject;
+  return [vmMD5 isEqualToString:self.unzipVmDataMD5];
+}
+
+- (NSString*)unzipVmDataMD5 {
+  NSString* unzipVmDataMD5 = nil;
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    unzipVmDataMD5 = _unzipVmDataMD5;
+  }
+  if (!unzipVmDataMD5) {
+    unzipVmDataMD5 = [self MD5WithContentsOfFile:_vmDataPath];
+  }
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    if (!_unzipVmDataMD5) {
+      _unzipVmDataMD5 = [unzipVmDataMD5 copy];
+    }
+  }
+  return _unzipVmDataMD5;
+}
+
+- (NSString*)unzipIsolateValidateMD5 {
+  NSString* unzipIsolateValidateMD5 = nil;
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    unzipIsolateValidateMD5 = _unzipIsolateValidateMD5;
+  }
+  if (!unzipIsolateValidateMD5) {
+    unzipIsolateValidateMD5 = [self MD5WithContentsOfFile:self.isolateDataPath];
+  }
+  {
+    FlutterCompressSizeModeManagerLock(self->_mutexLock);
+    if (!_unzipIsolateValidateMD5) {
+      _unzipIsolateValidateMD5 = [unzipIsolateValidateMD5 copy];
+    }
+  }
+  return _unzipIsolateValidateMD5;
+}
+
+- (NSString*)MD5WithContentsOfFile:(NSString*)filePath {
+  NSData* fileData = [NSData dataWithContentsOfFile:filePath];
+  if (fileData) {
+    return [fileData MD5];
+  }
+  return nil;
 }
 
 - (BOOL)isIcudtlDecompressedFileValid {
@@ -550,7 +637,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 }
 
 - (flutter::MappingCallback)vmSnapshotDataCallback {
-  if ([self isVMDataDecompressedFileValid]) {
+  if ([self isVMDataStable]) {
     return [scoped_manager =
                 fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
       return std::make_unique<fml::FileMapping>(
@@ -569,7 +656,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 }
 
 - (flutter::MappingCallback)isolateSnapshotDataCallback {
-  if ([self isIsolateDataDecompressedFileValid]) {
+  if ([self isIsolateDataStable]) {
     return [scoped_manager =
                 fml::scoped_nsobject<FlutterCompressSizeModeManager>([self retain])]() {
       return std::make_unique<fml::FileMapping>(
