@@ -206,18 +206,18 @@ for liteMode in ${liteModes[@]}; do
               mapPlatform $platform
               echo $platformResult
               if [ $liteMode != 'normal' ]; then
-                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.jar
-                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.pom
+                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.jar flutter/framework/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.jar
+                bd_upload $androidDir/${platformResult}_${mode}_${liteMode}.pom flutter/framework/io/flutter/${platformResult}_${mode}_${liteMode}/1.0.0-${tosDir}/${platformResult}_${mode}_${liteMode}-1.0.0-${tosDir}.pom
                 if [ $platform = 'arm' ]; then
-                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.jar
-                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.pom
+                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.jar flutter/framework/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.jar
+                    bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.pom flutter/framework/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.pom
                 fi
               else
-                bd_upload $androidDir/${platformResult}_${mode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.jar
-                bd_upload $androidDir/${platformResult}_${mode}.pom flutter/framework/$tosDir/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.pom
+                bd_upload $androidDir/${platformResult}_${mode}.jar flutter/framework/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.jar
+                bd_upload $androidDir/${platformResult}_${mode}.pom flutter/framework/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.pom
                 if [ $platform = 'arm' ]; then
-                    bd_upload $androidDir/flutter_embedding_${mode}.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}/1.0.0-${tosDir}/flutter_embedding_${mode}-1.0.0-${tosDir}.jar
-                    bd_upload $androidDir/flutter_embedding_${mode}.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_${mode}/1.0.0-${tosDir}/flutter_embedding_${mode}-1.0.0-${tosDir}.pom
+                    bd_upload $androidDir/flutter_embedding_${mode}.jar flutter/framework/io/flutter/flutter_embedding_${mode}/1.0.0-${tosDir}/flutter_embedding_${mode}-1.0.0-${tosDir}.jar
+                    bd_upload $androidDir/flutter_embedding_${mode}.pom flutter/framework/io/flutter/flutter_embedding_${mode}/1.0.0-${tosDir}/flutter_embedding_${mode}-1.0.0-${tosDir}.pom
                 fi
               fi
           done
