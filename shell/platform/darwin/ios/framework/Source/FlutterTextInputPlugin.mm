@@ -307,7 +307,11 @@ static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
 
 - (NSString*)textInRange:(UITextRange*)range {
   NSRange textRange = ((FlutterTextRange*)range).range;
-  return [self.text substringWithRange:textRange];
+  // BD MOD: START
+  // return [self.text substringWithRange:textRange];
+  NSRange fixedRange = [self clampSelection:textRange forText:self.text];
+  return [self.text substringWithRange:fixedRange];
+  // END
 }
 
 - (void)replaceRange:(UITextRange*)range withText:(NSString*)text {
@@ -390,18 +394,34 @@ static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
   if (markedText == nil)
     markedText = @"";
 
+  // BD ADD: START
+  // if (markedTextRange.length > 0) {
+  //   // Replace text in the marked range with the new text.
+  //   [self replaceRange:self.markedTextRange withText:markedText];
+  //   markedTextRange.length = markedText.length;
+  // } else {
+  //   // Replace text in the selected range with the new text.
+  //   [self replaceRange:_selectedTextRange withText:markedText];
+  //   markedTextRange = NSMakeRange(selectedRange.location, markedText.length);
+  // }
+  //
+  // self.markedTextRange =
+  //     markedTextRange.length > 0 ? [FlutterTextRange rangeWithNSRange:markedTextRange] : nil;
+  FlutterTextRange* lastMarkedTextRange = [[self.markedTextRange copy] autorelease];
   if (markedTextRange.length > 0) {
     // Replace text in the marked range with the new text.
-    [self replaceRange:self.markedTextRange withText:markedText];
     markedTextRange.length = markedText.length;
+    self.markedTextRange =
+        markedTextRange.length > 0 ? [FlutterTextRange rangeWithNSRange:markedTextRange] : nil;
+    [self replaceRange:lastMarkedTextRange withText:markedText];
   } else {
     // Replace text in the selected range with the new text.
-    [self replaceRange:_selectedTextRange withText:markedText];
     markedTextRange = NSMakeRange(selectedRange.location, markedText.length);
+    self.markedTextRange =
+        markedTextRange.length > 0 ? [FlutterTextRange rangeWithNSRange:markedTextRange] : nil;
+    [self replaceRange:_selectedTextRange withText:markedText];
   }
-
-  self.markedTextRange =
-      markedTextRange.length > 0 ? [FlutterTextRange rangeWithNSRange:markedTextRange] : nil;
+  // END
 
   NSUInteger selectionLocation = markedSelectedRange.location + markedTextRange.location;
   selectedRange = NSMakeRange(selectionLocation, markedSelectedRange.length);
@@ -601,8 +621,14 @@ static UIReturnKeyType ToUIReturnKeyType(NSString* inputType) {
   NSInteger composingBase = -1;
   NSInteger composingExtent = -1;
   if (self.markedTextRange != nil) {
-    composingBase = ((FlutterTextPosition*)self.markedTextRange.start).index;
-    composingExtent = ((FlutterTextPosition*)self.markedTextRange.end).index;
+    // BD MOD: START
+    // composingBase = ((FlutterTextPosition*)self.markedTextRange.start).index;
+    // composingExtent = ((FlutterTextPosition*)self.markedTextRange.end).index;
+    NSRange composingRange = [self clampSelection:((FlutterTextRange*)self.markedTextRange).range
+                                          forText:self.text];
+    composingBase = composingRange.location;
+    composingExtent = composingRange.location + composingRange.length;
+    // END
   }
   [_textInputDelegate updateEditingClient:_textInputClient
                                 withState:@{

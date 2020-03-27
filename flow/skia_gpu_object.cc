@@ -19,7 +19,8 @@ SkiaUnrefQueue::SkiaUnrefQueue(fml::RefPtr<fml::TaskRunner> task_runner,
       resource_context_(sk_sp<GrContext>(resource_context)) {}
 
 SkiaUnrefQueue::~SkiaUnrefQueue() {
-  FML_DCHECK(objects_.empty());
+  // BD DEL:
+  // FML_DCHECK(objects_.empty());
 }
 
 void SkiaUnrefQueue::Unref(SkRefCnt* object) {
