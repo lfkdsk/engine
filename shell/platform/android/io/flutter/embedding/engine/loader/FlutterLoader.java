@@ -341,7 +341,7 @@ public class FlutterLoader {
             final String packageName = applicationContext.getPackageName();
             final PackageManager packageManager = applicationContext.getPackageManager();
             final AssetManager assetManager = applicationContext.getResources().getAssets();
-            resourceExtractor = new ResourceExtractor(dataDirPath, packageName, packageManager, assetManager);
+            resourceExtractor = new ResourceExtractor(dataDirPath, packageName, packageManager, assetManager, settings);
 
             // In debug/JIT mode these assets will be written to disk and then
             // mapped into memory so they can be provided to the Dart VM.
@@ -392,12 +392,19 @@ public class FlutterLoader {
         return flutterAssetsDir + File.separator + filePath;
     }
 
+    public interface InitExceptionCallback {
+        void onRetryException(Throwable t);
+        void onInitException(Throwable t);
+    }
+
     public static class Settings {
         private String logTag;
         // BD ADD START:
         private String nativeLibraryDir;
         private SoLoader soLoader;
         private boolean disableLeakVM = false;
+        private Runnable onInitResources;
+        private InitExceptionCallback initExceptionCallback;
         // END
 
         @Nullable
@@ -439,6 +446,22 @@ public class FlutterLoader {
         // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
         public void disableLeakVM() {
             disableLeakVM = true;
+        }
+
+        public Runnable getOnInitResourcesCallback() {
+            return onInitResources;
+        }
+
+        public void setOnInitResourcesCallback(Runnable callback) {
+            onInitResources = callback;
+        }
+
+        public InitExceptionCallback getInitExceptionCallback() {
+            return initExceptionCallback;
+        }
+
+        public void setInitExceptionCallback(InitExceptionCallback iec) {
+            initExceptionCallback = iec;
         }
         // END
     }
