@@ -132,7 +132,8 @@ FLUTTER_EXPORT
  * 是否需要解压数据到磁盘
  * @note 返回YES时，进入Flutter页面使用磁盘中的数据；返回NO时，进入Flutter页面使用内存中的数据
  */
-+ (BOOL)needDecompressData;
++ (BOOL)needDecompressData FLUTTER_DEPRECATED(
+    "Always called before decompress. No need to call manually");
 
 /**
  * 压缩模式解压数据到磁盘，返回是否解压到磁盘成功

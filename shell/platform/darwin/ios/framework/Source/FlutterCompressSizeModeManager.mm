@@ -261,7 +261,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   BOOL succeeded = YES;
   BOOL needDecompress = NO;
 
-  if ([self needDecompressData]) {
+  if ([self isDecompressDataDamaged]) {
     needDecompress = YES;
     succeeded = [self decompressData:&internalError];
   }
@@ -364,6 +364,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
       FlutterCompressSizeModeManagerLock(self->_mutexLock);
       self.unzipVmDataMD5 = [fileMD5 copy];
     }
+    return YES;
   }
 }
 
@@ -540,6 +541,15 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
 - (BOOL)needDecompressData {
   if (self.isCompressSizeMode) {
+    return !([self isVMDataDecompressedFileValid] && [self isIsolateDataDecompressedFileValid] &&
+             [self isIcudtlDecompressedFileValid] && [self isAssetsDecompressedFileValid]);
+  } else {
+    return NO;
+  }
+}
+
+- (BOOL)isDecompressDataDamaged {
+  if (self.isCompressSizeMode) {
     return !([self isVMDataStable] && [self isIsolateDataStable] &&
              [self isIcudtlDecompressedFileValid] && [self isAssetsDecompressedFileValid]);
   } else {
@@ -603,6 +613,14 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
   return nil;
 }
 
+- (BOOL)isVMDataDecompressedFileValid {
+  return [[NSFileManager defaultManager] fileExistsAtPath:self.vmDataPath];
+}
+
+- (BOOL)isIsolateDataDecompressedFileValid {
+  return [[NSFileManager defaultManager] fileExistsAtPath:self.isolateDataPath];
+}
+
 - (BOOL)isIcudtlDecompressedFileValid {
   return [[NSFileManager defaultManager] fileExistsAtPath:self.icudtlDataPath] &&
          [[NSFileManager defaultManager] fileExistsAtPath:self.icudtlFlagPath];
@@ -617,7 +635,7 @@ static void ImageAdded(const struct mach_header* mh, intptr_t slide) {
 
 - (void)updateSettingsIfNeeded:(flutter::Settings&)settings
                        monitor:(FlutterCompressSizeModeMonitor _Nullable)monitor {
-  if ([self needDecompressData]) {
+  if ([self isDecompressDataDamaged]) {
     [self decompressDataAsyncIfNeeded:NO monitor:monitor];
   }
   [self removePreviousDecompressedDataAsync];
