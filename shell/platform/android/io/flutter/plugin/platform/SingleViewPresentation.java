@@ -5,6 +5,7 @@
 package io.flutter.plugin.platform;
 
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.Presentation;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -98,6 +99,9 @@ class SingleViewPresentation extends Presentation {
 
     private boolean startFocused = false;
 
+    // The context for the application window that hosts FlutterView.
+    private final Context outerContext;
+
     /**
      * Creates a presentation that will use the view factory to create a new
      * platform view in the presentation's onCreate, and attach it.
@@ -117,6 +121,7 @@ class SingleViewPresentation extends Presentation {
         this.viewId = viewId;
         this.createParams = createParams;
         this.focusChangeListener = focusChangeListener;
+        this.outerContext = outerContext;
         state = new PresentationState();
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
@@ -148,6 +153,7 @@ class SingleViewPresentation extends Presentation {
         viewFactory = null;
         this.state = state;
         this.focusChangeListener = focusChangeListener;
+        this.outerContext = outerContext;
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
@@ -172,7 +178,7 @@ class SingleViewPresentation extends Presentation {
 
         // Our base mContext has already been wrapped with an IMM cache at instantiation time, but
         // we want to wrap it again here to also return state.windowManagerHandler.
-        Context context = new PresentationContext(getContext(), state.windowManagerHandler);
+        Context context = new PresentationContext(getContext(), state.windowManagerHandler, outerContext);
 
         if (state.platformView == null) {
             state.platformView = viewFactory.create(context, viewId, createParams);
@@ -312,15 +318,34 @@ class SingleViewPresentation extends Presentation {
         final WindowManagerHandler windowManagerHandler;
         private @Nullable
         WindowManager windowManager;
+        private final Context flutterAppWindowContext;
 
-        PresentationContext(Context base, @NonNull WindowManagerHandler windowManagerHandler) {
+        PresentationContext(
+            Context base,
+            @NonNull WindowManagerHandler windowManagerHandler,
+            Context flutterAppWindowContext) {
             super(base);
             this.windowManagerHandler = windowManagerHandler;
+            this.flutterAppWindowContext = flutterAppWindowContext;
         }
 
         @Override
         public Object getSystemService(String name) {
             if (WINDOW_SERVICE.equals(name)) {
+                if (isCalledFromAlertDialog()) {
+                    // Alert dialogs are showing on top of the entire application and should not be limited to
+                    // the virtual
+                    // display. If we detect that an android.app.AlertDialog constructor is what's fetching
+                    // the window manager
+                    // we return the one for the application's window.
+                    //
+                    // Note that if we don't do this AlertDialog will throw a ClassCastException as down the
+                    // line it tries
+                    // to case this instance to a WindowManagerImpl which the object returned by
+                    // getWindowManager is not
+                    // a subclass of.
+                    return flutterAppWindowContext.getSystemService(name);
+                }
                 return getWindowManager();
             }
             return super.getSystemService(name);
@@ -331,6 +356,17 @@ class SingleViewPresentation extends Presentation {
                 windowManager = windowManagerHandler.getWindowManager();
             }
             return windowManager;
+        }
+
+        private boolean isCalledFromAlertDialog() {
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+            for (int i = 0; i < stackTraceElements.length && i < 11; i++) {
+                if (stackTraceElements[i].getClassName().equals(AlertDialog.class.getCanonicalName())
+                    && stackTraceElements[i].getMethodName().equals("<init>")) {
+                return true;
+                }
+            }
+            return false;
         }
     }
 
