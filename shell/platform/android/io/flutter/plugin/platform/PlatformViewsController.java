@@ -390,6 +390,11 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
      * Else returns false.
      */
     public boolean checkInputConnectionProxy(View view) {
+        // BD ADD: START
+        if (view == null) {
+            return false;
+        }
+        // END
         if(!contextToPlatformView.containsKey(view.getContext())) {
             return false;
         }
