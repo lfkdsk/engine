@@ -47,13 +47,13 @@ function checkResult() {
 
 cd ..
 for liteMode in ${liteModes[@]}; do
-  for mode in 'debug' 'profile' 'release'; do
+	for mode in 'debug' 'profile' 'release'; do
 		# lite only build for release mode
 		if [ $mode == 'debug' ] || [ $mode == 'profile' ]; then
-		  if [ $liteMode != 'normal' ]; then
-		    echo 'lite mode only build for release!'
-		    continue
-		  fi
+			if [ $liteMode != 'normal' ]; then
+				echo 'lite mode only build for release!'
+				continue
+			fi
 		fi
 #		hostDir=out/host_${mode}
 		iOSArm64Dir=out/ios_${mode}
@@ -61,14 +61,14 @@ for liteMode in ${liteModes[@]}; do
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
 
-    modeSuffix=''
+		modeSuffix=''
 		if [ "$liteMode" != "normal" ]; then
-        iOSArm64Dir=${iOSArm64Dir}_${liteMode}
-        iOSArmV7Dir=${iOSArmV7Dir}_${liteMode}
-        iOSSimDir=${iOSSimDir}_${liteMode}
-        cacheDir=${cacheDir}_${liteMode}
-        modeSuffix=--${liteMode}
-    fi
+			iOSArm64Dir=${iOSArm64Dir}_${liteMode}
+			iOSArmV7Dir=${iOSArmV7Dir}_${liteMode}
+			iOSSimDir=${iOSSimDir}_${liteMode}
+			cacheDir=${cacheDir}_${liteMode}
+			modeSuffix=--${liteMode}
+		fi
 
 		dSYMInfoPlist=flutter/tt_build_tools/Info.plist
 
@@ -78,31 +78,28 @@ for liteMode in ${liteModes[@]}; do
 #		./flutter/tools/gn --runtime-mode=$mode
 #		ninja -C $hostDir -j $jcount
 
-    ./flutter/tools/gn --ios --runtime-mode=$mode $modeSuffix
-    ninja -C $iOSArm64Dir -j $jcount
-    checkResult
+		./flutter/tools/gn --ios --runtime-mode=$mode $modeSuffix
+		ninja -C $iOSArm64Dir -j $jcount
+		checkResult
 
-    ./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm $modeSuffix
-    ninja -C $iOSArmV7Dir -j $jcount
-    checkResult
+		./flutter/tools/gn --ios --runtime-mode=$mode --ios-cpu=arm $modeSuffix
+		ninja -C $iOSArmV7Dir -j $jcount
+		checkResult
 
-    ./flutter/tools/gn --ios --runtime-mode=debug --simulator $modeSuffix
-    ninja -C $iOSSimDir -j $jcount
-    checkResult
+		./flutter/tools/gn --ios --runtime-mode=debug --simulator $modeSuffix
+		ninja -C $iOSSimDir -j $jcount
+		checkResult
 
 		lipo -create $iOSArm64Dir/Flutter.framework/Flutter $iOSArmV7Dir/Flutter.framework/Flutter $iOSSimDir/Flutter.framework/Flutter -output $cacheDir/Flutter
 
-		if [ "$mode" == "release" ]
-		then
-			echo "Generate dSYM"
-			cd $cacheDir
-			xcrun dsymutil -o Flutter.dSYM Flutter
-			cp ${dSYMInfoPlistPath} Flutter.dSYM/Contents/Info.plist
-			zip -rq Flutter.dSYM.zip Flutter.dSYM
-			[ -e Flutter.dSYM ] && rm -rf Flutter.dSYM
-			xcrun strip -x -S Flutter
-			cd -
-		fi
+		echo "Generate dSYM"
+		cd $cacheDir
+		xcrun dsymutil -o Flutter.dSYM Flutter
+		cp ${dSYMInfoPlistPath} Flutter.dSYM/Contents/Info.plist
+		zip -rq Flutter.dSYM.zip Flutter.dSYM
+		[ -e Flutter.dSYM ] && rm -rf Flutter.dSYM
+		xcrun strip -x -S Flutter
+		cd -
 
 		cp -r $iOSArm64Dir/Flutter.framework $cacheDir/Flutter.framework
 		mv $cacheDir/Flutter $cacheDir/Flutter.framework/Flutter
@@ -146,15 +143,12 @@ for liteMode in ${liteModes[@]}; do
 		fi
 
 		if [ "$liteMode" != "normal" ]; then
-        modeDir=${modeDir}-${liteMode}
-    fi
+			modeDir=${modeDir}-${liteMode}
+		fi
 
 		bd_upload $cacheDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
 
-		if [ "$mode" == "release" ]
-		then
-			bd_upload $cacheDir/Flutter.dSYM.zip flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
-			upload_dsym_to_slardar "${cacheDir}/Flutter.dSYM.zip"
-		fi
+		bd_upload $cacheDir/Flutter.dSYM.zip flutter/framework/$tosDir/$modeDir/Flutter.dSYM.zip
+		upload_dsym_to_slardar "${cacheDir}/Flutter.dSYM.zip"
 	done
 done
