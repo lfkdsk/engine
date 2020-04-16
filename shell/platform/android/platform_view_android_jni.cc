@@ -1025,7 +1025,7 @@ bool PlatformViewAndroid::Register(JNIEnv* env) {
 
   if (env->RegisterNatives(g_image_loader_callback_class->obj(),
                            native_load_callback_methods,
-                           fml::size(native_load_callback_methods) != 0)) {
+                           fml::size(native_load_callback_methods)) != 0) {
       FML_LOG(ERROR) << "Failed to RegisterNatives with NativeLoadCallback";
       return false;
   }
