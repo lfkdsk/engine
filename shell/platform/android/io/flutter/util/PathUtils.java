@@ -6,6 +6,8 @@ package io.flutter.util;
 
 import android.content.Context;
 import android.os.Build;
+// BD ADD
+import java.io.File;
 
 public final class PathUtils {
     public static String getFilesDir(Context applicationContext) {
@@ -17,8 +19,13 @@ public final class PathUtils {
     }
 
     public static String getCacheDirectory(Context applicationContext) {
-        if (Build.VERSION.SDK_INT >= 21) {
-            return applicationContext.getCodeCacheDir().getPath();
+        // BD MOD:START
+        // if (Build.VERSION.SDK_INT >= 21) {
+        //     return applicationContext.getCodeCacheDir().getPath();
+        File codeCacheDir = applicationContext.getCodeCacheDir();
+        if (Build.VERSION.SDK_INT >= 21 && codeCacheDir != null) {
+            return codeCacheDir.getPath();
+        // END
         } else {
             return applicationContext.getCacheDir().getPath();
         }
