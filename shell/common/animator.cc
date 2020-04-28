@@ -255,8 +255,13 @@ void Animator::AwaitVSync() {
   // BD MOD: START
   // delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_);
   task_runners_.GetUITaskRunner()->PostTask(
-      [this, dart_frame_deadline_ = std::move(dart_frame_deadline_)]() {
-        delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_, Boost::kVsyncIdle);
+      [self = weak_factory_.GetWeakPtr(),
+       dart_frame_deadline_ = std::move(dart_frame_deadline_)]() {
+        if (!self.get()) {
+          return;
+        }
+        self->delegate_.OnAnimatorNotifyIdle(dart_frame_deadline_,
+                                             Boost::kVsyncIdle);
       });
   // END
 }

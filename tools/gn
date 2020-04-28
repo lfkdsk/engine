@@ -130,6 +130,7 @@ def to_gn_args(args):
                 gn_args['is_skia_component_build'] = True
                 gn_args['skialite_use_component_name_skialite'] = False
                 gn_args['skialite_enable_test'] = False
+                gn_args['skialite_only_lite_apis'] = True
     # END
 
     # Skia GN args.

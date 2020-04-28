@@ -3123,8 +3123,11 @@ TEST_F(EmbedderTest, VerifyB143464703WithSoftwareBackend) {
                                   renderered_scene));
 }
 
-TEST_F(EmbedderTest,
-       PushingMutlipleFramesSetsUpNewRecordingCanvasWithCustomCompositor) {
+TEST_F(
+    EmbedderTest,
+    // BD MOD:
+    // PushingMutlipleFramesSetsUpNewRecordingCanvasWithCustomCompositor
+    DISABLED_PushingMutlipleFramesSetsUpNewRecordingCanvasWithCustomCompositor) {
   auto& context = GetEmbedderContext();
 
   EmbedderConfigBuilder builder(context);
@@ -3165,8 +3168,11 @@ TEST_F(EmbedderTest,
   ASSERT_EQ(frames_expected, frames_seen);
 }
 
-TEST_F(EmbedderTest,
-       PushingMutlipleFramesSetsUpNewRecordingCanvasWithoutCustomCompositor) {
+TEST_F(
+    EmbedderTest,
+    // BD MOD:
+    // PushingMutlipleFramesSetsUpNewRecordingCanvasWithoutCustomCompositor
+    DISABLED_PushingMutlipleFramesSetsUpNewRecordingCanvasWithoutCustomCompositor) {
   auto& context = GetEmbedderContext();
 
   EmbedderConfigBuilder builder(context);

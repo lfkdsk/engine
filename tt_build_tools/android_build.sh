@@ -197,7 +197,7 @@ for liteMode in ${liteModes[@]}; do
               bd_upload $cacheDir/$modeDir/artifacts.zip flutter/framework/$tosDir/$modeDir/artifacts.zip
               bd_upload $androidDir/libflutter.so flutter/framework/$tosDir/$modeDir/libflutter_symtab.so
               # get so BuildID
-              hashcode=`file $androidDir/libflutter.so | sed 's/.*BuildID\[xxHash\]=\([0-9a-zA-Z]*\),.*/\1/g'`
+              hashcode=`file $androidDir/libflutter.so | sed 's/.*BuildID\[[0-9a-zA-Z\/]*\]=\([0-9a-zA-Z]*\),.*/\1/g'`
               resultFile=$androidDir/$hashcode
               # get so build mode
               echo mode=$modeDir >> $resultFile

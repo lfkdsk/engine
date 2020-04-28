@@ -334,7 +334,8 @@ public class FlutterLoader {
      * files on disk.
      */
     private void initResources(@NonNull Context applicationContext) {
-        new ResourceCleaner(applicationContext).start();
+        // BD DEL:
+        // new ResourceCleaner(applicationContext).start();
 
         if (BuildConfig.DEBUG || BuildConfig.JIT_RELEASE) {
             final String dataDirPath = PathUtils.getDataDirectory(applicationContext);
