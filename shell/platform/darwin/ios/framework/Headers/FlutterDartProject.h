@@ -11,17 +11,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol DynamicFlutterDelegate <NSObject>
-
-@required
-/**
- * 当Flutter被加载时，调用接口请求需要动态替换的flutter_assets文件夹路径
- * 如果返回nil或不合法路径，则使用预置包
- */
-- (NSString*)assetsPath;
-
-@end
-
 // BD ADD: START
 typedef void (^FlutterCompressSizeModeMonitor)(BOOL needDecompress,
                                                BOOL isPredecompressMode,
@@ -61,10 +50,10 @@ FLUTTER_EXPORT
 
 // BD ADD:
 /**
- * dynamic settings
+ * Package settings
  */
-- (void)setDynamicDillPath:(NSString*)path;    // 动态App压缩包路径
-- (void)setDynamicEnginePath:(NSString*)path;  // 动态Engine文件夹路径
+- (void)setDillPath:(NSString*)path;    // 动态App压缩包路径
+- (void)setEnginePath:(NSString*)path;  // 动态Engine文件夹路径
 // END
 
 /**

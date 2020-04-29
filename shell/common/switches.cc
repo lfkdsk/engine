@@ -316,8 +316,8 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
       settings.leak_vm = false;
   }
 
-  command_line.GetOptionValue(FlagForSwitch(Switch::DynamicDillPath),
-                              &settings.dynamic_dill_path);
+  command_line.GetOptionValue(FlagForSwitch(Switch::PackageDillPath),
+                              &settings.package_dill_path);
   // END
 
   if (settings.icu_initialization_required) {
