@@ -25,6 +25,8 @@ import java.util.List;
 
 import io.flutter.BuildConfig;
 import io.flutter.embedding.engine.FlutterJNI;
+// BD ADD:
+import io.flutter.embedding.engine.FlutterShellArgs;
 import io.flutter.util.PathUtils;
 import io.flutter.view.VsyncWaiter;
 
@@ -239,6 +241,10 @@ public class FlutterLoader {
             // BD ADD:START
             if (settings.isDisableLeakVM()) {
                 shellArgs.add("--disable-leak-vm");
+            }
+            if (ResourceExtractor.isX86Device() &&
+                    !shellArgs.contains(FlutterShellArgs.ARG_ENABLE_SOFTWARE_RENDERING)) {
+                shellArgs.add(FlutterShellArgs.ARG_ENABLE_SOFTWARE_RENDERING);
             }
             // END
 

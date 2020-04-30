@@ -49,6 +49,22 @@ class ResourceExtractor {
         }
     }
 
+    /**
+     * BD ADD:
+     */
+    static boolean isX86Device() {
+        boolean isX86Device = false;
+        if (SUPPORTED_ABIS != null && SUPPORTED_ABIS.length > 0) {
+            for (String abi : SUPPORTED_ABIS) {
+                if (abi != null && abi.contains("86")) {
+                    isX86Device = true;
+                    break;
+                }
+            }
+        }
+        return isX86Device;
+    }
+
     private static class ExtractTask extends AsyncTask<Void, Void, Void> {
         @NonNull
         private final String mDataDirPath;
