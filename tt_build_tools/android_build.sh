@@ -219,11 +219,11 @@ for liteMode in ${liteModes[@]}; do
                     bd_upload $androidDir/flutter_embedding_${mode}_${liteMode}.pom flutter/framework/io/flutter/flutter_embedding_${mode}_${liteMode}/1.0.0-${tosDir}/flutter_embedding_${mode}_${liteMode}-1.0.0-${tosDir}.pom
                 fi
               elif [ $dynamic = 'dynamicart' ]; then
-                bd_upload $androidDir/${platformResult}_dynamicart_${mode}.jar flutter/framework/$tosDir/io/flutter/${platformResult}_dynamicart_${mode}/1.0.0-${tosDir}/${platformResult}_dynamicart_${mode}-1.0.0-${tosDir}.jar
-                bd_upload $androidDir/${platformResult}_dynamicart_${mode}.pom flutter/framework/$tosDir/io/flutter/${platformResult}_dynamicart_${mode}/1.0.0-${tosDir}/${platformResult}_dynamicart_${mode}-1.0.0-${tosDir}.pom
+                bd_upload $androidDir/${platformResult}_dynamicart_${mode}.jar flutter/framework/io/flutter/${platformResult}_dynamicart_${mode}/1.0.0-${tosDir}/${platformResult}_dynamicart_${mode}-1.0.0-${tosDir}.jar
+                bd_upload $androidDir/${platformResult}_dynamicart_${mode}.pom flutter/framework/io/flutter/${platformResult}_dynamicart_${mode}/1.0.0-${tosDir}/${platformResult}_dynamicart_${mode}-1.0.0-${tosDir}.pom
                 if [ $platform = 'arm' ]; then
-                    bd_upload $androidDir/flutter_embedding_dynamicart_${mode}.jar flutter/framework/$tosDir/io/flutter/flutter_embedding_dynamicart_${mode}/1.0.0-${tosDir}/flutter_embedding_dynamicart_${mode}-1.0.0-${tosDir}.jar
-                    bd_upload $androidDir/flutter_embedding_dynamicart_${mode}.pom flutter/framework/$tosDir/io/flutter/flutter_embedding_dynamicart_${mode}/1.0.0-${tosDir}/flutter_embedding_dynamicart_${mode}-1.0.0-${tosDir}.pom
+                    bd_upload $androidDir/flutter_embedding_dynamicart_${mode}.jar flutter/framework/io/flutter/flutter_embedding_dynamicart_${mode}/1.0.0-${tosDir}/flutter_embedding_dynamicart_${mode}-1.0.0-${tosDir}.jar
+                    bd_upload $androidDir/flutter_embedding_dynamicart_${mode}.pom flutter/framework/io/flutter/flutter_embedding_dynamicart_${mode}/1.0.0-${tosDir}/flutter_embedding_dynamicart_${mode}-1.0.0-${tosDir}.pom
                 fi
               else
                 bd_upload $androidDir/${platformResult}_${mode}.jar flutter/framework/io/flutter/${platformResult}_${mode}/1.0.0-${tosDir}/${platformResult}_${mode}-1.0.0-${tosDir}.jar
