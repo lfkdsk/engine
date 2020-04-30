@@ -18,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import io.flutter.BuildConfig;
 import io.flutter.embedding.engine.FlutterJNI;
+// BD ADD:
+import io.flutter.embedding.engine.FlutterShellArgs;
 import io.flutter.util.PathUtils;
 import io.flutter.view.VsyncWaiter;
 import java.io.File;
@@ -158,7 +160,6 @@ public class FlutterLoader {
             if (resourceExtractor != null) {
               resourceExtractor.waitForCompletion();
             }
-
             return new InitResult(
                 PathUtils.getFilesDir(appContext),
                 PathUtils.getCacheDirectory(appContext),
@@ -243,6 +244,12 @@ public class FlutterLoader {
           shellArgs.add("--use-embedded-view");
         }
       }
+      // BD ADD: START
+      if (ResourceExtractor.isX86Device() &&
+              !shellArgs.contains(FlutterShellArgs.ARG_ENABLE_SOFTWARE_RENDERING)) {
+        shellArgs.add(FlutterShellArgs.ARG_ENABLE_SOFTWARE_RENDERING);
+      }
+      // END
 
       FlutterJNI.nativeInit(
           applicationContext,
