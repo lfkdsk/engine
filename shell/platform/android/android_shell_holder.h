@@ -42,7 +42,7 @@ class AndroidShellHolder {
   // BD ADD: START
   void ExitApp(fml::closure closure);
 
-  void UpdateSettings(const std::string& dynamic_dill_path);
+  void UpdateSettings(const std::string& package_dill_path);
 
   void NotifyLowMemory();
   // END

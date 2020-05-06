@@ -248,12 +248,28 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
     // 后续的逻辑会根据IsolateConfiguration创建isolate
     // isolate.PrepareForRunningFromDynamicartKernel()中加载该kernel文件
     std::unique_ptr<fml::Mapping> kernel =
-        asset_manager.GetAsMapping("kernel_blob.bin");
+        asset_manager.GetAsMapping("kb");
     if (kernel != nullptr && kernel->GetSize() > 0) {
-      TT_LOG() << "Created IsolateConfiguration For Running Dynamicart Kernel.";
-      return IsolateConfiguration::CreateForDynamicartKernel(std::move(kernel));
+        TT_LOG() << "begin decode kb";
+        const uint8_t* encodeData = kernel->GetMapping();
+        size_t encodeSize = kernel->GetSize();
+        std::vector<uint8_t> decodeData;
+        const size_t space = 8;
+        size_t spaceCount = encodeSize / space;
+        for (size_t i = 0; i < spaceCount; i++) {
+            for(size_t j = 0; j < space; j++){
+                decodeData.push_back(encodeData[i * space + j] ^ (i % space));
+            }
+        }
+        for (size_t i = (spaceCount * space ); i <= encodeSize; i++) {
+            decodeData.push_back(encodeData[i]  ^ 2);
+        }
+        std::unique_ptr<fml::Mapping> decodeKernel(new fml::DataMapping(decodeData));
+        TT_LOG() << "finish decode kb";
+        TT_LOG() << "Created IsolateConfiguration For Dyart.";
+      return IsolateConfiguration::CreateForDyartKernel(std::move(decodeKernel));
     } else {
-      TT_LOG() << "No kernel_blob.bin in package_dill_path "
+      TT_LOG() << "No kb file in package_dill_path "
                << settings.package_dill_path.c_str();
     }
   }
@@ -261,7 +277,7 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
 }
 
 std::unique_ptr<IsolateConfiguration>
-IsolateConfiguration::CreateForDynamicartKernel(
+IsolateConfiguration::CreateForDyartKernel(
     std::unique_ptr<const fml::Mapping> kernel) {
   return std::make_unique<DynamicartIsolateConfiguration>(std::move(kernel));
 }

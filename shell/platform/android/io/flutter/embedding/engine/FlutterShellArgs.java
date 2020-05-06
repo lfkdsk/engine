@@ -103,9 +103,9 @@ public class FlutterShellArgs {
     }
 
     // BD ADD:
-    String path = intent.getStringExtra("dynamic_dill_path");
+    String path = intent.getStringExtra("package_dill_path");
     if (!TextUtils.isEmpty(path)){
-      args.add("--dynamic_dill_path="+path);
+      args.add("--package_dill_path="+path);
     }
     // END
 

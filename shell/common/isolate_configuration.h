@@ -165,7 +165,7 @@ class IsolateConfiguration {
 
  private:
   // BD ADD: START
-  static std::unique_ptr<IsolateConfiguration> CreateForDynamicartKernel(
+  static std::unique_ptr<IsolateConfiguration> CreateForDyartKernel(
       std::unique_ptr<const fml::Mapping> kernel);
   // END
   FML_DISALLOW_COPY_AND_ASSIGN(IsolateConfiguration);
