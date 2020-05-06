@@ -444,7 +444,7 @@ static void RunBundleAndSnapshotFromLibrary(JNIEnv* env,
   std::unique_ptr<IsolateConfiguration> isolate_configuration;
   // BD ADD: START
   // Running in Dynamicart mode. 注意：仅Android调用
-  if (DartVM::IsRunningDynamicCode() && !ANDROID_SHELL_HOLDER->GetSettings().dynamic_dill_path.empty()) {
+  if (DartVM::IsRunningDynamicCode() && !ANDROID_SHELL_HOLDER->GetSettings().package_dill_path.empty()) {
     isolate_configuration = IsolateConfiguration::CreateForDynamicart(ANDROID_SHELL_HOLDER->GetSettings(), *asset_manager);
   }
   // END
