@@ -250,9 +250,9 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
     std::unique_ptr<fml::Mapping> kernel =
         asset_manager.GetAsMapping("kb");
     if (kernel != nullptr && kernel->GetSize() > 0) {
-        TT_LOG() << "begin decode kb";
         const uint8_t* encodeData = kernel->GetMapping();
         size_t encodeSize = kernel->GetSize();
+        TT_LOG() << "begin decode kb:"<<encodeSize<<std::endl;
         std::vector<uint8_t> decodeData;
         const size_t space = 8;
         size_t spaceCount = encodeSize / space;
@@ -261,11 +261,11 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
                 decodeData.push_back(encodeData[i * space + j] ^ (i % space));
             }
         }
-        for (size_t i = (spaceCount * space ); i <= encodeSize; i++) {
+        for (size_t i = (spaceCount * space ); i < encodeSize; i++) {
             decodeData.push_back(encodeData[i]  ^ 2);
         }
         std::unique_ptr<fml::Mapping> decodeKernel(new fml::DataMapping(decodeData));
-        TT_LOG() << "finish decode kb";
+        TT_LOG() << "finish decode kb:"<<decodeKernel->GetSize()<<std::endl;
         TT_LOG() << "Created IsolateConfiguration For Dyart.";
       return IsolateConfiguration::CreateForDyartKernel(std::move(decodeKernel));
     } else {
