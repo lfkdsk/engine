@@ -8,6 +8,7 @@
 
 #include "flutter/fml/make_copyable.h"
 #include "flutter/runtime/dart_vm.h"
+#include <chrono>
 
 namespace flutter {
 
@@ -248,29 +249,49 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
     // 后续的逻辑会根据IsolateConfiguration创建isolate
     // isolate.PrepareForRunningFromDynamicartKernel()中加载该kernel文件
     std::unique_ptr<fml::Mapping> kernel =
-        asset_manager.GetAsMapping("kb");
+              asset_manager.GetAsMapping("kernel_blob.bin");
     if (kernel != nullptr && kernel->GetSize() > 0) {
-        const uint8_t* encodeData = kernel->GetMapping();
-        size_t encodeSize = kernel->GetSize();
-        TT_LOG() << "begin decode kb:"<<encodeSize<<std::endl;
-        std::vector<uint8_t> decodeData;
-        const size_t space = 8;
-        size_t spaceCount = encodeSize / space;
-        for (size_t i = 0; i < spaceCount; i++) {
-            for(size_t j = 0; j < space; j++){
-                decodeData.push_back(encodeData[i * space + j] ^ (i % space));
-            }
-        }
-        for (size_t i = (spaceCount * space ); i < encodeSize; i++) {
-            decodeData.push_back(encodeData[i]  ^ 2);
-        }
-        std::unique_ptr<fml::Mapping> decodeKernel(new fml::DataMapping(decodeData));
-        TT_LOG() << "finish decode kb:"<<decodeKernel->GetSize()<<std::endl;
         TT_LOG() << "Created IsolateConfiguration For Dyart.";
-      return IsolateConfiguration::CreateForDyartKernel(std::move(decodeKernel));
+        return IsolateConfiguration::CreateForDyartKernel(std::move(kernel));
     } else {
-      TT_LOG() << "No kb file in package_dill_path "
-               << settings.package_dill_path.c_str();
+        kernel = asset_manager.GetAsMapping("kb");
+        if (kernel != nullptr && kernel->GetSize() > 0) {
+            std::unique_ptr<fml::Mapping> encrypt = asset_manager.GetAsMapping("encrypt.txt");
+            if (encrypt != nullptr) {
+                const uint8_t *encodeData = kernel->GetMapping();
+                size_t encodeSize = kernel->GetSize();
+                std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch()
+                );
+                long start = ms.count();
+                TT_LOG() << "begin decode kb:" << encodeSize << std::endl;
+                std::vector<uint8_t> decodeData;
+                const size_t space = 8;
+                size_t spaceCount = encodeSize / space;
+                for (size_t i = 0; i < spaceCount; i++) {
+                    for (size_t j = 0; j < space; j++) {
+                        decodeData.push_back(encodeData[i * space + j] ^ (i % space));
+                    }
+                }
+                for (size_t i = (spaceCount * space); i < encodeSize; i++) {
+                    decodeData.push_back(encodeData[i] ^ 2);
+                }
+                std::unique_ptr<fml::Mapping> decodeKernel(new fml::DataMapping(decodeData));
+                ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch()
+                );
+                long end = ms.count();
+                TT_LOG() << "finish decode kb:" << decodeKernel->GetSize() << ",time:" << (end - start) << std::endl;
+                TT_LOG() << "Created IsolateConfiguration For Dyart.";
+                return IsolateConfiguration::CreateForDyartKernel(std::move(decodeKernel));
+            } else {
+                TT_LOG() << "Created IsolateConfiguration For Dyart.";
+                return IsolateConfiguration::CreateForDyartKernel(std::move(kernel));
+            }
+        } else {
+            TT_LOG() << "No kb file in package_dill_path "
+                     << settings.package_dill_path.c_str();
+        }
     }
   }
   return nullptr;
