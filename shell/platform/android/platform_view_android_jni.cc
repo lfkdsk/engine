@@ -346,6 +346,12 @@ static jlong AttachJNI(JNIEnv* env,
   }
 }
 
+// BD ADD:
+static void ScheduleBackgroundFrame(JNIEnv *env, jobject jcaller, jlong shell_holder) {
+  ANDROID_SHELL_HOLDER->ScheduleBackgroundFrame();
+}
+// END
+
 static void DestroyJNI(JNIEnv *env, jobject jcaller, jlong shell_holder) {
     // BD MOD
     // delete ANDROID_SHELL_HOLDER;
@@ -742,6 +748,13 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(Lio/flutter/embedding/engine/FlutterJNI;Z)J",
           .fnPtr = reinterpret_cast<void*>(&AttachJNI),
       },
+      // BD ADD: START
+      {
+          .name = "nativeScheduleBackgroundFrame",
+          .signature = "(J)V",
+          .fnPtr = reinterpret_cast<void*>(&ScheduleBackgroundFrame),
+      },
+      // END
       {
           .name = "nativeDestroy",
           .signature = "(J)V",

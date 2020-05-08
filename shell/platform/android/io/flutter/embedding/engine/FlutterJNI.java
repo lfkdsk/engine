@@ -620,6 +620,14 @@ public class FlutterJNI {
   }
 
   private native void nativeNotifyLowMemory(long nativePlatformViewId);
+
+  public void scheduleBackgroundFrame() {
+    ensureAttachedToNative();
+    nativeScheduleBackgroundFrame(nativePlatformViewId);
+  }
+
+  private native void nativeScheduleBackgroundFrame(long nativePlatformViewId);
+
   // END
   /**
    * Executes a Dart entrypoint.
