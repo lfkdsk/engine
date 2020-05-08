@@ -200,6 +200,13 @@ void AndroidShellHolder::UpdateSettings(const std::string& dynamic_dill_path) {
   settings_.dynamic_dill_path = dynamic_dill_path;
 }
 
+void AndroidShellHolder::ScheduleBackgroundFrame() {
+  if (!IsValid()) {
+    return;
+  }
+  shell_->ScheduleBackgroundFrame();
+}
+
 void AndroidShellHolder::NotifyLowMemory() {
   if (!IsValid()) {
     return;

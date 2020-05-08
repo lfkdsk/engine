@@ -1556,6 +1556,19 @@ void Shell::ExitApp(fml::closure closure) {
                 }));
           }));
 }
+
+void Shell::ScheduleBackgroundFrame() {
+  FML_DCHECK(is_setup_);
+  FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
+
+  task_runners_.GetUITaskRunner()->PostTask([this] {
+    auto engine = GetEngine();
+    if (engine) {
+      engine->ScheduleBackgroundFrame();
+    }
+  });
+}
+
 // END
 
 }  // namespace flutter

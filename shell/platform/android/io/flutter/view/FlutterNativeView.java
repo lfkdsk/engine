@@ -158,6 +158,10 @@ public class FlutterNativeView implements BinaryMessenger {
     public void updateNative(String assetsPath) {
         mFlutterJNI.updateNative(assetsPath);
     }
+
+    public void scheduleBackgroundFrame() {
+        mFlutterJNI.scheduleBackgroundFrame();
+    }
     // END
 
     private final class EngineLifecycleListenerImpl implements EngineLifecycleListener {
