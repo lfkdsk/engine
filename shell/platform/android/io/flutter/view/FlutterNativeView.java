@@ -161,4 +161,9 @@ public class FlutterNativeView implements BinaryMessenger {
       mPluginRegistry.onPreEngineRestart();
     }
   }
+  // BD ADD: START
+  public void scheduleBackgroundFrame() {
+	  mFlutterJNI.scheduleBackgroundFrame();
+  }
+  // END
 }

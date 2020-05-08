@@ -137,6 +137,13 @@ static void DestroyJNI(JNIEnv* env, jobject jcaller, jlong shell_holder) {
   delete ANDROID_SHELL_HOLDER;
 }
 
+// BD ADD: START
+static void ScheduleBackgroundFrame(JNIEnv *env, jobject jcaller, jlong shell_holder) {
+  // 每个Holder都拥有自己的Settings，需要设置不同的dynamic_dill_path
+  ANDROID_SHELL_HOLDER->ScheduleBackgroundFrame();
+}
+// END
+
 static void SurfaceCreated(JNIEnv* env,
                            jobject jcaller,
                            jlong shell_holder,
@@ -515,6 +522,13 @@ bool RegisterApi(JNIEnv* env) {
           .signature = "(Lio/flutter/embedding/engine/FlutterJNI;Z)J",
           .fnPtr = reinterpret_cast<void*>(&AttachJNI),
       },
+      // BD ADD: START
+      {
+          .name = "nativeScheduleBackgroundFrame",
+          .signature = "(J)V",
+          .fnPtr = reinterpret_cast<void*>(&ScheduleBackgroundFrame),
+      },
+      // END
       {
           .name = "nativeDestroy",
           .signature = "(J)V",

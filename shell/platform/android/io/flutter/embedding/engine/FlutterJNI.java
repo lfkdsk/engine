@@ -619,6 +619,15 @@ public class FlutterJNI {
   private native void nativeUnregisterTexture(long nativePlatformViewId, long textureId);
   // ------ Start Texture Registration Support -----
 
+  // BD ADD: START
+  public void scheduleBackgroundFrame() {
+    ensureAttachedToNative();
+    nativeScheduleBackgroundFrame(nativePlatformViewId);
+  }
+
+  private native void nativeScheduleBackgroundFrame(long nativePlatformViewId);
+  // END
+
   // ------ Start Dart Execution Support -------
   /**
    * Executes a Dart entrypoint.
