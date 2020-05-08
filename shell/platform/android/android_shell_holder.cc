@@ -215,4 +215,13 @@ void AndroidShellHolder::NotifyLowMemoryWarning() {
   FML_DCHECK(shell_);
   shell_->NotifyLowMemoryWarning();
 }
+
+// BD ADD: START
+void AndroidShellHolder::ScheduleBackgroundFrame() {
+  if (!IsValid()) {
+    return;
+  }
+  shell_->ScheduleBackgroundFrame();
+}
+// END
 }  // namespace flutter
