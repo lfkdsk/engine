@@ -173,7 +173,7 @@ DEF_SWITCH(
     "in the flutter_tester.")
 // BD ADD: START
 DEF_SWITCH(DisableLeakVM, "disable-leak-vm", "Set leak_vm in setting.h to false.")
-DEF_SWITCH(DynamicDillPath, "dynamic_dill_path", "Dynamicart Assets Path")
+DEF_SWITCH(PackageDillPath, "package_dill_path", "Package Assets Path")
 // END
 DEF_SWITCHES_END
 

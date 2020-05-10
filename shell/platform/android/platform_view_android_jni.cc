@@ -347,9 +347,9 @@ static jlong AttachJNI(JNIEnv* env,
 }
 
 // BD ADD:
-static void UpdateSettings(JNIEnv *env, jobject jcaller, jlong shell_holder, jstring dynamic_dill_path) {
+static void UpdateSettings(JNIEnv *env, jobject jcaller, jlong shell_holder, jstring package_dill_path) {
   // 每个Holder都拥有自己的Settings，需要设置不同的dynamic_dill_path
-  ANDROID_SHELL_HOLDER->UpdateSettings(fml::jni::JavaStringToString(env, dynamic_dill_path));
+  ANDROID_SHELL_HOLDER->UpdateSettings(fml::jni::JavaStringToString(env, package_dill_path));
 }
 
 static void ScheduleBackgroundFrame(JNIEnv *env, jobject jcaller, jlong shell_holder) {
@@ -449,7 +449,7 @@ static void RunBundleAndSnapshotFromLibrary(JNIEnv* env,
   std::unique_ptr<IsolateConfiguration> isolate_configuration;
   // BD ADD: START
   // Running in Dynamicart mode. 注意：仅Android调用
-  if (DartVM::IsRunningDynamicCode() && !ANDROID_SHELL_HOLDER->GetSettings().dynamic_dill_path.empty()) {
+  if (DartVM::IsRunningDynamicCode() && !ANDROID_SHELL_HOLDER->GetSettings().package_dill_path.empty()) {
     isolate_configuration = IsolateConfiguration::CreateForDynamicart(ANDROID_SHELL_HOLDER->GetSettings(), *asset_manager);
   }
   // END

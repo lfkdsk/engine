@@ -293,7 +293,6 @@ bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fm
 
   tonic::DartState::Scope scope(this);
 
-  TT_LOG() << "LoadKernelFromDyanmicartKernel.";
   LoadKernelFromDyanmicartKernel(mapping);
 
   if (Dart_IsNull(Dart_RootLibrary())) {
@@ -384,16 +383,16 @@ bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapp
     return false;
   }
   if (!mapping || mapping->GetSize() == 0) {
-        FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is NULL." << std::endl;
+        FML_LOG(ERROR)<<"kb is NULL." << std::endl;
         return false;
   }
 
-  FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: start loading..." << std::endl;
+  FML_LOG(ERROR)<<"start loading kb..." << std::endl;
   kernel_buffers_.push_back(mapping);
 
 
   if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
-    FML_LOG(ERROR)<<"LoadKernelFromDyanmicartKernel: Kernel is Invalid." << std::endl;
+    FML_LOG(ERROR)<<"kb is Invalid." << std::endl;
     return false;
   }
 
@@ -402,18 +401,18 @@ bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapp
   Dart_Handle library =
       Dart_LoadLibraryFromKernel2(mapping->GetMapping(), mapping->GetSize());
   if (tonic::LogIfError(library)) {
-    FML_LOG(ERROR)<<"Kernel load failed"<<std::endl;
+    FML_LOG(ERROR)<<"kb load failed"<<std::endl;
     return false;
   }
 
   Dart_SetRootLibrary(library);
 
   if (tonic::LogIfError(Dart_FinalizeLoading(false))) {
-    FML_LOG(ERROR)<<"Kernel FinalizeLoading failed"<<std::endl;
+    FML_LOG(ERROR)<<"kb FinalizeLoading failed"<<std::endl;
     return false;
   }
 
-  FML_LOG(ERROR)<<"Kernel load success"<<std::endl;
+  FML_LOG(ERROR)<<"kb load success"<<std::endl;
   return true;
 }
 

@@ -8,6 +8,7 @@
 
 #include "flutter/fml/make_copyable.h"
 #include "flutter/runtime/dart_vm.h"
+#include <chrono>
 
 namespace flutter {
 
@@ -168,7 +169,7 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::InferFromSettings(
 
   // BD ADD:
   // Running in Dynamicart mode. 注意：仅iOS调用
-  if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
+  if (DartVM::IsRunningDynamicCode() && !settings.package_dill_path.empty()) {
     return CreateForDynamicart(settings, *asset_manager);
   }
   // END
@@ -228,40 +229,76 @@ IsolateConfiguration::CreateForAppSnapshot() {
 std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
     const Settings& settings, AssetManager& asset_manager) {
   // Running in Dynamicart mode.
-  if (DartVM::IsRunningDynamicCode() && !settings.dynamic_dill_path.empty()) {
+  if (DartVM::IsRunningDynamicCode() && !settings.package_dill_path.empty()) {
     // 如果是动态模式，把动态包资源也加入asset_manager的查找范围中，且放在最前面，优先级最高。
-    // 根据dynamic_dill_path的后缀判断有不同的处理逻辑：
+    // 根据package_dill_path的后缀判断有不同的处理逻辑：
     // 如果.zip结尾就作为ZipAssetStore处理
     // 如果不是那就作为DirectoryAssetBundle处理
-    size_t file_ext_index = settings.dynamic_dill_path.rfind('.');
+    size_t file_ext_index = settings.package_dill_path.rfind('.');
     if (file_ext_index == std::string::npos ||
-        settings.dynamic_dill_path.substr(file_ext_index) != ".zip") {
+        settings.package_dill_path.substr(file_ext_index) != ".zip") {
       asset_manager.PushFront(std::make_unique<DirectoryAssetBundle>(
-          fml::OpenDirectory(settings.dynamic_dill_path.c_str(), false,
+          fml::OpenDirectory(settings.package_dill_path.c_str(), false,
                              fml::FilePermission::kRead)));
     } else {
       asset_manager.PushFront(std::make_unique<ZipAssetStore>(
-          settings.dynamic_dill_path.c_str(), "flutter_assets"));
+          settings.package_dill_path.c_str(), "flutter_assets"));
     }
 
     // 然后，从资源中找出kernel文件, 由此生成IsolateConfiguration
     // 后续的逻辑会根据IsolateConfiguration创建isolate
     // isolate.PrepareForRunningFromDynamicartKernel()中加载该kernel文件
     std::unique_ptr<fml::Mapping> kernel =
-        asset_manager.GetAsMapping("kernel_blob.bin");
+              asset_manager.GetAsMapping("kernel_blob.bin");
     if (kernel != nullptr && kernel->GetSize() > 0) {
-      TT_LOG() << "Created IsolateConfiguration For Running Dynamicart Kernel.";
-      return IsolateConfiguration::CreateForDynamicartKernel(std::move(kernel));
+        TT_LOG() << "Created IsolateConfiguration For Dyart.";
+        return IsolateConfiguration::CreateForDyartKernel(std::move(kernel));
     } else {
-      TT_LOG() << "No kernel_blob.bin in dynamic_dill_path "
-               << settings.dynamic_dill_path.c_str();
+        kernel = asset_manager.GetAsMapping("kb");
+        if (kernel != nullptr && kernel->GetSize() > 0) {
+            std::unique_ptr<fml::Mapping> encrypt = asset_manager.GetAsMapping("encrypt.txt");
+            if (encrypt != nullptr) {
+                const uint8_t *encodeData = kernel->GetMapping();
+                size_t encodeSize = kernel->GetSize();
+                std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch()
+                );
+                long start = ms.count();
+                TT_LOG() << "begin decode kb:" << encodeSize << std::endl;
+                std::vector<uint8_t> decodeData;
+                const size_t space = 8;
+                size_t spaceCount = encodeSize / space;
+                for (size_t i = 0; i < spaceCount; i++) {
+                    for (size_t j = 0; j < space; j++) {
+                        decodeData.push_back(encodeData[i * space + j] ^ (i % space));
+                    }
+                }
+                for (size_t i = (spaceCount * space); i < encodeSize; i++) {
+                    decodeData.push_back(encodeData[i] ^ 2);
+                }
+                std::unique_ptr<fml::Mapping> decodeKernel(new fml::DataMapping(decodeData));
+                ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch()
+                );
+                long end = ms.count();
+                TT_LOG() << "finish decode kb:" << decodeKernel->GetSize() << ",time:" << (end - start) << std::endl;
+                TT_LOG() << "Created IsolateConfiguration For Dyart.";
+                return IsolateConfiguration::CreateForDyartKernel(std::move(decodeKernel));
+            } else {
+                TT_LOG() << "Created IsolateConfiguration For Dyart.";
+                return IsolateConfiguration::CreateForDyartKernel(std::move(kernel));
+            }
+        } else {
+            TT_LOG() << "No kb file in package_dill_path "
+                     << settings.package_dill_path.c_str();
+        }
     }
   }
   return nullptr;
 }
 
 std::unique_ptr<IsolateConfiguration>
-IsolateConfiguration::CreateForDynamicartKernel(
+IsolateConfiguration::CreateForDyartKernel(
     std::unique_ptr<const fml::Mapping> kernel) {
   return std::make_unique<DynamicartIsolateConfiguration>(std::move(kernel));
 }

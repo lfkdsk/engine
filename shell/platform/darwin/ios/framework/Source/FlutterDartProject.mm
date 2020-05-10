@@ -233,16 +233,16 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 }
 
 // BD ADD: START
-- (void)setDynamicDillPath:(NSString*)path {
+- (void)setDillPath:(NSString*)path {
   if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
     return;
   }
   if (flutter::DartVM::IsRunningDynamicCode()) {
-    _settings.dynamic_dill_path = path.UTF8String;
+    _settings.package_dill_path = path.UTF8String;
   }
 }
 
-- (void)setDynamicEnginePath:(NSString*)path {
+- (void)setEnginePath:(NSString*)path {
   if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
     return;
   }

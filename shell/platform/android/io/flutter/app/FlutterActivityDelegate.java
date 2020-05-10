@@ -151,7 +151,7 @@ public final class FlutterActivityDelegate
             flutterView = new FlutterView(activity, null, nativeView);
 
             // BD ADD:
-            String path = activity.getIntent().getStringExtra("dynamic_dill_path");
+            String path = activity.getIntent().getStringExtra("package_dill_path");
             if (!TextUtils.isEmpty(path)){
                 flutterView.getFlutterNativeView().updateNative(path);
             }

@@ -44,7 +44,7 @@ class AndroidShellHolder {
 
   void ScheduleBackgroundFrame();
 
-  void UpdateSettings(const std::string& dynamic_dill_path);
+  void UpdateSettings(const std::string& package_dill_path);
 
   void NotifyLowMemory();
   // END
