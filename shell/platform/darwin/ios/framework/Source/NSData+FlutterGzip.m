@@ -8,6 +8,7 @@
 // BD ADD: START
 #import "NSData+FlutterGzip.h"
 #include "third_party/zlib/zlib.h"
+#import <CommonCrypto/CommonCrypto.h>
 
 @implementation NSData (FlutterGzip)
 
@@ -50,6 +51,21 @@
   const UInt8* bytes = (const UInt8*)self.bytes;
   return (self.length >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b);
 }
+
+
+- (NSString *)MD5 {
+  CC_MD5_CTX md5;
+  CC_MD5_Init(&md5);
+  CC_MD5_Update(&md5, self.bytes, (CC_LONG)self.length);
+  unsigned char result[CC_MD5_DIGEST_LENGTH];
+  CC_MD5_Final(result, &md5);
+  NSMutableString *resultValue = [NSMutableString string];
+  for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
+    [resultValue appendFormat:@"%02x", result[i]];
+  }
+  return resultValue;
+}
+
 
 @end
 // END
