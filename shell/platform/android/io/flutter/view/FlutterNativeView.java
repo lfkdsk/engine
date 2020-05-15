@@ -154,6 +154,12 @@ public class FlutterNativeView implements BinaryMessenger {
         dartExecutor.onAttachedToJNI();
     }
 
+    // BD ADD:
+    public void scheduleBackgroundFrame() {
+        mFlutterJNI.scheduleBackgroundFrame();
+    }
+    // END
+
     private final class EngineLifecycleListenerImpl implements EngineLifecycleListener {
         // Called by native to notify when the engine is restarted (cold reload).
         @SuppressWarnings("unused")

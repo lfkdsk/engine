@@ -42,6 +42,8 @@ class AndroidShellHolder {
   // BD ADD:START
   void ExitApp(fml::closure closure);
 
+  void ScheduleBackgroundFrame();
+
   void NotifyLowMemory();
   // END
 

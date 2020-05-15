@@ -191,6 +191,13 @@ void AndroidShellHolder::ExitApp(fml::closure closure) {
   shell_->ExitApp(std::move(closure));
 }
 
+void AndroidShellHolder::ScheduleBackgroundFrame() {
+  if (!IsValid()) {
+    return;
+  }
+  shell_->ScheduleBackgroundFrame();
+}
+
 void AndroidShellHolder::NotifyLowMemory() {
   if (!IsValid()) {
     return;

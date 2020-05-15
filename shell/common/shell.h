@@ -314,6 +314,12 @@ class Shell final : public PlatformView::Delegate,
   void ExitApp(fml::closure closure);
   // END
 
+  /**
+   * BD ADD:
+   * 增加后台渲染能力，防止一些情况dispose没执行
+   */
+  void ScheduleBackgroundFrame();
+
   // BD ADD:
   static int64_t GetEngineMainEnterMicros();
 
