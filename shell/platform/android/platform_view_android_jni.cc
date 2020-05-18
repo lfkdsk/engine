@@ -353,7 +353,6 @@ static void UpdateSettings(JNIEnv *env, jobject jcaller, jlong shell_holder, jst
 }
 
 static void ScheduleBackgroundFrame(JNIEnv *env, jobject jcaller, jlong shell_holder) {
-  // 每个Holder都拥有自己的Settings，需要设置不同的dynamic_dill_path
   ANDROID_SHELL_HOLDER->ScheduleBackgroundFrame();
 }
 // END
