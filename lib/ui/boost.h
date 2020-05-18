@@ -68,6 +68,9 @@ class Boost {
 
   void ForceGC();
 
+  void DisableMips(bool disable);
+  bool IsDisableMips();
+
  private:
   Boost();
   ~Boost();
@@ -95,6 +98,8 @@ class Boost {
   fml::Semaphore extend_semaphore_;
   
   int64_t notify_idle_deadline_;
+
+  atomic_bool disable_mipmaps_;
   
   FML_DISALLOW_COPY_AND_ASSIGN(Boost);
 };

@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 #include "flutter/lib/ui/painting/image_decoder.h"
 
 #include "flutter/fml/make_copyable.h"
@@ -190,7 +192,9 @@ static SkiaGPUObject<SkImage> UploadRasterImage(
             sk_sp<SkImage> texture_image = SkImage::MakeCrossContextFromPixmap(
                 context.get(),  // context
                 pixmap,         // pixmap
-                true,           // buildMips,
+                // BD MOD:
+                // true,           // buildMips,
+                !Boost::Current()->IsDisableMips(),
                 true            // limitToMaxTextureSize
             );
             if (!texture_image) {

@@ -97,4 +97,6 @@ void finishBoost(int flags) native 'FinishBoost';
 void preloadFontFamilies(List<String> font_families, String locale) native 'PreloadFontFamilies';
 
 void forceGC() native 'ForceGC';
+
+void disableMips(bool disable) native 'DisableMips';
 /// END

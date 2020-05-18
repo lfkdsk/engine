@@ -60,10 +60,11 @@ namespace flutter {
   V(ForceGC, 0)                 \
   V(StartBoost, 2)              \
   V(FinishBoost, 1)             \
-  V(PreloadFontFamilies, 2)
+  V(PreloadFontFamilies, 2)     \
+  V(DisableMips, 1)
   /** END **/
 
-BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
+  BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
 
 void DartRuntimeHooks::RegisterNatives(tonic::DartLibraryNatives* natives) {
   natives->Register({BUILTIN_NATIVE_LIST(REGISTER_FUNCTION)});
@@ -379,6 +380,11 @@ void PreloadFontFamilies(Dart_NativeArguments args) {
 
 void ForceGC(Dart_NativeArguments args) {
   Boost::Current()->ForceGC();
+}
+
+void DisableMips(Dart_NativeArguments args) {
+  bool disable = (bool)DartConverter<bool >::FromDart(Dart_GetNativeArgument(args, 0));
+  Boost::Current()->DisableMips(disable);
 }
 // END
 }  // namespace flutter
