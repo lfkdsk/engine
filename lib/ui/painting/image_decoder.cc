@@ -10,6 +10,9 @@
 #include "third_party/skia/include/codec/SkCodec.h"
 #include "third_party/skia/src/codec/SkCodecImageGenerator.h"
 
+// BD ADD:
+#include "flutter/bdflutter/lib/ui/performance/performance.h"
+
 namespace flutter {
 namespace {
 
@@ -290,7 +293,9 @@ static SkiaGPUObject<SkImage> UploadRasterImage(
             sk_sp<SkImage> texture_image = SkImage::MakeCrossContextFromPixmap(
                 context.get(),  // context
                 pixmap,         // pixmap
-                true,           // buildMips,
+                // BD MOD:
+//                 true,           // buildMips,
+                !Performance::GetInstance()->IsDisableMips(),
                 true            // limitToMaxTextureSize
             );
             if (!texture_image) {
