@@ -131,7 +131,36 @@ def to_gn_args(args):
                 gn_args['skialite_use_component_name_skialite'] = False
                 gn_args['skialite_enable_test'] = False
                 gn_args['skialite_only_lite_apis'] = True
-    # END
+                gn_args['skialite_use_codec_cg'] = True
+                gn_args['skia_use_metal'] = False
+                gn_args['skia_use_libjpeg_turbo'] = False
+                gn_args['skia_use_libpng'] = False
+
+                # common
+                gn_args['skialite_disable_codec_api'] = False
+                gn_args['skialite_enable_module_skottie'] = False
+                gn_args['skialite_disable_codec_encode_api'] = True
+                gn_args['skialite_disable_c_api'] = True
+                gn_args['skialite_disable_utils_part_apis'] = True
+                gn_args['skialite_disable_filter_effect_part_api'] = True
+                gn_args['skialite_disable_shader_part_api'] = True
+                gn_args['skialite_disable_path_effect_part_api'] = True
+                gn_args['skialite_disable_effect_imagefilter_api'] = True
+                gn_args['skialite_disable_remote_glyph'] = True
+                gn_args['skialite_disable_svg'] = True
+                gn_args['skia_enable_sksl_interpreter'] = False
+                gn_args['skia_enable_atlas_text'] = False
+                gn_args['skia_enable_nvpr'] = False
+                gn_args['skia_enable_ccpr'] = False
+                gn_args['skia_use_harfbuzz'] = False
+                gn_args['skia_use_icu'] = False
+                gn_args['skia_use_dng_sdk'] = False
+                gn_args['skia_use_piex'] = False
+                gn_args['skia_use_libheif'] = False
+                gn_args['skia_enable_pdf'] = False
+                gn_args['skia_use_libwebp'] = True
+                gn_args['werror'] = False
+# END
 
     # Skia GN args.
     gn_args['skia_enable_flutter_defines'] = True # Enable Flutter API guards in Skia.
