@@ -49,11 +49,16 @@ cd ..
 for liteMode in ${liteModes[@]}; do
 	for mode in 'debug' 'profile' 'release' 'release_dynamicart' 'profile_dynamicart'; do
 		# lite only build for release mode
-		if [ $mode == 'debug' ] || [ $mode == 'profile' ] || [[ $mode == *"dynamicart"* ]]; then
+		if [ $mode == 'debug' ] || [ $mode == 'profile' ] || [[ $mode == *"profile_dynamicart"* ]]; then
 		  if [ $liteMode != 'normal' ]; then
 		    echo 'lite mode only build for release!'
 		    continue
 		  fi
+		fi
+		if [ "$liteMode" != 'normal' ] && [ "$mode" == 'release' ]; then
+			echo "Warning: mode is $mode-$liteMode"
+			echo "Warning: dynamicart branch only build release_dynamicart"
+			continue
 		fi
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
@@ -64,10 +69,11 @@ for liteMode in ${liteModes[@]}; do
 		if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]; then
 		   iOSArmV7Dir=out/ios_${real_mode}_arm_dynamicart
 		fi
-		if [ $mode != 'release' -a $liteMode != 'normal' ]; then
-		  echo 'lite mode only build for release!'
+		# only build for release_dynamicart
+		if [ $mode != 'release_dynamicart' -a $liteMode != 'normal' ]; then
+		  echo 'lite mode only build for release_dynamicart!'
 		  continue
-		 fi
+		fi
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
 		echo "iOS build start mode = ${mode} liteMode = ${liteMode}"
@@ -92,15 +98,15 @@ for liteMode in ${liteModes[@]}; do
 		# 编译各种架构引擎
         if [ "$mode" == "release_dynamicart" -o "$mode" == "profile_dynamicart" ]
         then
-            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --dynamicart
+            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --dynamicart $modeSuffix
             ninja -C $iOSArm64Dir -j $jcount
             checkResult
 
-            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --ios-cpu=arm --dynamicart
+            ./flutter/tools/gn --ios --runtime-mode=${real_mode} --ios-cpu=arm --dynamicart $modeSuffix
             ninja -C $iOSArmV7Dir -j $jcount
             checkResult
         else
-            ./flutter/tools/gn --ios --runtime-mode=$mode $modeSuffix
+            ./flutter/tools/gn --ios --runtime-mode=$mode $modeSuffix $modeSuffix
             ninja -C $iOSArm64Dir -j $jcount
             checkResult
 

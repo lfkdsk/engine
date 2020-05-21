@@ -100,6 +100,10 @@ cd ..
 bd_upload $cacheDir/flutter_patched_sdk_product.zip flutter/framework/$tosDir/flutter_patched_sdk_product.zip
 
 for liteMode in ${liteModes[@]}; do
+  if [ "$liteMode" != "normal" ]; then
+     echo 'Warning: dynamicart dont compile lite mode for android'
+     coutinue
+  fi
   liteModeComdSuffix=''
   if [ ${liteMode} != 'normal' ]; then
       liteModeComdSuffix=--${liteMode}
