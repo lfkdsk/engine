@@ -318,6 +318,8 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
 
   command_line.GetOptionValue(FlagForSwitch(Switch::PackageDillPath),
                               &settings.package_dill_path);
+  settings.limit_skia_worker =
+      command_line.HasOption(FlagForSwitch(Switch::LimitSkiaWorker));
   // END
 
   if (settings.icu_initialization_required) {

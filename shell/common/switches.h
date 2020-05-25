@@ -174,6 +174,9 @@ DEF_SWITCH(
 // BD ADD: START
 DEF_SWITCH(DisableLeakVM, "disable-leak-vm", "Set leak_vm in setting.h to false.")
 DEF_SWITCH(PackageDillPath, "package_dill_path", "Package Assets Path")
+DEF_SWITCH(LimitSkiaWorker,
+     "limit-skia-worker",
+     "Limit Skia worker thread count")
 // END
 DEF_SWITCHES_END
 

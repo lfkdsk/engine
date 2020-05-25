@@ -189,6 +189,7 @@ struct Settings {
   std::string zip_assets_file_path;
   std::string zip_assets_directory;
   bool high_qos = false;
+  bool limit_skia_worker = false;
   // END
 
   // This data will be available to the isolate immediately on launch via the
