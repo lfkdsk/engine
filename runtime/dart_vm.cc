@@ -273,7 +273,7 @@ DartVM::DartVM(std::shared_ptr<const DartVMData> vm_data,
                std::shared_ptr<IsolateNameServer> isolate_name_server)
     : settings_(vm_data->GetSettings()),
       // BD MOD:
-      concurrent_message_loop_(settings_.limit_skia_worker ? fml::ConcurrentMessageLoop::Create(2)
+      concurrent_message_loop_(settings_.limit_skia_worker ? fml::ConcurrentMessageLoop::Create(4)
           : fml::ConcurrentMessageLoop::Create()),
       skia_concurrent_executor_(
           [runner = concurrent_message_loop_->GetTaskRunner()](
