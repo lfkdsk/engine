@@ -248,7 +248,8 @@ std::unique_ptr<Shell> ShellTest::CreateShell(Settings settings,
             shell, shell.GetTaskRunners(), simulate_vsync);
       },
       [](Shell& shell) {
-        return std::make_unique<Rasterizer>(shell, shell.GetTaskRunners());
+        return std::make_unique<Rasterizer>(shell, shell.GetTaskRunners(),
+                                            shell.GetIsGpuDisabledSyncSwitch());
       });
 }
 
