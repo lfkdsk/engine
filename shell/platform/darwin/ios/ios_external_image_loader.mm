@@ -23,7 +23,7 @@ namespace flutter {
         const TaskRunners task_runners;
         ImageLoaderCallbackContext(const TaskRunners& task_runners) : callback(nullptr), task_runners(task_runners){}
         ~ ImageLoaderCallbackContext() {
-            if (callback != nullptr) {
+            if (callback != nullptr && task_runners.IsValid()) {
                 task_runners.GetUITaskRunner()->PostTask(fml::MakeCopyable(
                     [callback = std::move(callback)]() mutable {
                       callback(nullptr);
