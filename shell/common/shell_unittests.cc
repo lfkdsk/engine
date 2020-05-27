@@ -128,7 +128,7 @@ TEST_F(ShellTest,
                              },
                              [](Shell& shell) {
                                return std::make_unique<Rasterizer>(
-                                   shell, shell.GetTaskRunners());
+                                   shell, shell.GetTaskRunners(),shell.GetIsGpuDisabledSyncSwitch());
                              });
   ASSERT_TRUE(ValidateShell(shell.get()));
   ASSERT_TRUE(DartVMRef::IsInstanceRunning());
