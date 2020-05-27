@@ -5,6 +5,7 @@
 #include "flutter/flow/skia_gpu_object.h"
 
 #include "flutter/fml/message_loop.h"
+#include "flutter/fml/trace_event.h"
 
 namespace flutter {
 
@@ -34,6 +35,7 @@ void SkiaUnrefQueue::Unref(SkRefCnt* object) {
 }
 
 void SkiaUnrefQueue::Drain() {
+  TRACE_EVENT0("flutter", "SkiaUnrefQueue::Drain");
   std::deque<SkRefCnt*> skia_objects;
   {
     std::scoped_lock lock(mutex_);
@@ -43,6 +45,10 @@ void SkiaUnrefQueue::Drain() {
 
   for (SkRefCnt* skia_object : skia_objects) {
     skia_object->unref();
+  }
+
+  if (resource_context_ && skia_objects.size() > 0) {
+    resource_context_->performDeferredCleanup(std::chrono::milliseconds(0));
   }
 }
 

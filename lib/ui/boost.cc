@@ -270,4 +270,13 @@ void Boost::ForceGC() {
 #endif
 }
 
+
+void Boost::DisableMips(bool disable) {
+  disable_mipmaps_ = disable;
+}
+
+bool Boost::IsDisableMips(){
+  return disable_mipmaps_ ;
+}
+
 }  // namespace flutter

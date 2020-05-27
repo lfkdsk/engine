@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 #include "flutter/lib/ui/painting/multi_frame_codec.h"
 
 #include "flutter/fml/make_copyable.h"
@@ -122,7 +124,10 @@ sk_sp<SkImage> MultiFrameCodec::State::GetNextFrameImage(
     SkPixmap pixmap(bitmap.info(), bitmap.pixelRef()->pixels(),
                     bitmap.pixelRef()->rowBytes());
     return SkImage::MakeCrossContextFromPixmap(resourceContext.get(), pixmap,
-                                               true);
+                                               // BD MOD:
+                                               // true
+                                               !Boost::Current()->IsDisableMips()
+                                               );
   } else {
     // Defer decoding until time of draw later on the GPU thread. Can happen
     // when GL operations are currently forbidden such as in the background

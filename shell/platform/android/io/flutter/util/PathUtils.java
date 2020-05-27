@@ -21,11 +21,9 @@ public final class PathUtils {
     public static String getCacheDirectory(Context applicationContext) {
         // BD MOD:START
         // if (Build.VERSION.SDK_INT >= 21) {
-        //     return applicationContext.getCodeCacheDir().getPath();
-        File codeCacheDir = applicationContext.getCodeCacheDir();
-        if (Build.VERSION.SDK_INT >= 21 && codeCacheDir != null) {
-            return codeCacheDir.getPath();
+        if (Build.VERSION.SDK_INT >= 21 && applicationContext.getCodeCacheDir() != null) {
         // END
+            return applicationContext.getCodeCacheDir().getPath();
         } else {
             return applicationContext.getCacheDir().getPath();
         }
