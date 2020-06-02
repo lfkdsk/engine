@@ -719,19 +719,13 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jcaller,
         jstring key,
         jobject jBitmap) {
-    auto cKey = fml::jni::JavaStringToString(env, key);
-    auto loadContext = g_image_load_contexts[cKey];
-    if (loadContext == nullptr) {
-        return;
-    }
-    loadContext->onLoadSuccess(env, cKey, env->NewGlobalRef(jBitmap));
-    auto dartState = static_cast<UIDartState *>(loadContext->contextPtr);
-    if (!dartState || !dartState->GetTaskRunners().IsValid()) {
-      return;
-    }
-    dartState->GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable([cKey = std::move(cKey)](){
-      g_image_load_contexts.erase(cKey);
-    }));
+  auto cKey = fml::jni::JavaStringToString(env, key);
+  auto loadContext = g_image_load_contexts[cKey];
+  if (loadContext == nullptr) {
+    return;
+  }
+  loadContext->onLoadSuccess(env, cKey, env->NewGlobalRef(jBitmap));
+  g_image_load_contexts.erase(cKey);
 }
 /**
  * BD ADD: jni call to notify android image load fail
@@ -739,19 +733,13 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
 static void ExternalImageLoadFail(JNIEnv *env,
         jobject jcaller,
         jstring key) {
-    auto cKey = fml::jni::JavaStringToString(env, key);
-    auto loadContext = g_image_load_contexts[cKey];
-    if (loadContext == nullptr) {
-        return;
-    }
-    loadContext->onLoadFail(env, cKey);
-    auto dartState = static_cast<UIDartState *>(loadContext->contextPtr);
-    if (!dartState || !dartState->GetTaskRunners().IsValid()) {
-      return;
-    }
-    dartState->GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable([cKey = std::move(cKey)](){
-      g_image_load_contexts.erase(cKey);
-    }));
+  auto cKey = fml::jni::JavaStringToString(env, key);
+  auto loadContext = g_image_load_contexts[cKey];
+  if (loadContext == nullptr) {
+    return;
+  }
+  loadContext->onLoadFail(env, cKey);
+  g_image_load_contexts.erase(cKey);
 }
 /**
  * BD ADD: register android image loader
@@ -760,9 +748,9 @@ static void RegisterAndroidImageLoader(JNIEnv *env,
                             jobject jcaller,
                             jlong shell_holder,
                             jobject android_image_loader) {
-    ANDROID_SHELL_HOLDER->GetPlatformView()->RegisterExternalImageLoader(
-            fml::jni::JavaObjectWeakGlobalRef(env, android_image_loader)  //
-    );
+  ANDROID_SHELL_HOLDER->GetPlatformView()->RegisterExternalImageLoader(
+      fml::jni::JavaObjectWeakGlobalRef(env, android_image_loader)
+      );
 }
 /**
  * BD ADD: unregister android image loader
