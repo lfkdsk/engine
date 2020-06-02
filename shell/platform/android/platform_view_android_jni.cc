@@ -237,74 +237,56 @@ public:
     }
 
     void onLoadSuccess(JNIEnv *env, std::string cKey, jobject jbitmap) {
-        auto dartState = static_cast<UIDartState *>(contextPtr);
-        if (!dartState || !dartState->GetTaskRunners().IsValid()) {
-          return;
-        }
-        dartState->GetTaskRunners().GetIOTaskRunner()->PostTask(
-                [cKey, jbitmap, dartState, androidImageLoader = androidImageLoader, contextPtr = contextPtr,
-                        callback = std::move(callback)]() {
-                    JNIEnv *env = fml::jni::AttachCurrentThread();
-                    void *pixels = nullptr;
-                    uint32_t width = 0;
-                    uint32_t height = 0;
-                    int32_t format = 0;
-                    uint32_t stride;
-                    ObtainPixelsFromJavaBitmap(env, jbitmap, &width, &height, &format, &stride, &pixels);
-                    sk_sp<SkImage> skImage;
-                    SkColorType ct;
-                    // if android
-                    switch (format) {
-                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_NONE:
-                            ct = kUnknown_SkColorType;
-                            break;
-                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGBA_8888:
-                            ct = kRGBA_8888_SkColorType;
-                            break;
-                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGB_565:
-                            ct = kRGB_565_SkColorType;
-                            break;
-                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGBA_4444:
-                            ct = kARGB_4444_SkColorType;
-                            break;
-                        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_A_8:
-                            ct = kAlpha_8_SkColorType;
-                            break;
-                    }
-                    SkImageInfo sk_info =
-                            SkImageInfo::Make(width, height, ct, kPremul_SkAlphaType);
-                    size_t row_bytes = stride;
-                    if (row_bytes < sk_info.minRowBytes()) {
-                        return;
-                    }
+      auto dartState = static_cast<UIDartState *>(contextPtr);
+      JNIEnv *jniEnv = fml::jni::AttachCurrentThread();
+      void* pixels = nullptr;
+      uint32_t width = 0;
+      uint32_t height = 0;
+      int32_t format = 0;
+      uint32_t stride;
+      ObtainPixelsFromJavaBitmap(jniEnv, jbitmap, &width, &height, &format, &stride, &pixels);
+      sk_sp<SkImage> skImage;
+      SkColorType ct;
+      // if android
+      switch (format) {
+        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_NONE:ct = kUnknown_SkColorType;
+          break;
+        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGBA_8888:ct = kRGBA_8888_SkColorType;
+          break;
+        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGB_565:ct = kRGB_565_SkColorType;
+          break;
+        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_RGBA_4444:ct = kARGB_4444_SkColorType;
+          break;
+        case AndroidBitmapFormat::ANDROID_BITMAP_FORMAT_A_8:ct = kAlpha_8_SkColorType;
+          break;
+      }
+      SkImageInfo sk_info =
+          SkImageInfo::Make(width, height, ct, kPremul_SkAlphaType);
+      size_t row_bytes = stride;
+      if (row_bytes < sk_info.minRowBytes()) {
+        return;
+      }
 
-                    auto context = dartState->GetResourceContext();
-                    sk_sp<SkData> buffer = SkData::MakeWithProc(pixels, row_bytes * height, ReleaseLoadContext,
-                                                                contextPtr);
-                    SkPixmap pixelMap(sk_info, buffer->data(), row_bytes);
-                    skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixelMap, false, true);
-                    auto res = AndroidBitmap_unlockPixels(env, jbitmap);
-                    if (ANDROID_BITMAP_RESULT_SUCCESS != res) {
-                        FML_LOG(ERROR)
-                        << "FlutterViewHandleBitmapPixels: unlock dst bitmap failed code is " + std::to_string(res)
-                        << std::endl;
-                    }
-                    env->CallVoidMethod(androidImageLoader, g_image_loader_class_release,
-                                        fml::jni::StringToJavaString(env, cKey).obj());
-                    env->DeleteGlobalRef(androidImageLoader);
+      auto context = dartState->GetResourceContext();
+      sk_sp<SkData> buffer = SkData::MakeWithProc(pixels, row_bytes * height, ReleaseLoadContext,
+                                                  contextPtr);
+      SkPixmap pixelMap(sk_info, buffer->data(), row_bytes);
+      skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixelMap, false, true);
+      auto res = AndroidBitmap_unlockPixels(jniEnv, jbitmap);
+      if (ANDROID_BITMAP_RESULT_SUCCESS != res) {
+        FML_LOG(ERROR)
+            << "FlutterViewHandleBitmapPixels: unlock dst bitmap failed code is " + std::to_string(res)
+            << std::endl;
+      }
+      jniEnv->CallVoidMethod(androidImageLoader, g_image_loader_class_release,
+                          fml::jni::StringToJavaString(jniEnv, cKey).obj());
+      jniEnv->DeleteGlobalRef(androidImageLoader);
 
-                    callback(skImage);
-                });
+      callback(skImage);
     }
 
     void onLoadFail(JNIEnv* env, std::string cKey) {
-      auto dartState = static_cast<UIDartState *>(contextPtr);
-      if (!dartState || !dartState->GetTaskRunners().IsValid()) {
-        return;
-      }
-      dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([callback = std::move(callback)](){
         callback(nullptr);
-      });
     }
 private:
     jobject androidImageLoader;
@@ -721,11 +703,21 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jBitmap) {
   auto cKey = fml::jni::JavaStringToString(env, key);
   auto loadContext = g_image_load_contexts[cKey];
-  if (loadContext == nullptr) {
+  auto dartState = static_cast<UIDartState*>(loadContext->contextPtr);
+  if (!dartState->GetTaskRunners().IsValid()) {
     return;
   }
-  loadContext->onLoadSuccess(env, cKey, env->NewGlobalRef(jBitmap));
-  g_image_load_contexts.erase(cKey);
+  auto globalJBitmap = env->NewGlobalRef(jBitmap);
+  dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([cKey,
+                                                              globalJBitmap,
+                                                              loadContext]() {
+    if (loadContext == nullptr) {
+      return;
+    }
+    JNIEnv *jniEnv = fml::jni::AttachCurrentThread();
+    loadContext->onLoadSuccess(jniEnv, cKey, globalJBitmap);
+    g_image_load_contexts.erase(cKey);
+  });
 }
 /**
  * BD ADD: jni call to notify android image load fail
@@ -735,11 +727,19 @@ static void ExternalImageLoadFail(JNIEnv *env,
         jstring key) {
   auto cKey = fml::jni::JavaStringToString(env, key);
   auto loadContext = g_image_load_contexts[cKey];
-  if (loadContext == nullptr) {
+  auto dartState = static_cast<UIDartState*>(loadContext->contextPtr);
+  if (!dartState->GetTaskRunners().IsValid()) {
     return;
   }
-  loadContext->onLoadFail(env, cKey);
-  g_image_load_contexts.erase(cKey);
+  dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([env,
+                                                              cKey,
+                                                              loadContext]() {
+    if (loadContext == nullptr) {
+      return;
+    }
+    loadContext->onLoadFail(env, cKey);
+    g_image_load_contexts.erase(cKey);
+  });
 }
 /**
  * BD ADD: register android image loader
