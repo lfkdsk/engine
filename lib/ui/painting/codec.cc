@@ -304,30 +304,47 @@ void GetNativeImage(Dart_NativeArguments args) {
   auto* dart_state = UIDartState::Current();
 
   const auto& task_runners = dart_state->GetTaskRunners();
-  fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
-  std::shared_ptr<flutter::ImageLoader> imageLoader =
-      io_manager.get()->GetImageLoader();
-  imageLoader->Load(
-      url, width, height, scale, dart_state,
-      fml::MakeCopyable([context = dart_state->GetResourceContext(),
-                         ui_task_runner = task_runners.GetUITaskRunner(),
-                         io_task_runner = task_runners.GetIOTaskRunner(),
-                         queue = UIDartState::Current()->GetSkiaUnrefQueue(),
-                         callback = std::make_unique<DartPersistentValue>(
-                             tonic::DartState::Current(), callback_handle),
-                         trace_id](sk_sp<SkImage> skimage) mutable {
-        fml::RefPtr<CanvasImage> image;
-        if (skimage) {
-          image = CanvasImage::Create();
-          image->set_image({skimage, queue});
-        } else {
-          image = nullptr;
-        }
-        ui_task_runner->PostTask(
-            fml::MakeCopyable([callback = std::move(callback),
-                               image = std::move(image), trace_id]() mutable {
-              InvokeGetNativeImageCallback(image, std::move(callback),
-                                           trace_id);
+
+
+  task_runners.GetIOTaskRunner()->PostTask(
+      fml::MakeCopyable([dart_state,
+                            url,
+                            width,
+                            height,
+                            scale,
+                            context = dart_state->GetResourceContext(),
+                            ui_task_runner = task_runners.GetUITaskRunner(),
+                            io_task_runner = task_runners.GetIOTaskRunner(),
+                            queue = UIDartState::Current()->GetSkiaUnrefQueue(),
+                            callback = std::make_unique<DartPersistentValue>(
+                            tonic::DartState::Current(), callback_handle),
+                            trace_id]() mutable {
+
+        fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
+        std::shared_ptr<flutter::ImageLoader> imageLoader =
+            io_manager.get()->GetImageLoader();
+
+        imageLoader->Load(
+            url, width, height, scale, dart_state,
+            fml::MakeCopyable([context,
+                                  ui_task_runner,
+                                  io_task_runner,
+                                  queue,
+                                  callback = std::move(callback),
+                                  trace_id](sk_sp<SkImage> skimage) mutable {
+              fml::RefPtr<CanvasImage> image;
+              if (skimage) {
+                image = CanvasImage::Create();
+                image->set_image({skimage, queue});
+              } else {
+                image = nullptr;
+              }
+              ui_task_runner->PostTask(
+                  fml::MakeCopyable([callback = std::move(callback),
+                                        image = std::move(image), trace_id]() mutable {
+                    InvokeGetNativeImageCallback(image, std::move(callback),
+                                                 trace_id);
+                  }));
             }));
       }));
 }
