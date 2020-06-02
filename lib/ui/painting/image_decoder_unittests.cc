@@ -9,6 +9,7 @@
 #include "flutter/testing/test_gl_surface.h"
 #include "flutter/testing/testing.h"
 #include "flutter/testing/thread_test.h"
+#include "third_party/skia/include/codec/SkCodec.h"
 
 namespace flutter {
 namespace testing {
