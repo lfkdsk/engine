@@ -312,7 +312,6 @@ void GetNativeImage(Dart_NativeArguments args) {
                             width,
                             height,
                             scale,
-                            context = dart_state->GetResourceContext(),
                             ui_task_runner = task_runners.GetUITaskRunner(),
                             io_task_runner = task_runners.GetIOTaskRunner(),
                             queue = UIDartState::Current()->GetSkiaUnrefQueue(),
@@ -326,8 +325,7 @@ void GetNativeImage(Dart_NativeArguments args) {
 
         imageLoader->Load(
             url, width, height, scale, dart_state,
-            fml::MakeCopyable([context,
-                                  ui_task_runner,
+            fml::MakeCopyable([ui_task_runner,
                                   io_task_runner,
                                   queue,
                                   callback = std::move(callback),
