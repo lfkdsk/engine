@@ -4,10 +4,6 @@
 
 package io.flutter.plugin.common;
 
-// BD ADD: START
-import android.os.Handler;
-import android.os.Looper;
-// END
 import android.support.annotation.UiThread;
 import android.util.Log;
 
@@ -220,95 +216,34 @@ public final class EventChannel {
 
         private final class EventSinkImplementation implements EventSink {
              final AtomicBoolean hasEnded = new AtomicBoolean(false);
-             // BD ADD:
-             final Handler handler = new Handler(Looper.getMainLooper());
 
              @Override
-             // BD DEL:
-             // @UiThread
+             @UiThread
              public void success(Object event) {
-                 // BD MOD: START
-                 // if (hasEnded.get() || activeSink.get() != this) {
-                 //     return;
-                 // }
-                 // EventChannel.this.messenger.send(name, codec.encodeSuccessEnvelope(event));
-                 if (Looper.myLooper() == Looper.getMainLooper()) {
-                     if (hasEnded.get() || activeSink.get() != this) {
-                         return;
-                     }
-                     EventChannel.this.messenger.send(name, codec.encodeSuccessEnvelope(event));
-                 } else {
-                     handler.post(new Runnable() {
-                         @Override
-                         public void run() {
-                             if (hasEnded.get() || activeSink.get() != EventSinkImplementation.this) {
-                                 return;
-                             }
-                             EventChannel.this.messenger.send(name, codec.encodeSuccessEnvelope(event));
-                         }
-                     });
+                 if (hasEnded.get() || activeSink.get() != this) {
+                     return;
                  }
-                 // END
+                 EventChannel.this.messenger.send(name, codec.encodeSuccessEnvelope(event));
              }
 
              @Override
-             // BD DEL:
-             // @UiThread
+             @UiThread
              public void error(String errorCode, String errorMessage, Object errorDetails) {
-                 // BD MOD: START
-                 // if (hasEnded.get() || activeSink.get() != this) {
-                 //     return;
-                 // }
-                 // EventChannel.this.messenger.send(
-                 //     name,
-                 //     codec.encodeErrorEnvelope(errorCode, errorMessage, errorDetails));
-                 if (Looper.myLooper() == Looper.getMainLooper()) {
-                     if (hasEnded.get() || activeSink.get() != this) {
-                         return;
-                     }
-                     EventChannel.this.messenger.send(name,
-                             codec.encodeErrorEnvelope(errorCode, errorMessage, errorDetails));
-                 } else {
-                     handler.post(new Runnable() {
-                         @Override
-                         public void run() {
-                             if (hasEnded.get() || activeSink.get() != EventSinkImplementation.this) {
-                                 return;
-                             }
-                             EventChannel.this.messenger.send(name,
-                                     codec.encodeErrorEnvelope(errorCode, errorMessage, errorDetails));
-                         }
-                     });
+                 if (hasEnded.get() || activeSink.get() != this) {
+                     return;
                  }
-                 // END
+                 EventChannel.this.messenger.send(
+                     name,
+                     codec.encodeErrorEnvelope(errorCode, errorMessage, errorDetails));
              }
 
              @Override
-             // BD DEL:
-             // @UiThread
+             @UiThread
              public void endOfStream() {
-                 // BD MOD: START
-                 // if (hasEnded.getAndSet(true) || activeSink.get() != this) {
-                 //     return;
-                 // }
-                 // EventChannel.this.messenger.send(name, null);
-                 if (Looper.myLooper() == Looper.getMainLooper()) {
-                     if (hasEnded.getAndSet(true) || activeSink.get() != this) {
-                         return;
-                     }
-                     EventChannel.this.messenger.send(name, null);
-                 } else {
-                     handler.post(new Runnable() {
-                         @Override
-                         public void run() {
-                             if (hasEnded.getAndSet(true) || activeSink.get() != EventSinkImplementation.this) {
-                                 return;
-                             }
-                             EventChannel.this.messenger.send(name, null);
-                         }
-                     });
+                 if (hasEnded.getAndSet(true) || activeSink.get() != this) {
+                     return;
                  }
-                 // END
+                 EventChannel.this.messenger.send(name, null);
              }
          }
     }
