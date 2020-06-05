@@ -18,6 +18,8 @@ import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Handler;
 import android.os.LocaleList;
+// BD ADD
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.UiThread;
@@ -761,10 +763,21 @@ public class FlutterTextureView extends CachedTextureView implements BinaryMesse
     /**
      * Return the most recent frame as a bitmap.
      *
+     * BD ADD: START
+     * Some device's system method will call this method on non-UI thread, which will cause crash
+     * See https://slardar.bytedance.net/node/app_detail/?aid=1691&os=Android&region=cn&lang=zh-Hans#/abnormal/detail/app/62f5310962a5c0751ead01b5a49de91d
+     * So,return null on non-UI thread
+     * END
+     *
      * @return A bitmap.
      */
     public Bitmap getBitmap() {
         assertAttached();
+        // BD ADD: START
+        if (Looper.getMainLooper() != Looper.myLooper()) {
+            return null;
+        }
+        // END
         return mNativeView.getFlutterJNI().getBitmap();
     }
 
