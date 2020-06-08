@@ -304,10 +304,11 @@ void GetNativeImage(Dart_NativeArguments args) {
   auto* dart_state = UIDartState::Current();
 
   const auto& task_runners = dart_state->GetTaskRunners();
-
+  fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
 
   task_runners.GetIOTaskRunner()->PostTask(
       fml::MakeCopyable([dart_state,
+                            io_manager,
                             url,
                             width,
                             height,
@@ -319,7 +320,6 @@ void GetNativeImage(Dart_NativeArguments args) {
                             tonic::DartState::Current(), callback_handle),
                             trace_id]() mutable {
 
-        fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
         std::shared_ptr<flutter::ImageLoader> imageLoader =
             io_manager.get()->GetImageLoader();
 
