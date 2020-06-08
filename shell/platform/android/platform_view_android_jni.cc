@@ -238,6 +238,9 @@ public:
 
     void onLoadSuccess(JNIEnv *env, std::string cKey, jobject jbitmap) {
         auto dartState = static_cast<UIDartState *>(contextPtr);
+        if (!dartState || !dartState->GetTaskRunners().IsValid()) {
+          return;
+        }
         dartState->GetTaskRunners().GetIOTaskRunner()->PostTask(
                 [cKey, jbitmap, dartState, androidImageLoader = androidImageLoader, contextPtr = contextPtr,
                         callback = std::move(callback)]() {
@@ -296,6 +299,9 @@ public:
 
     void onLoadFail(JNIEnv* env, std::string cKey) {
       auto dartState = static_cast<UIDartState *>(contextPtr);
+      if (!dartState || !dartState->GetTaskRunners().IsValid()) {
+        return;
+      }
       dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([callback = std::move(callback)](){
         callback(nullptr);
       });
@@ -675,6 +681,9 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
     }
     loadContext->onLoadSuccess(env, cKey, env->NewGlobalRef(jBitmap));
     auto dartState = static_cast<UIDartState *>(loadContext->contextPtr);
+    if (!dartState || !dartState->GetTaskRunners().IsValid()) {
+      return;
+    }
     dartState->GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable([cKey = std::move(cKey)](){
       g_image_load_contexts.erase(cKey);
     }));
@@ -692,6 +701,9 @@ static void ExternalImageLoadFail(JNIEnv *env,
     }
     loadContext->onLoadFail(env, cKey);
     auto dartState = static_cast<UIDartState *>(loadContext->contextPtr);
+    if (!dartState || !dartState->GetTaskRunners().IsValid()) {
+      return;
+    }
     dartState->GetTaskRunners().GetUITaskRunner()->PostTask(fml::MakeCopyable([cKey = std::move(cKey)](){
       g_image_load_contexts.erase(cKey);
     }));
