@@ -224,20 +224,19 @@ void ObtainPixelsFromJavaBitmap(JNIEnv* env, jobject jbitmap, uint32_t* width, u
 void ReleaseLoadContext(const void* pixels, SkImage::ReleaseContext releaseContext);
 
 // BD ADD: START
-class ImageLoadContext {
+class AndroidImageLoadContext {
 public:
 
-    void* contextPtr;
+    ImageLoaderContext loaderContext;
 
-    ImageLoadContext(std::function<void(sk_sp<SkImage> image)> _callback, void* _contextPtr, jobject _imageLoader):
-    contextPtr(_contextPtr),
+    AndroidImageLoadContext(std::function<void(sk_sp<SkImage> image)> _callback, ImageLoaderContext _loaderContext, jobject _imageLoader):
+    loaderContext(_loaderContext),
     androidImageLoader(_imageLoader),
     callback(std::move(_callback)){}
-    ~ImageLoadContext(){
+    ~AndroidImageLoadContext(){
     }
 
     void onLoadSuccess(JNIEnv *env, std::string cKey, jobject jbitmap) {
-      auto dartState = static_cast<UIDartState *>(contextPtr);
       JNIEnv *jniEnv = fml::jni::AttachCurrentThread();
       void* pixels = nullptr;
       uint32_t width = 0;
@@ -267,9 +266,9 @@ public:
         return;
       }
 
-      auto context = dartState->GetResourceContext();
+      auto context = loaderContext.resourceContext;
       sk_sp<SkData> buffer = SkData::MakeWithProc(pixels, row_bytes * height, ReleaseLoadContext,
-                                                  contextPtr);
+                                                  nullptr);
       SkPixmap pixelMap(sk_info, buffer->data(), row_bytes);
       skImage = SkImage::MakeCrossContextFromPixmap(context.get(), pixelMap, false, true);
       auto res = AndroidBitmap_unlockPixels(jniEnv, jbitmap);
@@ -297,15 +296,15 @@ private:
 /**
  * BD ADD: global map for image load context
  */
-static std::map<std::string, std::shared_ptr<ImageLoadContext>> g_image_load_contexts;
+static std::map<std::string, std::shared_ptr<AndroidImageLoadContext>> g_image_load_contexts;
 /**
  * BD ADD: call android to load image
  */
-void CallJavaImageLoader(jobject android_image_loader, const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
+void CallJavaImageLoader(jobject android_image_loader, const std::string url, const int width, const int height, const float scale, ImageLoaderContext loaderContext, std::function<void(sk_sp<SkImage> image)> callback) {
   JNIEnv* env = fml::jni::AttachCurrentThread();
-  auto loadContext = std::make_shared<ImageLoadContext>(callback, contextPtr, env->NewGlobalRef(android_image_loader));
-  auto key = url + std::to_string(reinterpret_cast<jlong>(loadContext.get()));
-  g_image_load_contexts[key] = loadContext;
+  auto androidLoadContext = std::make_shared<AndroidImageLoadContext>(callback, loaderContext, env->NewGlobalRef(android_image_loader));
+  auto key = url + std::to_string(reinterpret_cast<jlong>(androidLoadContext.get()));
+  g_image_load_contexts[key] = androidLoadContext;
   auto callObject = env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor);
   auto nativeCallback = new fml::jni::ScopedJavaLocalRef<jobject>(env, callObject);
   env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(),
@@ -703,12 +702,12 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jBitmap) {
   auto cKey = fml::jni::JavaStringToString(env, key);
   auto loadContext = g_image_load_contexts[cKey];
-  auto dartState = static_cast<UIDartState*>(loadContext->contextPtr);
-  if (!dartState->GetTaskRunners().IsValid()) {
+  auto loaderContext = static_cast<ImageLoaderContext>(loadContext->loaderContext);
+  if (!loaderContext.task_runners.IsValid()) {
     return;
   }
   auto globalJBitmap = env->NewGlobalRef(jBitmap);
-  dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([cKey,
+  loaderContext.task_runners.GetIOTaskRunner()->PostTask([cKey,
                                                               globalJBitmap,
                                                               loadContext]() {
     if (loadContext == nullptr) {
@@ -727,11 +726,14 @@ static void ExternalImageLoadFail(JNIEnv *env,
         jstring key) {
   auto cKey = fml::jni::JavaStringToString(env, key);
   auto loadContext = g_image_load_contexts[cKey];
-  auto dartState = static_cast<UIDartState*>(loadContext->contextPtr);
-  if (!dartState->GetTaskRunners().IsValid()) {
+  if (!loadContext) {
     return;
   }
-  dartState->GetTaskRunners().GetIOTaskRunner()->PostTask([env,
+  auto loaderContext = static_cast<ImageLoaderContext>(loadContext->loaderContext);
+  if (!loaderContext.task_runners.IsValid()) {
+    return;
+  }
+  loaderContext.task_runners.GetIOTaskRunner()->PostTask([env,
                                                               cKey,
                                                               loadContext]() {
     if (loadContext == nullptr) {
