@@ -44,11 +44,11 @@ namespace flutter {
         }
     }
     
-    void IOSExternalImageLoader::Load(const std::string url, const int width, const int height, const float scale, void* contextPtr, std::function<void(sk_sp<SkImage> image)> callback) {
+    void IOSExternalImageLoader::Load(const std::string url, const int width, const int height, const float scale, ImageLoaderContext loaderContext, std::function<void(sk_sp<SkImage> image)> callback) {
         NSString* URL = [NSString stringWithCString:url.c_str() encoding:[NSString defaultCStringEncoding]];
-        auto* dart_state = UIDartState::Current();
-        const auto& task_runners = dart_state->GetTaskRunners();
-        fml::WeakPtr<GrContext> context = dart_state->GetResourceContext();
+        const auto& task_runners = loaderContext.task_runners;
+        auto io_task_runner = task_runners.GetIOTaskRunner();
+        fml::WeakPtr<GrContext> context = loaderContext.resourceContext;
         std::shared_ptr<ImageLoaderCallbackContext> imageLoaderCallbackContext = std::make_shared<ImageLoaderCallbackContext>(task_runners);
         imageLoaderCallbackContext->callback = std::move(callback);
         void(^complete)(IOSImageInfo) = ^(IOSImageInfo imageInfo) {
@@ -79,8 +79,11 @@ namespace flutter {
                     }
                 }
             }
+            
+            if (!task_runners.IsValid()) {
+                return;
+            }
           
-            auto io_task_runner = task_runners.GetIOTaskRunner();
             if (!texture) {
                 io_task_runner->PostTask(fml::MakeCopyable(
                     [callback = std::move(callback)]() mutable {
@@ -110,6 +113,7 @@ namespace flutter {
                     }));
             }
         };
+        
         if ([imageLoader_ respondsToSelector:@selector(loadImage:width:height:scale:complete:)]) {
             [imageLoader_ loadImage:URL width:width height:height scale:scale complete:complete];
         } else if ([imageLoader_ respondsToSelector:@selector(loadImage:complete:)]) {

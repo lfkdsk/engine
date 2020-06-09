@@ -307,29 +307,24 @@ void GetNativeImage(Dart_NativeArguments args) {
   fml::WeakPtr<IOManager> io_manager = dart_state->GetIOManager();
 
   task_runners.GetIOTaskRunner()->PostTask(
-      fml::MakeCopyable([dart_state,
-                            io_manager,
-                            url,
-                            width,
-                            height,
-                            scale,
-                            ui_task_runner = task_runners.GetUITaskRunner(),
-                            io_task_runner = task_runners.GetIOTaskRunner(),
-                            queue = UIDartState::Current()->GetSkiaUnrefQueue(),
-                            callback = std::make_unique<DartPersistentValue>(
-                            tonic::DartState::Current(), callback_handle),
-                            trace_id]() mutable {
-
-        std::shared_ptr<flutter::ImageLoader> imageLoader =
-            io_manager.get()->GetImageLoader();
-
+      fml::MakeCopyable([io_manager,
+                         url,
+                         width,
+                         height,
+                         scale,
+                         task_runners,
+                         queue = UIDartState::Current()->GetSkiaUnrefQueue(),
+                         callback = std::make_unique<DartPersistentValue>(
+                         tonic::DartState::Current(), callback_handle),
+                         trace_id]() mutable {
+        std::shared_ptr<flutter::ImageLoader> imageLoader = io_manager.get()->GetImageLoader();
+        ImageLoaderContext contextPtr = ImageLoaderContext(task_runners, io_manager->GetResourceContext());
         imageLoader->Load(
-            url, width, height, scale, dart_state,
-            fml::MakeCopyable([ui_task_runner,
-                                  io_task_runner,
-                                  queue,
-                                  callback = std::move(callback),
-                                  trace_id](sk_sp<SkImage> skimage) mutable {
+            url, width, height, scale, contextPtr,
+            fml::MakeCopyable([ui_task_runner = task_runners.GetUITaskRunner(),
+                               queue,
+                               callback = std::move(callback),
+                               trace_id](sk_sp<SkImage> skimage) mutable {
               fml::RefPtr<CanvasImage> image;
               if (skimage) {
                 image = CanvasImage::Create();
