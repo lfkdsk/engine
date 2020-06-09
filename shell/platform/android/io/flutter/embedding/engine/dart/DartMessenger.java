@@ -4,10 +4,6 @@
 
 package io.flutter.embedding.engine.dart;
 
-// BD ADD:START
-import android.os.Handler;
-import android.os.Looper;
-// END
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -140,14 +136,10 @@ class DartMessenger implements BinaryMessenger, PlatformMessageHandler {
     private final FlutterJNI flutterJNI;
     private final int replyId;
     private final AtomicBoolean done = new AtomicBoolean(false);
-    // BD ADD
-    private final Handler handler;
 
     Reply(@NonNull FlutterJNI flutterJNI, int replyId) {
       this.flutterJNI = flutterJNI;
       this.replyId = replyId;
-      // BD ADD
-      handler = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -155,31 +147,11 @@ class DartMessenger implements BinaryMessenger, PlatformMessageHandler {
       if (done.getAndSet(true)) {
         throw new IllegalStateException("Reply already submitted");
       }
-      // BD MOD:START
-      // if (reply == null) {
-      //   flutterJNI.invokePlatformMessageEmptyResponseCallback(replyId);
-      // } else {
-      //   flutterJNI.invokePlatformMessageResponseCallback(replyId, reply, reply.position());
-      // }
-      if (Looper.myLooper() != Looper.getMainLooper()) {
-        handler.post(new Runnable() {
-          @Override
-          public void run() {
-            if (reply == null) {
-              flutterJNI.invokePlatformMessageEmptyResponseCallback(replyId);
-            } else {
-              flutterJNI.invokePlatformMessageResponseCallback(replyId, reply, reply.position());
-            }
-          }
-        });
+      if (reply == null) {
+        flutterJNI.invokePlatformMessageEmptyResponseCallback(replyId);
       } else {
-        if (reply == null) {
-          flutterJNI.invokePlatformMessageEmptyResponseCallback(replyId);
-        } else {
-          flutterJNI.invokePlatformMessageResponseCallback(replyId, reply, reply.position());
-        }
+        flutterJNI.invokePlatformMessageResponseCallback(replyId, reply, reply.position());
       }
-      // END
     }
   }
 }
