@@ -79,10 +79,6 @@ namespace flutter {
                     }
                 }
             }
-            
-            if (!task_runners.IsValid()) {
-                return;
-            }
           
             if (!texture) {
                 io_task_runner->PostTask(fml::MakeCopyable(
