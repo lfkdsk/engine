@@ -313,15 +313,29 @@ void GetNativeImage(Dart_NativeArguments args) {
                          height,
                          scale,
                          task_runners,
+                         ui_task_runner = task_runners.GetUITaskRunner(),
                          queue = UIDartState::Current()->GetSkiaUnrefQueue(),
                          callback = std::make_unique<DartPersistentValue>(
                          tonic::DartState::Current(), callback_handle),
                          trace_id]() mutable {
         std::shared_ptr<flutter::ImageLoader> imageLoader = io_manager.get()->GetImageLoader();
         ImageLoaderContext contextPtr = ImageLoaderContext(task_runners, io_manager->GetResourceContext());
+        
+        if (!imageLoader) {
+          FML_LOG(ERROR) << "ImageLoader is Null!";
+          
+          ui_task_runner->PostTask(
+              fml::MakeCopyable([callback = std::move(callback),
+                                 trace_id]() mutable {
+                InvokeGetNativeImageCallback(nullptr, std::move(callback),
+                                             trace_id);
+              }));
+          return;
+        }
+      
         imageLoader->Load(
             url, width, height, scale, contextPtr,
-            fml::MakeCopyable([ui_task_runner = task_runners.GetUITaskRunner(),
+            fml::MakeCopyable([ui_task_runner,
                                queue,
                                callback = std::move(callback),
                                trace_id](sk_sp<SkImage> skimage) mutable {
