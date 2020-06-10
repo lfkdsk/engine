@@ -280,7 +280,7 @@ public:
       jniEnv->CallVoidMethod(androidImageLoader, g_image_loader_class_release,
                           fml::jni::StringToJavaString(jniEnv, cKey).obj());
       jniEnv->DeleteGlobalRef(androidImageLoader);
-
+      jniEnv->DeleteGlobalRef(jbitmap);
       callback(skImage);
     }
 
@@ -297,6 +297,7 @@ private:
  * BD ADD: global map for image load context
  */
 static std::map<std::string, std::shared_ptr<AndroidImageLoadContext>> g_image_load_contexts;
+static std::recursive_mutex g_mutex;
 /**
  * BD ADD: call android to load image
  */
@@ -304,7 +305,9 @@ void CallJavaImageLoader(jobject android_image_loader, const std::string url, co
   JNIEnv* env = fml::jni::AttachCurrentThread();
   auto androidLoadContext = std::make_shared<AndroidImageLoadContext>(callback, loaderContext, env->NewGlobalRef(android_image_loader));
   auto key = url + std::to_string(reinterpret_cast<jlong>(androidLoadContext.get()));
+  g_mutex.lock();
   g_image_load_contexts[key] = androidLoadContext;
+  g_mutex.unlock();
   auto callObject = env->NewObject(g_image_loader_callback_class->obj(), g_native_callback_constructor);
   auto nativeCallback = new fml::jni::ScopedJavaLocalRef<jobject>(env, callObject);
   env->CallVoidMethod(android_image_loader, g_image_loader_class_load, fml::jni::StringToJavaString(env, url).obj(),
@@ -657,7 +660,10 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
         jobject jBitmap) {
 
   auto cKey = fml::jni::JavaStringToString(env, key);
+  g_mutex.lock();
   auto loadContext = g_image_load_contexts[cKey];
+  g_image_load_contexts.erase(cKey);
+  g_mutex.unlock();
   auto loaderContext = static_cast<ImageLoaderContext>(loadContext->loaderContext);
   if (!loaderContext.task_runners.IsValid()) {
     return;
@@ -671,7 +677,6 @@ static void ExternalImageLoadSuccess(JNIEnv *env,
     }
     JNIEnv *jniEnv = fml::jni::AttachCurrentThread();
     loadContext->onLoadSuccess(jniEnv, cKey, globalJBitmap);
-    g_image_load_contexts.erase(cKey);
   });
 }
 /**
@@ -681,7 +686,10 @@ static void ExternalImageLoadFail(JNIEnv *env,
         jobject jcaller,
         jstring key) {
   auto cKey = fml::jni::JavaStringToString(env, key);
+  g_mutex.lock();
   auto loadContext = g_image_load_contexts[cKey];
+  g_image_load_contexts.erase(cKey);
+  g_mutex.unlock();
   if (!loadContext) {
     return;
   }
@@ -696,7 +704,6 @@ static void ExternalImageLoadFail(JNIEnv *env,
       return;
     }
     loadContext->onLoadFail(env, cKey);
-    g_image_load_contexts.erase(cKey);
   });
 }
 /**
