@@ -294,6 +294,11 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
       FlagForSwitch(Switch::IsolateSnapshotInstructions),
       &isolate_snapshot_instr_filename);
 
+  // BD ADD: START
+  settings.start_trace_buffer =
+    command_line.HasOption(FlagForSwitch(Switch::StartupTraceBuffer));
+  // END
+
   if (aot_shared_library_name.size() > 0) {
     for (std::string_view name : aot_shared_library_name) {
       settings.application_library_path.emplace_back(name);

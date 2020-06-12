@@ -358,14 +358,18 @@ DartVM::DartVM(std::shared_ptr<const DartVMData> vm_data,
     PushBackAll(&args, kDartDisableServiceAuthCodesArgs,
                 fml::size(kDartDisableServiceAuthCodesArgs));
   }
-  // BD MOD:
-  // if (settings_.endless_trace_buffer || settings_.trace_startup) {
-  if (settings_.endless_trace_buffer) {
+  if (settings_.endless_trace_buffer || settings_.trace_startup) {
     // If we are tracing startup, make sure the trace buffer is endless so we
     // don't lose early traces.
     PushBackAll(&args, kDartEndlessTraceBufferArgs,
                 fml::size(kDartEndlessTraceBufferArgs));
   }
+  // BD ADD: START
+  else if (settings_.start_trace_buffer) {
+    PushBackAll(&args, kDartStartupTraceBufferArgs,
+                fml::size(kDartStartupTraceBufferArgs));
+  }
+  // END
 
   if (settings_.trace_systrace) {
     PushBackAll(&args, kDartSystraceTraceBufferArgs,
@@ -374,9 +378,6 @@ DartVM::DartVM(std::shared_ptr<const DartVMData> vm_data,
   }
 
   if (settings_.trace_startup) {
-    // BD ADD:
-    PushBackAll(&args, kDartStartupTraceBufferArgs,
-                fml::size(kDartStartupTraceBufferArgs));
     PushBackAll(&args, kDartTraceStartupArgs, fml::size(kDartTraceStartupArgs));
   }
 
