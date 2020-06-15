@@ -55,11 +55,6 @@ for liteMode in ${liteModes[@]}; do
 		    continue
 		  fi
 		fi
-		if [ "$liteMode" != 'normal' ] && [ "$mode" == 'release' ]; then
-			echo "Warning: mode is $mode-$liteMode"
-			echo "Warning: dynamicart branch only build release_dynamicart"
-			continue
-		fi
 		iOSArm64Dir=out/ios_${mode}
 		iOSArmV7Dir=out/ios_${mode}_arm
 		real_mode=${mode%_dynamicart}
@@ -70,9 +65,11 @@ for liteMode in ${liteModes[@]}; do
 		   iOSArmV7Dir=out/ios_${real_mode}_arm_dynamicart
 		fi
 		# only build for release_dynamicart
-		if [ $mode != 'release_dynamicart' -a $liteMode != 'normal' ]; then
-		  echo 'lite mode only build for release_dynamicart!'
-		  continue
+		if [ "$liteMode" != "normal" ]; then
+			if [ "$mode" != "release_dynamicart" ] && [ "$mode" != "release" ]; then
+				echo 'lite mode only build for release_dynamicart & release!'
+				continue
+			fi
 		fi
 		iOSSimDir=out/ios_debug_sim
 		cacheDir=out/tt_ios_${mode}
