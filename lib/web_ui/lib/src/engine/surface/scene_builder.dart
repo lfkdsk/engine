@@ -315,13 +315,14 @@ class SurfaceSceneBuilder implements ui.SceneBuilder {
       {ui.Offset offset = ui.Offset.zero,
       double width = 0.0,
       double height = 0.0,
-      bool freeze = false}) {
+      bool freeze = false,
+      ui.FilterQuality filterQuality = ui.FilterQuality.low}) {
     assert(offset != null, 'Offset argument was null');
-    _addTexture(offset.dx, offset.dy, width, height, textureId);
+    _addTexture(offset.dx, offset.dy, width, height, textureId, filterQuality.index);
   }
 
   void _addTexture(
-      double dx, double dy, double width, double height, int textureId) {
+      double dx, double dy, double width, double height, int textureId, int filterQuality) {
     // In test mode, allow this to be a no-op.
     if (!ui.debugEmulateFlutterTesterEnvironment) {
       throw UnimplementedError('Textures are not supported in Flutter Web');

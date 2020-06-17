@@ -19,7 +19,7 @@ class IOSExternalTextureGL : public flutter::Texture {
   ~IOSExternalTextureGL() override;
 
   // Called from GPU thread.
-  void Paint(SkCanvas& canvas, const SkRect& bounds, bool freeze, GrContext* context) override;
+  void Paint(SkCanvas& canvas, const SkRect& bounds, bool freeze, GrContext* context, SkFilterQuality filter_quality) override;
 
   void OnGrContextCreated() override;
 
