@@ -278,7 +278,8 @@ abstract class SceneBuilder {
       {Offset offset = Offset.zero,
       double width = 0.0,
       double height = 0.0,
-      bool freeze = false});
+      bool freeze = false,
+      FilterQuality filterQuality = FilterQuality.low});
 
   /// Adds a platform view (e.g an iOS UIView) to the scene.
   ///

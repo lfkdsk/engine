@@ -581,11 +581,11 @@ class SceneBuilder extends NativeFieldWrapperClass2 {
   /// previous or new size, to workaround this the framework "freezes" the
   /// texture just before resizing the Android view and un-freezes it when it is
   /// certain that a frame with the new size is ready.
-  void addTexture(int textureId, { Offset offset = Offset.zero, double width = 0.0, double height = 0.0 , bool freeze = false}) {
+  void addTexture(int textureId, { Offset offset = Offset.zero, double width = 0.0, double height = 0.0 , bool freeze = false, FilterQuality filterQuality = FilterQuality.low}) {
     assert(offset != null, 'Offset argument was null');
-    _addTexture(offset.dx, offset.dy, width, height, textureId, freeze);
+    _addTexture(offset.dx, offset.dy, width, height, textureId, freeze, filterQuality.index);
   }
-  void _addTexture(double dx, double dy, double width, double height, int textureId, bool freeze) native 'SceneBuilder_addTexture';
+  void _addTexture(double dx, double dy, double width, double height, int textureId, bool freeze, int filterQuality) native 'SceneBuilder_addTexture';
 
   /// Adds a platform view (e.g an iOS UIView) to the scene.
   ///

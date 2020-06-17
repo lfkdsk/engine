@@ -18,7 +18,8 @@ class MockTexture : public Texture {
   void Paint(SkCanvas& canvas,
              const SkRect& bounds,
              bool freeze,
-             GrContext* context) override {}
+             GrContext* context,
+             SkFilterQuality quality) override {}
 
   void OnGrContextCreated() override {}
 

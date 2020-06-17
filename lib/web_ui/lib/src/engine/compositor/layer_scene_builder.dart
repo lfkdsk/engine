@@ -61,7 +61,8 @@ class LayerSceneBuilder implements ui.SceneBuilder {
       {ui.Offset offset = ui.Offset.zero,
       double width = 0.0,
       double height = 0.0,
-      bool freeze = false}) {
+      bool freeze = false,
+      ui.FilterQuality filterQuality = ui.FilterQuality.low}) {
     // TODO(b/128315641): implement addTexture.
   }
 

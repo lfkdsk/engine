@@ -11,8 +11,13 @@ namespace flutter {
 TextureLayer::TextureLayer(const SkPoint& offset,
                            const SkSize& size,
                            int64_t texture_id,
-                           bool freeze)
-    : offset_(offset), size_(size), texture_id_(texture_id), freeze_(freeze) {}
+                           bool freeze,
+                           SkFilterQuality filter_quality)
+    : offset_(offset),
+      size_(size),
+      texture_id_(texture_id),
+      freeze_(freeze),
+      filter_quality_(filter_quality) {}
 
 TextureLayer::~TextureLayer() = default;
 
@@ -28,7 +33,7 @@ void TextureLayer::Paint(PaintContext& context) const {
     return;
   }
   texture->Paint(*context.leaf_nodes_canvas, paint_bounds(), freeze_,
-                 context.gr_context);
+                 context.gr_context, filter_quality_);
 }
 
 }  // namespace flutter

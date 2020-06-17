@@ -259,12 +259,14 @@ void SceneBuilder::addTexture(double dx,
                               double width,
                               double height,
                               int64_t textureId,
-                              bool freeze) {
+                              bool freeze,
+                              int filterQuality) {
   if (!current_layer_) {
     return;
   }
   auto layer = std::make_unique<flutter::TextureLayer>(
-      SkPoint::Make(dx, dy), SkSize::Make(width, height), textureId, freeze);
+      SkPoint::Make(dx, dy), SkSize::Make(width, height), textureId, freeze,
+      static_cast<SkFilterQuality>(filterQuality));
   current_layer_->Add(std::move(layer));
 }
 
