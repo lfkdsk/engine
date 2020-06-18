@@ -198,6 +198,14 @@ DEF_SWITCH(UseEmbeddedView,
            "the platform thread."
            "This flag should be removed once the dynamic thread merging is "
            "enabled on android.")
+// BD ADD: START
+DEF_SWITCH(LimitSkiaWorker,
+     "limit-skia-worker",
+     "Limit Skia worker thread count")
+DEF_SWITCH(DisablePreload,
+     "disable-preload",
+     "Disable preload DartVM and SkFontMgr")
+// END
 DEF_SWITCHES_END
 
 void PrintUsage(const std::string& executable_name);
