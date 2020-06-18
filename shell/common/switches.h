@@ -176,6 +176,9 @@ DEF_SWITCH(DisableLeakVM, "disable-leak-vm", "Set leak_vm in setting.h to false.
 DEF_SWITCH(StartupTraceBuffer,
            "startup-trace-buffer",
            "Enable an startup trace buffer. The default is a ring buffer. ")
+DEF_SWITCH(DisablePreload,
+     "disable-preload",
+     "Disable preload DartVM and SkFontMgr")
 // END
 DEF_SWITCHES_END
 

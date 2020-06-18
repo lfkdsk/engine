@@ -320,6 +320,8 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
   if (command_line.HasOption(FlagForSwitch(Switch::DisableLeakVM))) {
       settings.leak_vm = false;
   }
+  settings.disable_preload =
+      command_line.HasOption(FlagForSwitch(Switch::DisablePreload));
   // END
 
   if (settings.icu_initialization_required) {
