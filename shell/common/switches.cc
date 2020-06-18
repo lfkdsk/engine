@@ -320,6 +320,8 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
                               &settings.package_dill_path);
   settings.limit_skia_worker =
       command_line.HasOption(FlagForSwitch(Switch::LimitSkiaWorker));
+  settings.disable_preload =
+      command_line.HasOption(FlagForSwitch(Switch::DisablePreload));
   // END
 
   if (settings.icu_initialization_required) {

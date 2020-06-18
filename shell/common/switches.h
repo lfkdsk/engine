@@ -177,6 +177,9 @@ DEF_SWITCH(PackageDillPath, "package_dill_path", "Package Assets Path")
 DEF_SWITCH(LimitSkiaWorker,
      "limit-skia-worker",
      "Limit Skia worker thread count")
+DEF_SWITCH(DisablePreload,
+     "disable-preload",
+     "Disable preload DartVM and SkFontMgr")
 // END
 DEF_SWITCHES_END
 
