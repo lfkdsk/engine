@@ -201,6 +201,8 @@ struct Settings {
   // BD ADD: START
   std::string zip_assets_file_path;
   std::string zip_assets_directory;
+  bool limit_skia_worker = false;
+  bool disable_preload = false;
   // END
 
   // Callback to handle the timings of a rasterized frame. This is called as
