@@ -22,10 +22,14 @@ static constexpr const char* kVsyncTraceName = "vsync callback";
 #else   // defined(OS_FUCHSIA)
 // Note: The tag name must be "VSYNC" (it is special) so that the
 // "Highlight Vsync" checkbox in the timeline can be enabled.
-static constexpr const char* kVsyncTraceName = "VSYNC";
+// BD MOD:
+// static constexpr const char* kVsyncTraceName = "VSYNC";
+static constexpr const char* kVsyncTraceName FML_ALLOW_UNUSED_TYPE = "VSYNC";
 #endif  // defined(OS_FUCHSIA)
 
-static constexpr const char* kVsyncFlowName = "VsyncFlow";
+// BD MOD:
+// static constexpr const char* kVsyncFlowName = "VsyncFlow";
+static constexpr const char* kVsyncFlowName FML_ALLOW_UNUSED_TYPE = "VsyncFlow";
 
 VsyncWaiter::VsyncWaiter(TaskRunners task_runners)
     : task_runners_(std::move(task_runners)) {}
