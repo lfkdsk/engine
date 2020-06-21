@@ -87,10 +87,9 @@ class ShimRegistrar implements PluginRegistry.Registrar, FlutterPlugin, Activity
   /**
    * BD ADD:
    */
-  // TODO @胡伟杰
   @Override
   public ImageLoaderRegistry imageLoaderRegistry() {
-    return null;
+    return pluginBinding != null ? pluginBinding.getImageLoaderRegistry() : null;
   }
 
   @Override
