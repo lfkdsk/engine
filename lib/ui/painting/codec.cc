@@ -34,7 +34,7 @@ namespace flutter {
 namespace {
 
 // BD ADD:
-static constexpr const char* kGetNativeImageTraceTag = "GetNativeImage";
+static constexpr const char* kGetNativeImageTraceTag FML_ALLOW_UNUSED_TYPE = "GetNativeImage";
 
 // This must be kept in sync with the enum in painting.dart
 enum PixelFormat {
