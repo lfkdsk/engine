@@ -37,6 +37,9 @@ import io.flutter.embedding.engine.plugins.lifecycle.HiddenLifecycleReference;
 import io.flutter.embedding.engine.plugins.service.ServiceAware;
 import io.flutter.embedding.engine.plugins.service.ServiceControlSurface;
 import io.flutter.embedding.engine.plugins.service.ServicePluginBinding;
+// BD ADD: START
+import io.flutter.embedding.engine.FlutterJNI;
+// END
 import io.flutter.plugin.platform.PlatformViewsController;
 
 class FlutterEnginePluginRegistry implements PluginRegistry,
@@ -92,7 +95,9 @@ class FlutterEnginePluginRegistry implements PluginRegistry,
   FlutterEnginePluginRegistry(
       @NonNull Context appContext,
       @NonNull FlutterEngine flutterEngine,
-      @NonNull FlutterLoader flutterLoader
+      @NonNull FlutterLoader flutterLoader,
+      // BD ADD:
+      @NonNull FlutterJNI flutterJNI
   ) {
     this.flutterEngine = flutterEngine;
     pluginBinding = new FlutterPlugin.FlutterPluginBinding(
@@ -101,7 +106,9 @@ class FlutterEnginePluginRegistry implements PluginRegistry,
         flutterEngine.getDartExecutor(),
         flutterEngine.getRenderer(),
         flutterEngine.getPlatformViewsController().getRegistry(),
-        new DefaultFlutterAssets(flutterLoader)
+        new DefaultFlutterAssets(flutterLoader),
+        // BD ADD:
+        flutterJNI
     );
   }
 

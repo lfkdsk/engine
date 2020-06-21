@@ -4,6 +4,8 @@ import io.flutter.view.AndroidImageLoader.RealImageLoader;
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.ImageLoaderRegistry;
 
+import io.flutter.embedding.engine.FlutterJNI;
+
 /**
  * BD ADD:
  * ImageLoaderRegistryImpl
@@ -12,6 +14,11 @@ public class ImageLoaderRegistryImpl implements ImageLoaderRegistry {
 
     private AndroidImageLoader mAndroidImageLoader;
     private FlutterNativeView mNativeView;
+    private FlutterJNI mFlutterJNI;
+
+    public ImageLoaderRegistryImpl(FlutterJNI flutterJNI) {
+      mFlutterJNI = flutterJNI;
+    }
 
     public ImageLoaderRegistryImpl(FlutterNativeView nativeView) {
       mNativeView = nativeView;
@@ -47,13 +54,21 @@ public class ImageLoaderRegistryImpl implements ImageLoaderRegistry {
      * register android image loader
      */
     private void registerAndroidImageLoader(AndroidImageLoader androidImageLoader) {
-        mNativeView.getFlutterJNI().registerAndroidImageLoader(androidImageLoader);
+        if (mFlutterJNI == null) {
+            mNativeView.getFlutterJNI().registerAndroidImageLoader(androidImageLoader);
+        } else {
+            mFlutterJNI.registerAndroidImageLoader(androidImageLoader);
+        }
     }
     /**
      * unregister android image loader
      */
     private void unRegisterAndroidImageLoader() {
-        mNativeView.getFlutterJNI().unRegisterAndroidImageLoader();
+        if (mFlutterJNI == null) {
+            mNativeView.getFlutterJNI().unRegisterAndroidImageLoader();
+        } else {
+            mFlutterJNI.unRegisterAndroidImageLoader();
+        }
     }
 
 
