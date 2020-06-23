@@ -146,6 +146,8 @@ void MultiFrameCodec::State::GetNextFrameAndInvokeCallback(
   sk_sp<SkImage> skImage = GetNextFrameImage(resourceContext);
   if (skImage) {
     fml::RefPtr<CanvasImage> image = CanvasImage::Create();
+    // BD ADD:
+    image->setMips(!Boost::Current()->IsDisableMips());
     image->set_image({skImage, std::move(unref_queue)});
     SkCodec::FrameInfo skFrameInfo;
     codec_->getFrameInfo(nextFrameIndex_, &skFrameInfo);

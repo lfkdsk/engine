@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// BD ADD:
+#include "flutter/lib/ui/boost.h"
 #include "flutter/lib/ui/painting/single_frame_codec.h"
 
 #include "flutter/lib/ui/painting/frame_info.h"
@@ -74,6 +76,8 @@ Dart_Handle SingleFrameCodec::getNextFrame(Dart_Handle callback_handle) {
 
     if (image.get()) {
       auto canvas_image = fml::MakeRefCounted<CanvasImage>();
+      // BD ADD:
+      canvas_image->setMips(!flutter::Boost::Current()->IsDisableMips());
       canvas_image->set_image(std::move(image));
 
       codec->cached_frame_ = fml::MakeRefCounted<FrameInfo>(

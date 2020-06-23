@@ -39,6 +39,13 @@ class CanvasImage final : public RefCountedDartWrappable<CanvasImage> {
     image_ = std::move(image);
   }
 
+  // BD ADD: START
+  void setMips(bool isMips) {
+    isMips_ = isMips;
+  }
+  // END
+
+
   size_t GetAllocationSize() override;
 
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
@@ -47,6 +54,9 @@ class CanvasImage final : public RefCountedDartWrappable<CanvasImage> {
   CanvasImage();
 
   flutter::SkiaGPUObject<SkImage> image_;
+
+  // BD ADD:
+  bool isMips_ = true;
 };
 
 }  // namespace flutter
