@@ -155,6 +155,11 @@ source_set("ui") {
       deps += [ "//topaz/public/dart-pkg/zircon" ]
     }
   }
+  # BD ADD: START
+  if (lite_suffix == "lites") {
+    defines += [ "LITE_SHARE_SKIA" ]
+  }
+  # END
 }
 
 if (current_toolchain == host_toolchain) {

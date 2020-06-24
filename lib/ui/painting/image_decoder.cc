@@ -15,7 +15,9 @@
 namespace flutter {
 namespace {
 
-constexpr double kAspectRatioChangedThreshold = 0.01;
+// BD MOD:
+// constexpr double kAspectRatioChangedThreshold = 0.01;
+constexpr double kAspectRatioChangedThreshold FML_ALLOW_UNUSED_TYPE = 0.01;
 
 }  // namespace
 
@@ -67,7 +69,102 @@ static SkISize GetResizedDimensions(SkISize current_size,
 
   return current_size;
 }
+// BD ADD: START
+#ifdef LITE_SHARE_SKIA
+  static sk_sp<SkImage> ResizeRasterImage(sk_sp<SkImage> image,
+                                        std::optional<uint32_t> target_width,
+                                        std::optional<uint32_t> target_height,
+                                        const fml::tracing::TraceFlow& flow) {
+  FML_DCHECK(!image->isTextureBacked());
 
+  const auto resized_dimensions =
+      GetResizedDimensions(image->dimensions(), target_width, target_height);
+
+  if (resized_dimensions.isEmpty()) {
+    FML_LOG(ERROR) << "Could not resize to empty dimensions.";
+    return nullptr;
+  }
+
+  if (resized_dimensions == image->dimensions()) {
+    // The resized dimesions are the same as the intrinsic dimensions of the
+    // image. There is nothing to do.
+    return image;
+  }
+
+  TRACE_EVENT0("flutter", __FUNCTION__);
+  flow.Step(__FUNCTION__);
+
+  const auto scaled_image_info = image->imageInfo().makeWH(
+      resized_dimensions.width(), resized_dimensions.height());
+
+  SkBitmap scaled_bitmap;
+  if (!scaled_bitmap.tryAllocPixels(scaled_image_info)) {
+    FML_LOG(ERROR) << "Could not allocate bitmap when attempting to scale.";
+    return nullptr;
+  }
+
+  if (!image->scalePixels(scaled_bitmap.pixmap(), kLow_SkFilterQuality,
+                          SkImage::kDisallow_CachingHint)) {
+    FML_LOG(ERROR) << "Could not scale pixels";
+    return nullptr;
+  }
+
+  // Marking this as immutable makes the MakeFromBitmap call share the pixels
+  // instead of copying.
+  scaled_bitmap.setImmutable();
+
+  auto scaled_image = SkImage::MakeFromBitmap(scaled_bitmap);
+  if (!scaled_image) {
+    FML_LOG(ERROR) << "Could not create a scaled image from a scaled bitmap.";
+    return nullptr;
+  }
+
+  return scaled_image;
+}
+
+static sk_sp<SkImage> ImageFromDecompressedData(
+    sk_sp<SkData> data,
+    ImageDecoder::ImageInfo info,
+    std::optional<uint32_t> target_width,
+    std::optional<uint32_t> target_height,
+    const fml::tracing::TraceFlow& flow) {
+  TRACE_EVENT0("flutter", __FUNCTION__);
+  flow.Step(__FUNCTION__);
+  auto image = SkImage::MakeRasterData(info.sk_info, data, info.row_bytes);
+
+  if (!image) {
+    FML_LOG(ERROR) << "Could not create image from decompressed bytes.";
+    return nullptr;
+  }
+
+  return ResizeRasterImage(std::move(image), target_width, target_height, flow);
+}
+
+static sk_sp<SkImage> ImageFromCompressedData(
+    sk_sp<SkData> data,
+    std::optional<uint32_t> target_width,
+    std::optional<uint32_t> target_height,
+    const fml::tracing::TraceFlow& flow) {
+  TRACE_EVENT0("flutter", __FUNCTION__);
+  flow.Step(__FUNCTION__);
+
+  auto decoded_image = SkImage::MakeFromEncoded(data);
+
+  if (!decoded_image) {
+    return nullptr;
+  }
+
+  // Make sure to resolve all lazy images.
+  decoded_image = decoded_image->makeRasterImage();
+
+  if (!decoded_image) {
+    return nullptr;
+  }
+
+  return ResizeRasterImage(decoded_image, target_width, target_height, flow);
+}
+#else
+// END
 static sk_sp<SkImage> ResizeRasterImage(sk_sp<SkImage> image,
                                         const SkISize& resized_dimensions,
                                         const fml::tracing::TraceFlow& flow) {
@@ -245,6 +342,9 @@ sk_sp<SkImage> ImageFromCompressedData(sk_sp<SkData> data,
 
   return ResizeRasterImage(std::move(image), resized_dimensions, flow);
 }
+
+// BD ADD
+#endif  // LITE_SHARE_SKIA
 
 static SkiaGPUObject<SkImage> UploadRasterImage(
     sk_sp<SkImage> image,
