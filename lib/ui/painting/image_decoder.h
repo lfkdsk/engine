@@ -69,11 +69,14 @@ class ImageDecoder {
   FML_DISALLOW_COPY_AND_ASSIGN(ImageDecoder);
 };
 
+// BD ADD:
+#ifndef LITE_SHARE_SKIA
 sk_sp<SkImage> ImageFromCompressedData(sk_sp<SkData> data,
                                        std::optional<uint32_t> target_width,
                                        std::optional<uint32_t> target_height,
                                        const fml::tracing::TraceFlow& flow);
-
+// BD ADD:
+#endif
 }  // namespace flutter
 
 #endif  // FLUTTER_LIB_UI_PAINTING_IMAGE_DECODER_H_
