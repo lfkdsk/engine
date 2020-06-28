@@ -157,6 +157,9 @@ source_set("ui") {
   }
   # BD ADD: START
   if (lite_suffix == "lites") {
+    if (!defined(defines)) {
+      defines = []
+     }
     defines += [ "LITE_SHARE_SKIA" ]
   }
   # END
