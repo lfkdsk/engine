@@ -172,7 +172,12 @@ class VirtualDisplayController {
         } catch (Exception ignore) {}
         // END
         presentation.detachState();
-        view.dispose();
+        // BD MOD:
+        // view.dispose();
+        if (view != null) {
+            view.dispose();
+        }
+        // END
         virtualDisplay.release();
         textureEntry.release();
     }
