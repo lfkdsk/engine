@@ -61,7 +61,10 @@ namespace flutter {
   V(StartBoost, 2)              \
   V(FinishBoost, 1)             \
   V(PreloadFontFamilies, 2)     \
-  V(DisableMips, 1)
+  V(DisableMips, 1)             \
+  V(Performance_startStackTraceSamples, 0) \
+  V(Performance_stopStackTraceSamples, 0)  \
+  V(Performance_getStackTraceSamples, 1)
   /** END **/
 
   BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
@@ -386,5 +389,20 @@ void DisableMips(Dart_NativeArguments args) {
   bool disable = (bool)DartConverter<bool >::FromDart(Dart_GetNativeArgument(args, 0));
   Boost::Current()->DisableMips(disable);
 }
+
+void Performance_startStackTraceSamples(Dart_NativeArguments args) {
+    Dart_StartProfiling2();
+}
+
+void Performance_stopStackTraceSamples(Dart_NativeArguments args) {
+   Dart_StopProfiling2();
+}
+
+void Performance_getStackTraceSamples(Dart_NativeArguments args) {
+    int64_t microseconds = (int64_t)DartConverter<int64_t>::FromDart(Dart_GetNativeArgument(args, 0));
+    const char* result = Dart_GetStackSamples(microseconds);
+    Dart_SetReturnValue(args, (result==NULL ? Dart_Null() : Dart_NewStringFromCString(result)));
+}
+
 // END
 }  // namespace flutter
