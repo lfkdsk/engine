@@ -400,8 +400,8 @@ void Performance_stopStackTraceSamples(Dart_NativeArguments args) {
 
 void Performance_getStackTraceSamples(Dart_NativeArguments args) {
     int64_t microseconds = (int64_t)DartConverter<int64_t>::FromDart(Dart_GetNativeArgument(args, 0));
-    const char* result = Dart_GetStackSamples(microseconds);
-    Dart_SetReturnValue(args, (result==NULL ? Dart_Null() : Dart_NewStringFromCString(result)));
+    Dart_Handle res = Dart_GetStackSamples(microseconds);
+    Dart_SetReturnValue(args, res);
 }
 
 // END
