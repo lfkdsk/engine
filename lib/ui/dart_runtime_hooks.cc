@@ -62,6 +62,7 @@ namespace flutter {
   V(FinishBoost, 1)             \
   V(PreloadFontFamilies, 2)     \
   V(DisableMips, 1)             \
+  V(Performance_heapInfo, 0)    \
   V(Performance_startStackTraceSamples, 0) \
   V(Performance_stopStackTraceSamples, 0)  \
   V(Performance_getStackTraceSamples, 1)
@@ -388,6 +389,11 @@ void ForceGC(Dart_NativeArguments args) {
 void DisableMips(Dart_NativeArguments args) {
   bool disable = (bool)DartConverter<bool >::FromDart(Dart_GetNativeArgument(args, 0));
   Boost::Current()->DisableMips(disable);
+}
+
+void Performance_heapInfo(Dart_NativeArguments args) {
+  const char* json = Dart_HeapInfo();
+  Dart_SetReturnValue(args, Dart_NewStringFromCString(json));
 }
 
 void Performance_startStackTraceSamples(Dart_NativeArguments args) {
