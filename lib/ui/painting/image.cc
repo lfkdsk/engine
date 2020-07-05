@@ -5,6 +5,7 @@
 #include "flutter/lib/ui/painting/image.h"
 
 #include "flutter/lib/ui/painting/image_encoding.h"
+// BD ADD:
 #include "flutter/lib/ui/performance.h"
 #include "third_party/tonic/converter/dart_converter.h"
 #include "third_party/tonic/dart_args.h"
@@ -61,11 +62,12 @@ size_t CanvasImage::ComputeByteSize() const {
 // BD ADD: START
 void CanvasImage::RetainDartWrappableReference() const {
   RefCountedDartWrappable::RetainDartWrappableReference();
-  Performance::GetInstance()->AddImageMemoryUsage(ComputeByteSize());
+  sizeAddedToExternal = ComputeByteSize() >> 10;
+  Performance::GetInstance()->AddImageMemoryUsage(sizeAddedToExternal);
 }
 
 void CanvasImage::ReleaseDartWrappableReference() const {
-  Performance::GetInstance()->SubImageMemoryUsage(ComputeByteSize());
+  Performance::GetInstance()->SubImageMemoryUsage(sizeAddedToExternal);
   RefCountedDartWrappable::ReleaseDartWrappableReference();
 }
 // END

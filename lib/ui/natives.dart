@@ -110,6 +110,7 @@ bool requestHeapSnapshot(String outFilePath) native 'Performance_requestHeapSnap
 
 String getHeapInfo() native 'Performance_heapInfo';
 
+/// Memory usage of decoded image in dart heap external, in KB
 int getImageMemoryUsage() native 'Performance_imageMemoryUsage';
 
 

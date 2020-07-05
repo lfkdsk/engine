@@ -16,6 +16,7 @@
 #include "flutter/fml/logging.h"
 #include "flutter/lib/ui/plugins/callback_cache.h"
 #include "flutter/lib/ui/ui_dart_state.h"
+// BD ADD:
 #include "flutter/lib/ui/performance.h"
 #include "third_party/dart/runtime/include/bin/dart_io_api.h"
 #include "third_party/dart/runtime/include/dart_api.h"
@@ -399,8 +400,8 @@ void Performance_heapInfo(Dart_NativeArguments args) {
 }
 
 void Performance_imageMemoryUsage(Dart_NativeArguments args) {
-  Dart_SetReturnValue(args, DartConverter<uint64_t>::ToDart(
-                                Performance::GetInstance()->GetImageMemoryUsage()));
+  Dart_SetReturnValue(args, DartConverter<int64_t>::ToDart(
+                          Performance::GetInstance()->GetImageMemoryUsageKB()));
 }
 
 void Performance_startStackTraceSamples(Dart_NativeArguments args) {

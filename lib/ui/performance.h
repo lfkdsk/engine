@@ -1,12 +1,8 @@
-//
-// Created by bytedance on 2020/7/14.
-//
 
-#ifndef SRC_PERFORMANCE_H
-#define SRC_PERFORMANCE_H
+#ifndef FLUTTER_LIB_UI_PERFORMANCE_H_
+#define FLUTTER_LIB_UI_PERFORMANCE_H_
 
 #include <atomic>
-#include "flutter/fml/logging.h"
 
 namespace flutter {
 
@@ -16,16 +12,16 @@ class Performance {
     static Performance instance;
     return &instance;
   }
-  void AddImageMemoryUsage(size_t imageSize);
-  void SubImageMemoryUsage(size_t imageSize);
+  void AddImageMemoryUsage(int64_t sizeInKB);
+  void SubImageMemoryUsage(int64_t sizeInKB);
 
-  uint64_t GetImageMemoryUsage();  // KB
+  int64_t GetImageMemoryUsageKB();  // KB
 
  private:
   Performance();
 
-  std::atomic_uint_fast64_t dart_image_memory_usage;  // Byte
+  std::atomic_int64_t dart_image_memory_usage;  // KB
 };
 
 }
-#endif  // SRC_PERFORMANCE_H
+#endif  // FLUTTER_LIB_UI_PERFORMANCE_H_

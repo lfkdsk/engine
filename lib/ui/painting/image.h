@@ -56,6 +56,8 @@ class CanvasImage final : public RefCountedDartWrappable<CanvasImage> {
 
   flutter::SkiaGPUObject<SkImage> image_;
 
+  // BD ADD:
+  mutable int64_t sizeAddedToExternal = 0;
 };
 
 }  // namespace flutter
