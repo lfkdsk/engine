@@ -65,7 +65,8 @@ namespace flutter {
   V(Performance_heapInfo, 0)    \
   V(Performance_startStackTraceSamples, 0) \
   V(Performance_stopStackTraceSamples, 0)  \
-  V(Performance_getStackTraceSamples, 1)
+  V(Performance_getStackTraceSamples, 1)   \
+  V(Performance_requestHeapSnapshot, 0)
   /** END **/
 
   BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
@@ -392,8 +393,7 @@ void DisableMips(Dart_NativeArguments args) {
 }
 
 void Performance_heapInfo(Dart_NativeArguments args) {
-  const char* json = Dart_HeapInfo();
-  Dart_SetReturnValue(args, Dart_NewStringFromCString(json));
+  Dart_SetReturnValue(args, Dart_HeapInfo());
 }
 
 void Performance_startStackTraceSamples(Dart_NativeArguments args) {
@@ -408,6 +408,10 @@ void Performance_getStackTraceSamples(Dart_NativeArguments args) {
     int64_t microseconds = (int64_t)DartConverter<int64_t>::FromDart(Dart_GetNativeArgument(args, 0));
     Dart_Handle res = Dart_GetStackSamples(microseconds);
     Dart_SetReturnValue(args, res);
+}
+
+void Performance_requestHeapSnapshot(Dart_NativeArguments args) {
+    Dart_RequestSnapshot();
 }
 
 // END

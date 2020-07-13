@@ -106,6 +106,8 @@ void stopStackTraceSamples() native 'Performance_stopStackTraceSamples';
 
 String getStackTraceSamples(int microseconds) native 'Performance_getStackTraceSamples';
 
+void requestHeapSnapshot() native 'Performance_requestHeapSnapshot';
+
 String getHeapInfo() native 'Performance_heapInfo';
 
 /// END
