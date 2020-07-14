@@ -114,6 +114,8 @@ source_set("ui") {
     # BD ADD: START
     "boost.cc",
     "boost.h",
+    "performance.cc",
+    "performance.h",
     # END
   ]
 

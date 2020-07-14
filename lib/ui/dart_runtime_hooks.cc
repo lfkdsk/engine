@@ -16,6 +16,7 @@
 #include "flutter/fml/logging.h"
 #include "flutter/lib/ui/plugins/callback_cache.h"
 #include "flutter/lib/ui/ui_dart_state.h"
+#include "flutter/lib/ui/performance.h"
 #include "third_party/dart/runtime/include/bin/dart_io_api.h"
 #include "third_party/dart/runtime/include/dart_api.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
@@ -63,6 +64,7 @@ namespace flutter {
   V(PreloadFontFamilies, 2)     \
   V(DisableMips, 1)             \
   V(Performance_heapInfo, 0)    \
+  V(Performance_imageMemoryUsage, 0)       \
   V(Performance_startStackTraceSamples, 0) \
   V(Performance_stopStackTraceSamples, 0)  \
   V(Performance_getStackTraceSamples, 1)   \
@@ -394,6 +396,11 @@ void DisableMips(Dart_NativeArguments args) {
 
 void Performance_heapInfo(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, Dart_HeapInfo());
+}
+
+void Performance_imageMemoryUsage(Dart_NativeArguments args) {
+  Dart_SetReturnValue(args, DartConverter<uint64_t>::ToDart(
+                                Performance::GetInstance()->GetImageMemoryUsage()));
 }
 
 void Performance_startStackTraceSamples(Dart_NativeArguments args) {

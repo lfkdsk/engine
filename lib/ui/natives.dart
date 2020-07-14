@@ -110,4 +110,7 @@ void requestHeapSnapshot() native 'Performance_requestHeapSnapshot';
 
 String getHeapInfo() native 'Performance_heapInfo';
 
+int getImageMemoryUsage() native 'Performance_imageMemoryUsage';
+
+
 /// END
