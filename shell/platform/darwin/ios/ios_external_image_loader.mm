@@ -51,6 +51,13 @@ namespace flutter {
         fml::WeakPtr<GrContext> context = loaderContext.resourceContext;
         std::shared_ptr<ImageLoaderCallbackContext> imageLoaderCallbackContext = std::make_shared<ImageLoaderCallbackContext>(task_runners);
         imageLoaderCallbackContext->callback = std::move(callback);
+        // fml::CFRef 的拷贝构造函数被标为 delete 了， cache_ref_ 被 block 持有住的时候，引用计数没有增加
+        // 这里给 retain 下，block 结束再 release 下
+        BOOL retained = NO;
+        if (cache_ref_) {
+            retained = YES;
+            CFRetain(cache_ref_);
+        }
         void(^complete)(IOSImageInfo) = ^(IOSImageInfo imageInfo) {
             std::function<void(sk_sp<SkImage> image)> callback = std::move(imageLoaderCallbackContext->callback);
             imageLoaderCallbackContext->callback = nullptr;
@@ -107,6 +114,9 @@ namespace flutter {
                       FML_DCHECK(image) << "Failed to create SkImage from Texture.";
                       callback(std::move(image));
                     }));
+            }
+            if (retained) {
+                CFRelease(cache_ref_);
             }
         };
         
