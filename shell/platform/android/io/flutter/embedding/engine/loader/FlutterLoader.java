@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import io.flutter.BuildConfig;
 import io.flutter.embedding.engine.FlutterJNI;
@@ -128,6 +129,9 @@ public class FlutterLoader {
                 // of the JNI call is negligible).
                 long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
                 FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
+                if (settings.monitorCallback != null) {
+                    settings.monitorCallback.onMonitor("InitTask", initTimeMillis);
+                }
             } catch (Exception e){
                 throw new RuntimeException("InitTask failed.", e);
             }
@@ -167,7 +171,11 @@ public class FlutterLoader {
         this.settings = settings;
 
         sInitTask = new InitTask(applicationContext);
-        sInitTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        if (settings.executor != null) {
+            sInitTask.executeOnExecutor(settings.executor);
+        } else {
+            sInitTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -196,10 +204,17 @@ public class FlutterLoader {
           throw new IllegalStateException("ensureInitializationComplete must be called after startInitialization");
         }
         try {
+            long now = SystemClock.elapsedRealtime();
             // BD ADD:
             sInitTask.get();
+            if (settings.monitorCallback != null) {
+                settings.monitorCallback.onMonitor("InitTask.get", SystemClock.elapsedRealtime() - now);
+            }
             if (resourceExtractor != null) {
                 resourceExtractor.waitForCompletion();
+            }
+            if (settings.monitorCallback != null) {
+                settings.monitorCallback.onMonitor("resourceExtractor.waitForCompletion", SystemClock.elapsedRealtime() - now);
             }
 
             List<String> shellArgs = new ArrayList<>();
@@ -254,6 +269,9 @@ public class FlutterLoader {
                 kernelPath, appStoragePath, engineCachesPath);
 
             initialized = true;
+            if (settings.monitorCallback != null) {
+                settings.monitorCallback.onMonitor("EnsureInitialized", SystemClock.elapsedRealtime() - now);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Flutter initialization failed.", e);
             throw new RuntimeException(e);
@@ -404,6 +422,10 @@ public class FlutterLoader {
         void onInitException(Throwable t);
     }
 
+    public interface MonitorCallback {
+        void onMonitor(String event, long cost);
+    }
+
     public static class Settings {
         private String logTag;
         // BD ADD START:
@@ -412,6 +434,8 @@ public class FlutterLoader {
         private boolean disableLeakVM = false;
         private Runnable onInitResources;
         private InitExceptionCallback initExceptionCallback;
+        private MonitorCallback monitorCallback;
+        private Executor executor;
         // END
 
         @Nullable
@@ -448,6 +472,14 @@ public class FlutterLoader {
 
         public void setSoLoader(SoLoader loader) {
             soLoader = loader;
+        }
+
+        public void setExecutor(Executor executor) {
+            this.executor = executor;
+        }
+
+        public void setMonitorCallback(MonitorCallback monitorCallback) {
+            this.monitorCallback = monitorCallback;
         }
 
         // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
