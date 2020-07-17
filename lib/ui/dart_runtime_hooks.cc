@@ -418,7 +418,8 @@ void Performance_getStackTraceSamples(Dart_NativeArguments args) {
 }
 
 void Performance_requestHeapSnapshot(Dart_NativeArguments args) {
-    Dart_RequestSnapshot();
+    Dart_Handle res = Dart_RequestSnapshot();
+    Dart_SetReturnValue(args, res);
 }
 
 // END
