@@ -68,7 +68,7 @@ namespace flutter {
   V(Performance_startStackTraceSamples, 0) \
   V(Performance_stopStackTraceSamples, 0)  \
   V(Performance_getStackTraceSamples, 1)   \
-  V(Performance_requestHeapSnapshot, 0)
+  V(Performance_requestHeapSnapshot, 1)
   /** END **/
 
   BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
@@ -418,7 +418,9 @@ void Performance_getStackTraceSamples(Dart_NativeArguments args) {
 }
 
 void Performance_requestHeapSnapshot(Dart_NativeArguments args) {
-    Dart_Handle res = Dart_RequestSnapshot();
+    const char* filePath = nullptr;
+    Dart_StringToCString(Dart_GetNativeArgument(args, 0), &filePath);
+    Dart_Handle res = Dart_RequestSnapshot(filePath);
     Dart_SetReturnValue(args, res);
 }
 
