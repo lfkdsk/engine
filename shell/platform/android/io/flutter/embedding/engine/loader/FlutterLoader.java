@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -22,7 +21,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.FutureTask;
 
 import io.flutter.BuildConfig;
 import io.flutter.embedding.engine.FlutterJNI;
@@ -96,9 +97,9 @@ public class FlutterLoader {
         void loadLibrary(Context context, String libraryName);
     }
 
-    private InitTask sInitTask;
+    private FutureTask<Void> sInitTask;
 
-    private class InitTask extends AsyncTask<Void, Void, Void> {
+    private class InitTask implements Callable<Void> {
         private final Context context;
 
         public InitTask(Context applicationContext) {
@@ -106,7 +107,7 @@ public class FlutterLoader {
         }
 
         @Override
-        protected Void doInBackground(Void... unused) {
+        public Void call() {
             try {
                 long initStartTimestampMillis = SystemClock.uptimeMillis();
                 initConfig(context);
@@ -170,12 +171,8 @@ public class FlutterLoader {
 
         this.settings = settings;
 
-        sInitTask = new InitTask(applicationContext);
-        if (settings.executor != null) {
-            sInitTask.executeOnExecutor(settings.executor);
-        } else {
-            sInitTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        }
+        sInitTask = new FutureTask<>(new InitTask(applicationContext));
+        new Thread(sInitTask).start();
 
         new Handler().postDelayed(new Runnable() {
             @Override
