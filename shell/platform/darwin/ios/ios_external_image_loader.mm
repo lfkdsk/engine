@@ -51,15 +51,6 @@ namespace flutter {
         fml::WeakPtr<GrContext> context = loaderContext.resourceContext;
         std::shared_ptr<ImageLoaderCallbackContext> imageLoaderCallbackContext = std::make_shared<ImageLoaderCallbackContext>(task_runners);
         imageLoaderCallbackContext->callback = std::move(callback);
-        // the implementation of fml::CFRef disallow copy and assign，so when cache_ref_ is catched by complete block，
-        // the reference count of cached_ref_ do not increase. 
-        // when complete block is called after flutter engine released, crash occures
-        // so retain cached_ref_ before complete block defines and release is at the end of the complete block
-        BOOL retained = NO;
-        if (cache_ref_) {
-            retained = YES;
-            CFRetain(cache_ref_);
-        }
         void(^complete)(IOSImageInfo) = ^(IOSImageInfo imageInfo) {
             std::function<void(sk_sp<SkImage> image)> callback = std::move(imageLoaderCallbackContext->callback);
             imageLoaderCallbackContext->callback = nullptr;
@@ -116,9 +107,6 @@ namespace flutter {
                       FML_DCHECK(image) << "Failed to create SkImage from Texture.";
                       callback(std::move(image));
                     }));
-            }
-            if (retained) {
-                CFRelease(cache_ref_);
             }
         };
         
