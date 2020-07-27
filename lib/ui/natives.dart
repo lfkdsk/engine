@@ -99,4 +99,19 @@ void preloadFontFamilies(List<String> font_families, String locale) native 'Prel
 void forceGC() native 'ForceGC';
 
 void disableMips(bool disable) native 'DisableMips';
+
+void startStackTraceSamples() native 'Performance_startStackTraceSamples';
+
+void stopStackTraceSamples() native 'Performance_stopStackTraceSamples';
+
+String getStackTraceSamples(int microseconds) native 'Performance_getStackTraceSamples';
+
+bool requestHeapSnapshot(String outFilePath) native 'Performance_requestHeapSnapshot';
+
+String getHeapInfo() native 'Performance_heapInfo';
+
+/// Memory usage of decoded image in dart heap external, in KB
+int getImageMemoryUsage() native 'Performance_imageMemoryUsage';
+
+
 /// END

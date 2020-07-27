@@ -5,6 +5,8 @@
 #include "flutter/lib/ui/painting/image.h"
 
 #include "flutter/lib/ui/painting/image_encoding.h"
+// BD ADD:
+#include "flutter/lib/ui/performance.h"
 #include "third_party/tonic/converter/dart_converter.h"
 #include "third_party/tonic/dart_args.h"
 #include "third_party/tonic/dart_binding_macros.h"
@@ -41,6 +43,12 @@ void CanvasImage::dispose() {
 }
 
 size_t CanvasImage::GetAllocationSize() {
+  // BD ADD: START
+  return ComputeByteSize();
+}
+
+size_t CanvasImage::ComputeByteSize() const {
+  // END
   if (auto image = image_.get()) {
     const auto& info = image->imageInfo();
     const auto kMipmapOverhead = 4.0 / 3.0;
@@ -51,4 +59,16 @@ size_t CanvasImage::GetAllocationSize() {
   }
 }
 
+// BD ADD: START
+void CanvasImage::RetainDartWrappableReference() const {
+  RefCountedDartWrappable::RetainDartWrappableReference();
+  sizeAddedToExternal = ComputeByteSize() >> 10;
+  Performance::GetInstance()->AddImageMemoryUsage(sizeAddedToExternal);
+}
+
+void CanvasImage::ReleaseDartWrappableReference() const {
+  Performance::GetInstance()->SubImageMemoryUsage(sizeAddedToExternal);
+  RefCountedDartWrappable::ReleaseDartWrappableReference();
+}
+// END
 }  // namespace flutter

@@ -8,6 +8,8 @@
 #include "flutter/flow/skia_gpu_object.h"
 #include "flutter/lib/ui/dart_wrapper.h"
 #include "flutter/lib/ui/ui_dart_state.h"
+#include "flutter/lib/ui/boost.h"
+#include "flutter/fml/logging.h"
 #include "third_party/skia/include/core/SkImage.h"
 
 namespace tonic {
@@ -41,12 +43,21 @@ class CanvasImage final : public RefCountedDartWrappable<CanvasImage> {
 
   size_t GetAllocationSize() override;
 
+
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
 
+  // BD ADD: START
+  size_t ComputeByteSize() const;
+  void RetainDartWrappableReference() const override;
+  void ReleaseDartWrappableReference() const override;
+  // END
  private:
   CanvasImage();
 
   flutter::SkiaGPUObject<SkImage> image_;
+
+  // BD ADD:
+  mutable int64_t sizeAddedToExternal = 0;
 };
 
 }  // namespace flutter

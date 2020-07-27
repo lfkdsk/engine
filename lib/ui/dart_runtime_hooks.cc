@@ -16,6 +16,8 @@
 #include "flutter/fml/logging.h"
 #include "flutter/lib/ui/plugins/callback_cache.h"
 #include "flutter/lib/ui/ui_dart_state.h"
+// BD ADD:
+#include "flutter/lib/ui/performance.h"
 #include "third_party/dart/runtime/include/bin/dart_io_api.h"
 #include "third_party/dart/runtime/include/dart_api.h"
 #include "third_party/dart/runtime/include/dart_tools_api.h"
@@ -61,7 +63,13 @@ namespace flutter {
   V(StartBoost, 2)              \
   V(FinishBoost, 1)             \
   V(PreloadFontFamilies, 2)     \
-  V(DisableMips, 1)
+  V(DisableMips, 1)             \
+  V(Performance_heapInfo, 0)    \
+  V(Performance_imageMemoryUsage, 0)       \
+  V(Performance_startStackTraceSamples, 0) \
+  V(Performance_stopStackTraceSamples, 0)  \
+  V(Performance_getStackTraceSamples, 1)   \
+  V(Performance_requestHeapSnapshot, 1)
   /** END **/
 
   BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
@@ -386,5 +394,36 @@ void DisableMips(Dart_NativeArguments args) {
   bool disable = (bool)DartConverter<bool >::FromDart(Dart_GetNativeArgument(args, 0));
   Boost::Current()->DisableMips(disable);
 }
+
+void Performance_heapInfo(Dart_NativeArguments args) {
+  Dart_SetReturnValue(args, Dart_HeapInfo());
+}
+
+void Performance_imageMemoryUsage(Dart_NativeArguments args) {
+  Dart_SetReturnValue(args, DartConverter<int64_t>::ToDart(
+                          Performance::GetInstance()->GetImageMemoryUsageKB()));
+}
+
+void Performance_startStackTraceSamples(Dart_NativeArguments args) {
+    Dart_StartProfiling2();
+}
+
+void Performance_stopStackTraceSamples(Dart_NativeArguments args) {
+   Dart_StopProfiling2();
+}
+
+void Performance_getStackTraceSamples(Dart_NativeArguments args) {
+    int64_t microseconds = (int64_t)DartConverter<int64_t>::FromDart(Dart_GetNativeArgument(args, 0));
+    Dart_Handle res = Dart_GetStackSamples(microseconds);
+    Dart_SetReturnValue(args, res);
+}
+
+void Performance_requestHeapSnapshot(Dart_NativeArguments args) {
+    const char* filePath = nullptr;
+    Dart_StringToCString(Dart_GetNativeArgument(args, 0), &filePath);
+    Dart_Handle res = Dart_RequestSnapshot(filePath);
+    Dart_SetReturnValue(args, res);
+}
+
 // END
 }  // namespace flutter
