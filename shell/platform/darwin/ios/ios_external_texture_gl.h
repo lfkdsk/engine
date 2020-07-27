@@ -34,11 +34,23 @@ class IOSExternalTextureGL : public flutter::Texture {
 
   void EnsureTextureCacheExists();
   bool NeedUpdateTexture(bool freeze);
+    // BD ADD: START xudong
+  bool IsTexturesAvailable();
+  void CreateYUVTexturesFromPixelBuffer();
+  void CreateRGBATextureFromPixelBuffer();
+  sk_sp<SkImage> CreateImageFromYUVTextures(GrContext* context, const SkRect& bounds);
+  sk_sp<SkImage> CreateImageFromRGBATexture(GrContext* context, const SkRect& bounds);
+    // END
 
   bool new_frame_ready_ = false;
   fml::scoped_nsobject<NSObject<FlutterTexture>> external_texture_;
   fml::CFRef<CVOpenGLESTextureCacheRef> cache_ref_;
   fml::CFRef<CVOpenGLESTextureRef> texture_ref_;
+    // BD ADD: START xudong
+  OSType pixelFormat = 0;
+  fml::CFRef<CVOpenGLESTextureRef> y_texture_ref_;
+  fml::CFRef<CVOpenGLESTextureRef> uv_texture_ref_;
+    // END
   fml::CFRef<CVPixelBufferRef> buffer_ref_;
   FML_DISALLOW_COPY_AND_ASSIGN(IOSExternalTextureGL);
 };
