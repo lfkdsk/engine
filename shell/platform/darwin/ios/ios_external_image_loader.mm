@@ -51,13 +51,14 @@ namespace flutter {
         fml::WeakPtr<GrContext> context = loaderContext.resourceContext;
         std::shared_ptr<ImageLoaderCallbackContext> imageLoaderCallbackContext = std::make_shared<ImageLoaderCallbackContext>(task_runners);
         imageLoaderCallbackContext->callback = std::move(callback);
+        // obtain eaglcontext in io thread to make sure that we use the right one
+        EAGLContext *glcontext = [EAGLContext currentContext];
         void(^complete)(IOSImageInfo) = ^(IOSImageInfo imageInfo) {
             std::function<void(sk_sp<SkImage> image)> callback = std::move(imageLoaderCallbackContext->callback);
             imageLoaderCallbackContext->callback = nullptr;
             if (!cache_ref_) {
                 CVOpenGLESTextureCacheRef cache;
-                CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL,
-                                                            [EAGLContext currentContext], NULL, &cache);
+                CVReturn err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, glcontext, NULL, &cache);
                 if (err == noErr) {
                     cache_ref_.Reset(cache);
                 } else {
