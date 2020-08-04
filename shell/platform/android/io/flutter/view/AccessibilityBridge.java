@@ -1514,6 +1514,12 @@ public class AccessibilityBridge extends AccessibilityNodeProvider {
             return;
         }
         // TODO(mattcarroll): why are we explicitly talking to the root view's parent?
+        // BD ADD: START
+        if (rootAccessibilityView.getParent() == null) {
+            Log.w(TAG, "FlutterView has no parent. Skip accessibility event!");
+            return;
+        }
+        // END
         rootAccessibilityView.getParent().requestSendAccessibilityEvent(rootAccessibilityView, event);
     }
 
