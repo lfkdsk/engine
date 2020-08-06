@@ -26,6 +26,8 @@ public class AndroidImageLoader {
      * @param key the key associated to image resource
      */
     void release(String key);
+
+    void getNextFrame(int currentFrame, Object codec, NativeLoadCallback callback, String key);
   }
 
   private RealImageLoader realImageLoader;
@@ -42,6 +44,14 @@ public class AndroidImageLoader {
       return;
     }
     realImageLoader.load(url, width, height, scale, callback, key);
+  }
+
+  void getNextFrame(int currentFrame, Object codec, NativeLoadCallback callback, String key) {
+    if (realImageLoader == null) {
+      callback.onLoadFail(key);
+      return;
+    }
+    realImageLoader.getNextFrame(currentFrame, codec, callback, key);
   }
 
   /**

@@ -123,7 +123,9 @@ shared_library("create_flutter_framework_dylib") {
     "platform_view_ios.mm",
     # BD ADD: START
     "ios_external_image_loader.h",
-    "ios_external_image_loader.mm"
+    "ios_external_image_loader.mm",
+    "ios_native_export_codec.h",
+    "ios_native_export_codec.mm",
     # END
   ]
 

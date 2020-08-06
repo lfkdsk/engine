@@ -243,6 +243,7 @@ android_java_sources = [
   # BD ADD: START
   "io/flutter/view/AndroidImageLoader.java",
   "io/flutter/view/NativeLoadCallback.java",
+  "io/flutter/view/NativeCodec.java",
   "io/flutter/view/ImageLoaderRegistry.java",
   "io/flutter/view/ImageLoaderRegistryImpl.java",
   # END
