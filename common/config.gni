@@ -27,6 +27,12 @@ declare_args() {
   # This needs to be mirrored here because build/toolchain/clang.gni does
   # not exist in the Fuchsia source tree.
   flutter_enable_bitcode = false
+  # BD ADD: START
+  # Whether to use a cropped icudtl.dat
+  icu_use_lite_data_file = false
+  lite_suffix = ""
+  mac_10_15 = false
+  # END
 }
 
 # feature_defines_list ---------------------------------------------------------
