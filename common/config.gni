@@ -35,6 +35,7 @@ declare_args() {
   # Whether to use a cropped icudtl.dat
   icu_use_lite_data_file = false
   lite_suffix = ""
+  mac_10_15 = false
   # END
 }
 

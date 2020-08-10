@@ -7,6 +7,8 @@ import argparse
 import subprocess
 import sys
 import os
+# BD ADD:
+import platform
 
 SRC_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -350,6 +352,13 @@ def to_gn_args(args):
 
     if args.ubsan:
       gn_args['is_ubsan'] = True
+
+    # BD ADD: START
+    if platform.system() == 'Darwin':
+        v, _, _ = platform.mac_ver()
+        if v > '10.15':
+            gn_args['mac_10_15'] = True
+    # END
 
     return gn_args
 
