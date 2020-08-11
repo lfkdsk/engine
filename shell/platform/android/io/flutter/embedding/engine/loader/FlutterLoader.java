@@ -129,7 +129,11 @@ public class FlutterLoader {
                 // from the Timeline timestamp at the current moment (the assumption is that the overhead
                 // of the JNI call is negligible).
                 long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
-                FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
+                try {
+                  FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
+                } catch (Exception e) {
+                  Log.e(TAG, "Flutter initialization failed.", e);
+                }
                 if (settings.monitorCallback != null) {
                     settings.monitorCallback.onMonitor("InitTask", initTimeMillis);
                 }
