@@ -16,7 +16,14 @@ ThreadHost::ThreadHost(std::string name_prefix, uint64_t mask) {
   }
 
   if (mask & ThreadHost::Type::UI) {
+// BD MOD: START
+// ui_thread = std::make_unique<fml::Thread>(name_prefix + ".ui");
+#if OS_ANDROID
+    ui_thread = std::make_unique<fml::Thread>(name_prefix + ".ui", true);
+#else
     ui_thread = std::make_unique<fml::Thread>(name_prefix + ".ui");
+#endif
+    // END
   }
 
   if (mask & ThreadHost::Type::GPU) {
