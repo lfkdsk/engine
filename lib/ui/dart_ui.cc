@@ -31,6 +31,8 @@
 #include "flutter/lib/ui/window/window.h"
 #include "third_party/tonic/converter/dart_converter.h"
 #include "third_party/tonic/logging/dart_error.h"
+// BD ADD:
+#include "flutter/bdflutter/lib/ui/performance/performance.h"
 
 #if defined(LEGACY_FUCHSIA_EMBEDDER)
 #include "flutter/lib/ui/compositing/scene_host.h"  // nogncheck
@@ -82,6 +84,8 @@ void DartUI::InitForGlobal() {
     SemanticsUpdateBuilder::RegisterNatives(g_natives);
     Vertices::RegisterNatives(g_natives);
     Window::RegisterNatives(g_natives);
+    // BD ADD:
+    Performance::RegisterNatives(g_natives);
 #if defined(LEGACY_FUCHSIA_EMBEDDER)
     SceneHost::RegisterNatives(g_natives);
 #endif
