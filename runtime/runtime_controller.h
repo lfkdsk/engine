@@ -440,6 +440,9 @@ class RuntimeController final : public WindowClient {
   ///
   std::pair<bool, uint32_t> GetRootIsolateReturnCode();
 
+  // BD ADD:
+  void ExitApp();
+
  private:
   struct Locale {
     Locale(std::string language_code_,

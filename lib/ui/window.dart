@@ -1230,7 +1230,6 @@ class Window {
   /// For asynchronous communication between the embedder and isolate, a
   /// platform channel may be used.
   ByteData? getPersistentIsolateData() native 'Window_getPersistentIsolateData';
-
 }
 
 /// Additional accessibility features that may be enabled by the platform.
