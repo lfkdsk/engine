@@ -574,6 +574,10 @@ const std::string& Engine::GetLastEntrypointLibrary() const {
 int64_t Engine::GetEngineMainEnterMicros() {
   return delegate_.GetEngineMainEnterMicros();
 }
+
+void Engine::ExitApp() {
+  runtime_controller_->ExitApp();
+}
 // END
 
 }  // namespace flutter

@@ -448,6 +448,9 @@ class RuntimeController : public PlatformConfigurationClient {
   ///
   std::pair<bool, uint32_t> GetRootIsolateReturnCode();
 
+  // BD ADD:
+  void ExitApp();
+
  protected:
   /// Constructor for Mocks.
   RuntimeController(RuntimeDelegate& client, TaskRunners p_task_runners);

@@ -762,9 +762,12 @@ class Engine final : public RuntimeDelegate,
   // |RuntimeDelegate|
   FontCollection& GetFontCollection() override;
 
-  // BD ADD
+  // BD ADD: START
   void ScheduleBackgroundFrame();
 
+  void ExitApp();
+  // END
+  
   // |PointerDataDispatcher::Delegate|
   void DoDispatchPacket(std::unique_ptr<PointerDataPacket> packet,
                         uint64_t trace_flow_id) override;
