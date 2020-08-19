@@ -100,6 +100,9 @@ class Window final {
   void CompletePlatformMessageEmptyResponse(int response_id);
 
   static void RegisterNatives(tonic::DartLibraryNatives* natives);
+  
+  // BD ADD:
+  void ExitApp();
 
  private:
   WindowClient* client_;

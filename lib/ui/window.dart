@@ -1256,6 +1256,15 @@ class Window {
   set timeToFirstFrameMicros(int time) {
     _timeToFirstFrameMicros = time;
   }
+
+  /// 
+  VoidCallback? get exitApp => _exitApp;
+  VoidCallback? _exitApp;
+  Zone _exitAppZone = Zone.root;
+  set exitApp(VoidCallback? callback) {
+    _exitApp = callback;
+    _exitAppZone = Zone.current;
+  }
   // END
 }
 

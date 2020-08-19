@@ -211,6 +211,14 @@ void _drawFrame() {
   _invoke(window.onDrawFrame, window._onDrawFrameZone);
 }
 
+// BD ADD: START
+@pragma('vm:entry-point')
+// ignore: unused_element
+void _exitApp() {
+  _invoke(window.exitApp, window._exitAppZone);
+}
+// END
+
 // ignore: always_declare_return_types, prefer_generic_function_type_aliases
 typedef _UnaryFunction(Null args);
 // ignore: always_declare_return_types, prefer_generic_function_type_aliases
