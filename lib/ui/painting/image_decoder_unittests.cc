@@ -6,6 +6,7 @@
 #include "flutter/fml/mapping.h"
 #include "flutter/fml/synchronization/waitable_event.h"
 #include "flutter/lib/ui/painting/image_decoder.h"
+#include "flutter/bdflutter/lib/ui/painting/image_loader.h"
 #include "flutter/lib/ui/painting/multi_frame_codec.h"
 #include "flutter/runtime/dart_vm.h"
 #include "flutter/runtime/dart_vm_lifecycle.h"
@@ -72,6 +73,11 @@ class TestIOManager final : public IOManager {
   std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() override {
     did_access_is_gpu_disabled_sync_switch_ = true;
     return is_gpu_disabled_sync_switch_;
+  }
+
+  // |IOManager|
+  std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override {
+    return nullptr;
   }
 
   bool did_access_is_gpu_disabled_sync_switch_ = false;

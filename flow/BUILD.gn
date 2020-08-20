@@ -94,6 +94,12 @@ source_set_maybe_fuchsia_legacy("flow") {
     "$fuchsia_sdk_root/fidl:fuchsia.ui.app",
     "$fuchsia_sdk_root/fidl:fuchsia.ui.gfx",
     "$fuchsia_sdk_root/pkg:scenic_cpp",
+    # BD ADD: START
+    "$fuchsia_sdk_root/fidl:fuchsia.ui.views",
+    "//sdk/lib/ui/scenic/cpp",
+    "//topaz/public/dart-pkg/zircon",
+    "//zircon/public/lib/zx",
+    # END
   ]
 }
 

@@ -125,5 +125,21 @@ fml::WeakPtr<IOManager> ShellIOManager::GetWeakIOManager() const {
 std::shared_ptr<fml::SyncSwitch> ShellIOManager::GetIsGpuDisabledSyncSwitch() {
   return is_gpu_disabled_sync_switch_;
 }
+ 
+/**
+ * BD ADD:
+ *
+ */
+void ShellIOManager::RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader) {
+  imageLoader_ = imageLoader;
+}
+  
+/**
+ * BD ADD:
+ *
+ */
+std::shared_ptr<flutter::ImageLoader> ShellIOManager::GetImageLoader() const {
+  return imageLoader_;
+}
 
 }  // namespace flutter

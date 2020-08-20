@@ -730,6 +730,16 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   return self;
 }
 
+/**
+ * BD ADD:
+ *
+ */
+#pragma mark - FlutterImageLoaderRegistry
+
+- (void)registerImageLoader:(NSObject<FlutterImageLoader>*)imageLoader {
+    self.iosPlatformView->RegisterExternalImageLoader(imageLoader);
+}
+
 #pragma mark - FlutterPluginRegistry
 
 - (NSObject<FlutterPluginRegistrar>*)registrarForPlugin:(NSString*)pluginKey {
@@ -843,6 +853,14 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 
 - (NSObject<FlutterTextureRegistry>*)textures {
   return _flutterEngine;
+}
+
+/**
+ * BD ADD:
+ *
+ */
+- (NSObject<FlutterImageLoaderRegistry>*)imageLoaders {
+    return _flutterEngine;
 }
 
 - (void)publish:(NSObject*)value {
