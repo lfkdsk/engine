@@ -177,6 +177,11 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 }
 
 - (void)updateViewportMetrics:(flutter::ViewportMetrics)viewportMetrics {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   if (!self.platformView) {
     return;
   }
@@ -184,6 +189,11 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 }
 
 - (void)dispatchPointerDataPacket:(std::unique_ptr<flutter::PointerDataPacket>)packet {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   if (!self.platformView) {
     return;
   }
@@ -192,17 +202,38 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 
 - (fml::WeakPtr<flutter::PlatformView>)platformView {
   FML_DCHECK(_shell);
-  return _shell->GetPlatformView();
+  // BD MOD: START
+  // return _shell->GetPlatformView();
+  if (_shell != nullptr) {
+    return _shell->GetPlatformView();
+  } else {
+    return fml::WeakPtr<flutter::PlatformView>();
+  }
+  // END
 }
 
 - (flutter::PlatformViewIOS*)iosPlatformView {
   FML_DCHECK(_shell);
-  return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  // BD MOD: START
+  // return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  if (_shell != nullptr) {
+    return static_cast<flutter::PlatformViewIOS*>(_shell->GetPlatformView().get());
+  } else {
+    return nullptr;
+  }
+  // END
 }
 
 - (fml::RefPtr<fml::TaskRunner>)platformTaskRunner {
   FML_DCHECK(_shell);
-  return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  // BD MOD: START
+  // return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  if (_shell != nullptr) {
+    return _shell->GetTaskRunners().GetPlatformTaskRunner();
+  } else {
+    return nullptr;
+  }
+  // END
 }
 
 - (fml::RefPtr<fml::TaskRunner>)RasterTaskRunner {
@@ -211,11 +242,21 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 }
 
 - (void)ensureSemanticsEnabled {
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   self.iosPlatformView->SetSemanticsEnabled(true);
 }
 
 - (void)setViewController:(FlutterViewController*)viewController {
   FML_DCHECK(self.iosPlatformView);
+  // BD ADD: START
+  if (self.iosPlatformView == nullptr) {
+    return;
+  }
+  // END
   _viewController =
       viewController ? [viewController getWeakPtr] : fml::WeakPtr<FlutterViewController>();
   self.iosPlatformView->SetOwnerViewController(_viewController);
@@ -429,11 +470,23 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 
 - (flutter::Rasterizer::Screenshot)screenshot:(flutter::Rasterizer::ScreenshotType)type
                                  base64Encode:(bool)base64Encode {
-  return self.shell.Screenshot(type, base64Encode);
+  // BD MOD: START
+  // return self.shell.Screenshot(type, base64Encode);
+  if (_shell != nullptr) {
+    return self.shell.Screenshot(type, base64Encode);
+  } else {
+    return flutter::Rasterizer::Screenshot();
+  }
+  // END
 }
 
 - (void)launchEngine:(NSString*)entrypoint libraryURI:(NSString*)libraryOrNil {
   // Launch the Dart application with the inferred run configuration.
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   self.shell.RunEngine([_dartProject.get() runConfigurationForEntrypoint:entrypoint
                                                             libraryOrNil:libraryOrNil]);
 }
@@ -534,8 +587,12 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   }
 
   if (_shell == nullptr) {
+    // BD MOD: START
+    // FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
+    //                   << entrypoint.UTF8String;
     FML_LOG(ERROR) << "Could not start a shell FlutterEngine with entrypoint: "
-                   << entrypoint.UTF8String;
+                   << (entrypoint != nil ? entrypoint.UTF8String : "");
+    // END
   } else {
     [self setupChannels];
     [self onLocaleUpdated:nil];
@@ -657,7 +714,14 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 - (flutter::Rasterizer::Screenshot)takeScreenshot:(flutter::Rasterizer::ScreenshotType)type
                                   asBase64Encoded:(BOOL)base64Encode {
   FML_DCHECK(_shell) << "Cannot takeScreenshot without a shell";
-  return _shell->Screenshot(type, base64Encode);
+  // BD MOD: START
+  // return _shell->Screenshot(type, base64Encode);
+  if (_shell != nullptr) {
+    return _shell->Screenshot(type, base64Encode);
+  } else {
+    return flutter::Rasterizer::Screenshot();
+  }
+  // END
 }
 
 - (NSObject<FlutterBinaryMessenger>*)binaryMessenger {
@@ -676,6 +740,11 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   NSParameterAssert(channel);
   NSAssert(_shell && _shell->IsSetup(),
            @"Sending a message before the FlutterEngine has been run.");
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   fml::RefPtr<flutter::PlatformMessageResponseDarwin> response =
       (callback == nil) ? nullptr
                         : fml::MakeRefCounted<flutter::PlatformMessageResponseDarwin>(
@@ -695,6 +764,11 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
               binaryMessageHandler:(FlutterBinaryMessageHandler)handler {
   NSParameterAssert(channel);
   if (_shell && _shell->IsSetup()) {
+    // BD ADD: START
+    if (self.iosPlatformView == nullptr) {
+      return;
+    }
+    // END
     self.iosPlatformView->GetPlatformMessageRouter().SetMessageHandler(channel.UTF8String, handler);
   } else {
     NSAssert(!handler, @"Setting a message handler before the FlutterEngine has been run.");
@@ -706,15 +780,30 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 
 - (int64_t)registerTexture:(NSObject<FlutterTexture>*)texture {
   int64_t textureId = _nextTextureId++;
-  self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  // BD MOD: START
+  // self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  if (self.iosPlatformView != nullptr) {
+    self.iosPlatformView->RegisterExternalTexture(textureId, texture);
+  }
+  // END
   return textureId;
 }
 
 - (void)unregisterTexture:(int64_t)textureId {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   _shell->GetPlatformView()->UnregisterTexture(textureId);
 }
 
 - (void)textureFrameAvailable:(int64_t)textureId {
+  // BD ADD: START
+  if (_shell == nullptr) {
+    return;
+  }
+  // END
   _shell->GetPlatformView()->MarkTextureFrameAvailable(textureId);
 }
 

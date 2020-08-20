@@ -395,6 +395,12 @@ static void sendFakeTouchEvent(FlutterEngine* engine,
   if (!weakPlatformView) {
     return;
   }
+    
+  // BD ADD: START
+  if (![_engine.get() platformTaskRunner]) {
+    return;
+  }
+  // END
 
   // Start on the platform thread.
   weakPlatformView->SetNextFrameCallback([weakSelf = [self getWeakPtr],
@@ -1053,6 +1059,11 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 
 - (void)onAccessibilityStatusChanged:(NSNotification*)notification {
   auto platformView = [_engine.get() platformView];
+  // BD ADD: START
+  if (!platformView) {
+    return;
+  }
+  // END
   int32_t flags = 0;
   if (UIAccessibilityIsInvertColorsEnabled())
     flags |= static_cast<int32_t>(flutter::AccessibilityFeatureFlag::kInvertColors);

@@ -188,6 +188,10 @@ struct Settings {
   fml::UniqueFD::element_type assets_dir =
       fml::UniqueFD::traits_type::InvalidValue();
   std::string assets_path;
+  // BD ADD: START
+  std::string zip_assets_file_path;
+  std::string zip_assets_directory;
+  // END
 
   // Callback to handle the timings of a rasterized frame. This is called as
   // soon as a frame is rasterized.
