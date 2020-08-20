@@ -113,6 +113,7 @@ source_set("flutter_framework_source") {
 
   # BD ADD: START
   sources += external_image_loader_sources
+  sources += compress_size_sources
   # END
 
   sources += _flutter_framework_headers
@@ -146,6 +147,10 @@ source_set("flutter_framework_source") {
     "//flutter/shell/profiling:profiling",
     "//third_party/skia",
   ]
+
+  # BD ADD: START
+  deps += assets_deps
+  # END
 
   public_configs = [ "//flutter:config" ]
 
