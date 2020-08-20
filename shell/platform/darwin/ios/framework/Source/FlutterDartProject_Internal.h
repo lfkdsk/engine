@@ -39,6 +39,9 @@ NS_ASSUME_NONNULL_BEGIN
  **/
 - (void)setPersistentIsolateData:(NSData*)data;
 
+// BD ADD:
++ (NSString*)flutterAssetsPath;
+
 @end
 
 NS_ASSUME_NONNULL_END
