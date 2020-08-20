@@ -5,6 +5,7 @@
 #include "third_party/tonic/dart_args.h"
 #include "third_party/tonic/dart_binding_macros.h"
 #include "third_party/tonic/dart_library_natives.h"
+#include "bdflutter/common/fps_recorder.h"
 
 namespace flutter {
 
@@ -29,9 +30,44 @@ void Performance_imageMemoryUsage(Dart_NativeArguments args) {
       Performance::GetInstance()->GetImageMemoryUsageKB()));
 }
 
+void Performance_startRecordFps(Dart_NativeArguments args) {
+  Dart_Handle exception = nullptr;
+  std::string key = tonic::DartConverter<std::string>::FromArguments(args, 1, exception);
+  if (exception) {
+    Dart_ThrowException(exception);
+    return;
+  }
+  FpsRecorder::Current()->StartRecordFps(key);
+}
+
+void Performance_obtainFps(Dart_NativeArguments args) {
+  Dart_Handle exception = nullptr;
+  std::string key = tonic::DartConverter<std::string>::FromArguments(args, 1, exception);
+  if (exception) {
+    Dart_ThrowException(exception);
+    return;
+  }
+  bool stop_record = tonic::DartConverter<bool>::FromArguments(args, 2, exception);
+  if (exception) {
+    Dart_ThrowException(exception);
+    return;
+  }
+  std::vector<double> fpsInfo = FpsRecorder::Current()->ObtainFpsData(key, stop_record);
+  int size = 3;
+  Dart_Handle data_handle = Dart_NewList(size);
+  for (int i = 0; i != size; i++) {
+    Dart_Handle value = Dart_NewDouble(fpsInfo[i]);
+    Dart_ListSetAt(data_handle, i, value);
+  }
+  Dart_SetReturnValue(args, data_handle);
+}
+
+
 void Performance::RegisterNatives(tonic::DartLibraryNatives* natives) {
   natives->Register({
       {"Performance_imageMemoryUsage", Performance_imageMemoryUsage, 1, true},
+      {"Performance_startRecordFps", Performance_startRecordFps, 2, true},
+      {"Performance_obtainFps", Performance_obtainFps, 3, true},
   });
 }
 
