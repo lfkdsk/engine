@@ -21,6 +21,8 @@ import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
+// BD MOD: START
+//import android.view.*;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.PointerIcon;
@@ -31,6 +33,7 @@ import android.view.View;
 import android.view.ViewStructure;
 import android.view.WindowInsets;
 import android.view.WindowManager;
+// END
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillValue;
@@ -40,6 +43,19 @@ import android.view.inputmethod.InputMethodManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.UiThread;
+// BD MOD: START
+//import android.view.inputmethod.InputMethodManager;
+
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
+
+// END
+import io.flutter.embedding.engine.FlutterJNI;
 import io.flutter.app.FlutterPluginRegistry;
 import io.flutter.embedding.android.AndroidKeyProcessor;
 import io.flutter.embedding.android.AndroidTouchProcessor;
@@ -55,8 +71,11 @@ import io.flutter.embedding.engine.systemchannels.PlatformChannel;
 import io.flutter.embedding.engine.systemchannels.SettingsChannel;
 import io.flutter.embedding.engine.systemchannels.SystemChannel;
 import io.flutter.embedding.engine.systemchannels.TextInputChannel;
+// BD MOD: START
+//import io.flutter.plugin.common.*;
 import io.flutter.plugin.common.ActivityLifecycleListener;
 import io.flutter.plugin.common.BinaryMessenger;
+// END
 import io.flutter.plugin.editing.TextInputPlugin;
 import io.flutter.plugin.localization.LocalizationPlugin;
 import io.flutter.plugin.mouse.MouseCursorPlugin;
@@ -66,6 +85,17 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+// BD MOD: START
+//
+//import java.lang.ref.WeakReference;
+//import java.nio.ByteBuffer;
+//import java.nio.ByteOrder;
+//import java.util.*;
+//import java.util.concurrent.atomic.AtomicLong;
+import io.flutter.view.AndroidImageLoader;
+import io.flutter.view.AndroidImageLoader.RealImageLoader;
+import io.flutter.view.ImageLoaderRegistry;
+// END
 
 /**
  * Deprecated Android view containing a Flutter app.

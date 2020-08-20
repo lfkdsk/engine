@@ -54,7 +54,13 @@ class ShellIOManager final : public IOManager {
 
   // |IOManager|
   std::shared_ptr<fml::SyncSwitch> GetIsGpuDisabledSyncSwitch() override;
-
+    
+  // BD ADD:
+  void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
+  
+  // BD ADD:
+  std::shared_ptr<flutter::ImageLoader> GetImageLoader() const override;
+    
  private:
   // Resource context management.
   sk_sp<GrContext> resource_context_;
@@ -65,6 +71,12 @@ class ShellIOManager final : public IOManager {
   fml::RefPtr<flutter::SkiaUnrefQueue> unref_queue_;
 
   fml::WeakPtrFactory<ShellIOManager> weak_factory_;
+  
+  /**
+   * BD ADD:
+   *
+   */ 
+  std::shared_ptr<flutter::ImageLoader> imageLoader_;
 
   std::shared_ptr<fml::SyncSwitch> is_gpu_disabled_sync_switch_;
 

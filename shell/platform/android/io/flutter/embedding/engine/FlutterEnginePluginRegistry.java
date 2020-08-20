@@ -35,6 +35,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+// BD ADD: START
+import io.flutter.embedding.engine.FlutterJNI;
+// END
 
 class FlutterEnginePluginRegistry
     implements PluginRegistry,
@@ -88,7 +91,10 @@ class FlutterEnginePluginRegistry
   FlutterEnginePluginRegistry(
       @NonNull Context appContext,
       @NonNull FlutterEngine flutterEngine,
-      @NonNull FlutterLoader flutterLoader) {
+      @NonNull FlutterLoader flutterLoader,
+      // BD ADD:
+      @NonNull FlutterJNI flutterJNI
+  ) {
     this.flutterEngine = flutterEngine;
     pluginBinding =
         new FlutterPlugin.FlutterPluginBinding(
@@ -97,8 +103,10 @@ class FlutterEnginePluginRegistry
             flutterEngine.getDartExecutor(),
             flutterEngine.getRenderer(),
             flutterEngine.getPlatformViewsController().getRegistry(),
-            new DefaultFlutterAssets(flutterLoader));
-  }
+            new DefaultFlutterAssets(flutterLoader),
+            // BD ADD:
+            flutterJNI);
+ }
 
   public void destroy() {
     Log.v(TAG, "Destroying.");

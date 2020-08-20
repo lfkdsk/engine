@@ -294,10 +294,15 @@ public class FlutterEngine {
 
     this.platformViewsController = platformViewsController;
     this.platformViewsController.onAttachedToJNI();
-
-    this.pluginRegistry =
-        new FlutterEnginePluginRegistry(context.getApplicationContext(), this, flutterLoader);
-
+    //BD MOD: START
+    //this.pluginRegistry =
+    //    new FlutterEnginePluginRegistry(context.getApplicationContext(), this, flutterLoader);
+    this.pluginRegistry = new FlutterEnginePluginRegistry(
+      context.getApplicationContext(),
+      this,
+      flutterLoader,
+      flutterJNI
+    );
     if (automaticallyRegisterPlugins) {
       registerPlugins();
     }
