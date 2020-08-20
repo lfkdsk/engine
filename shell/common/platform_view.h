@@ -10,6 +10,8 @@
 #include "flutter/common/task_runners.h"
 #include "flutter/flow/surface.h"
 #include "flutter/flow/texture.h"
+// BD ADD:
+#include "flutter/bdflutter/lib/ui/painting/image_loader.h"
 #include "flutter/fml/macros.h"
 #include "flutter/fml/memory/weak_ptr.h"
 #include "flutter/lib/ui/semantics/custom_accessibility_action.h"
@@ -228,6 +230,13 @@ class PlatformView {
     virtual std::unique_ptr<std::vector<std::string>>
     ComputePlatformViewResolvedLocale(
         const std::vector<std::string>& supported_locale_data) = 0;
+
+    /**
+     * BD ADD:
+     *
+     */
+    virtual void OnPlatformViewRegisterImageLoader(
+        std::shared_ptr<flutter::ImageLoader> imageLoader) = 0;
   };
 
   //----------------------------------------------------------------------------
@@ -561,6 +570,9 @@ class PlatformView {
   ///                         updated.
   ///
   void MarkTextureFrameAvailable(int64_t texture_id);
+  
+  // BD ADD:
+  void RegisterImageLoader(std::shared_ptr<flutter::ImageLoader> imageLoader);
 
   //--------------------------------------------------------------------------
   /// @brief      Directly invokes platform-specific APIs to compute the

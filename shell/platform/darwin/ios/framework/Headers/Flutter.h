@@ -19,5 +19,7 @@
 #include "FlutterPluginAppLifeCycleDelegate.h"
 #include "FlutterTexture.h"
 #include "FlutterViewController.h"
+// BD ADD:
+#include "FlutterImageLoader.h"
 
 #endif  // FLUTTER_FLUTTER_H_
