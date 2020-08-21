@@ -198,8 +198,13 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
 
           vdControllers.put(request.viewId, vdController);
           View platformView = vdController.getView();
-          platformView.setLayoutDirection(request.direction);
-          contextToPlatformView.put(platformView.getContext(), platformView);
+          // BD MOD: START
+          // platformView.setLayoutDirection(request.direction);
+          // contextToPlatformView.put(platformView.getContext(), platformView);
+          if (platformView != null) {
+            platformView.setLayoutDirection(request.direction);
+            contextToPlatformView.put(platformView.getContext(), platformView);
+          }
 
           // TODO(amirh): copy accessibility nodes to the FlutterView's accessibility tree.
 
@@ -490,6 +495,11 @@ public class PlatformViewsController implements PlatformViewsAccessibilityDelega
    * {@link View#checkInputConnectionProxy(View)} method. Else returns false.
    */
   public boolean checkInputConnectionProxy(View view) {
+    // BD ADD: START
+    if (view == null) {
+      return false;
+    }
+    // END
     if (!contextToPlatformView.containsKey(view.getContext())) {
       return false;
     }
