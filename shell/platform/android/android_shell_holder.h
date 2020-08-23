@@ -51,6 +51,8 @@ class AndroidShellHolder {
   void NotifyLowMemoryWarning();
   // BD ADD: START
   void ScheduleBackgroundFrame();
+
+  void ExitApp(fml::closure closure);
   // END
 
  private:
