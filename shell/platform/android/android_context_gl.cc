@@ -9,9 +9,13 @@
 #include <utility>
 
 #include "flutter/fml/trace_event.h"
+// BD ADD:
+#include <sys/system_properties.h>
 
 namespace flutter {
 
+// BD ADD:
+static int android_sdk_version = INT_MIN;
 template <class T>
 using EGLResult = std::pair<bool, T>;
 
@@ -119,6 +123,30 @@ bool AndroidEGLSurface::IsValid() const {
   return surface_ != EGL_NO_SURFACE;
 }
 
+// BD ADD: START
+bool AndroidContextGL::NeedBindAndUnbindContext() {
+  if (android_sdk_version != INT_MIN) {
+    // API less more than 21 (Android 5.0)
+    return android_sdk_version < 21;
+  }
+
+  char osVersion[PROP_VALUE_MAX];
+  int osVersionLength = __system_property_get("ro.build.version.sdk", osVersion);
+  bool valid = osVersionLength > 0;
+  for (int i = 0; i < osVersionLength; i++) {
+    char c = osVersion[i];
+    if (c > '9' || c < '0') {
+      valid = false;
+      break;
+    }
+  }
+  android_sdk_version = valid ? std::stoi(osVersion) : INT_MAX;
+  FML_LOG(ERROR) << android_sdk_version;
+  // API less more than 21 (Android 5.0)
+  return android_sdk_version < 21;
+}
+// END
+
 bool AndroidEGLSurface::MakeCurrent() {
   if (eglMakeCurrent(display_, surface_, surface_, context_) != EGL_TRUE) {
     FML_LOG(ERROR) << "Could not make the context current";
@@ -223,8 +251,15 @@ std::unique_ptr<AndroidEGLSurface> AndroidContextGL::CreateOffscreenSurface()
   const EGLint attribs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
 
   EGLSurface surface = eglCreatePbufferSurface(display, config_, attribs);
-  return std::make_unique<AndroidEGLSurface>(surface, display,
+  auto glSurface = std::make_unique<AndroidEGLSurface>(surface, display,
                                              resource_context_);
+  // BD ADD: START
+  if (NeedBindAndUnbindContext()) {
+	  glSurface->MakeCurrent();
+	  ClearCurrent();
+  }
+  // END
+  return glSurface;
 }
 
 fml::RefPtr<AndroidEnvironmentGL> AndroidContextGL::Environment() const {
@@ -235,7 +270,7 @@ bool AndroidContextGL::IsValid() const {
   return valid_;
 }
 
-bool AndroidContextGL::ClearCurrent() {
+bool AndroidContextGL::ClearCurrent() const{
   if (eglGetCurrentContext() != context_) {
     return true;
   }
