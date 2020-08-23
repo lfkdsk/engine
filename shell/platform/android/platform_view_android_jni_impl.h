@@ -7,6 +7,8 @@
 
 #include "flutter/fml/platform/android/jni_weak_ref.h"
 #include "flutter/shell/platform/android/jni/platform_view_android_jni.h"
+// BD ADD:
+#include "flutter/bdflutter/shell/platform/android/android_external_image_loader.h"
 
 namespace flutter {
 

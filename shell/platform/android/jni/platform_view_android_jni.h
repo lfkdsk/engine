@@ -8,9 +8,6 @@
 #include "flutter/fml/macros.h"
 #include "flutter/fml/mapping.h"
 
-// BD ADD:
-#include "flutter/bdflutter/shell/platform/android/android_external_image_loader.h"
-
 #if OS_ANDROID
 #include "flutter/fml/platform/android/jni_weak_ref.h"
 #endif
