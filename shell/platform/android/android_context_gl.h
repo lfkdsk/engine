@@ -109,8 +109,9 @@ class AndroidContextGL : public AndroidContext {
   //----------------------------------------------------------------------------
   /// @return     Whether the current context was successfully clear.
   ///
-  bool ClearCurrent();
-
+  bool ClearCurrent() const;
+  // BD ADD:
+  static bool NeedBindAndUnbindContext();
  private:
   fml::RefPtr<AndroidEnvironmentGL> environment_;
   EGLConfig config_;
