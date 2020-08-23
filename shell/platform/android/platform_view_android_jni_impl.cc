@@ -289,7 +289,9 @@ static jlong AttachJNI(JNIEnv* env,
 }
 
 static void DestroyJNI(JNIEnv* env, jobject jcaller, jlong shell_holder) {
-  delete ANDROID_SHELL_HOLDER;
+  // BD MOD
+  // delete ANDROID_SHELL_HOLDER;
+  ANDROID_SHELL_HOLDER->ExitApp([holder = ANDROID_SHELL_HOLDER]() { delete holder; });
 }
 
 // BD ADD: START
