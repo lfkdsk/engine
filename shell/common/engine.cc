@@ -546,6 +546,11 @@ int64_t Engine::GetEngineMainEnterMicros() {
 void Engine::ExitApp() {
   runtime_controller_->ExitApp();
 }
+
+void Engine::NotifyLowMemoryWarning() {
+  runtime_controller_->NotifyLowMemoryWarning();
+}
+
 // END
 
 }  // namespace flutter

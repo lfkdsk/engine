@@ -770,10 +770,20 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 }
 
 - (void)onMemoryWarning:(NSNotification*)notification {
-  if (_shell) {
-    _shell->NotifyLowMemoryWarning();
-  }
-  [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
+  // BD MOD: START
+  // if (_shell) {
+  //   _shell->NotifyLowMemoryWarning();
+  // }
+  // [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}];
+  // 放在回调里面执行_shell->NotifyLowMemoryWarning()是因为method
+  // channel消息的执行在Framework层会进行async/await的操作，用来等待任务执行完成
+  [_systemChannel sendMessage:@{@"type" : @"memoryPressure"}
+                        reply:^(id _Nullable reply) {
+                          if (_shell) {
+                            _shell->NotifyLowMemoryWarning();
+                          }
+                        }];
+  // END
 }
 
 - (void)setIsGpuDisabled:(BOOL)value {
