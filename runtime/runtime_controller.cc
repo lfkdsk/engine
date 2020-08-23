@@ -423,6 +423,11 @@ void RuntimeController::ExitApp() {
     window->ExitApp();
   }
 }
+
+void RuntimeController::NotifyLowMemoryWarning() {
+  Dart_NotifyLowMemory();
+}
+
 // END
 
 // BD ADD: START
