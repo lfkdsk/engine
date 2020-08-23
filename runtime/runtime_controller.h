@@ -450,8 +450,10 @@ class RuntimeController : public PlatformConfigurationClient {
   ///
   std::pair<bool, uint32_t> GetRootIsolateReturnCode();
 
-  // BD ADD:
+  // BD ADD: START
   void ExitApp();
+  void NotifyLowMemoryWarning();
+  // END
 
  protected:
   /// Constructor for Mocks.
