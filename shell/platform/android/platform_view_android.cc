@@ -121,7 +121,8 @@ void PlatformViewAndroid::NotifyCreated(
           surface->ResourceContextMakeCurrent();
           latch.Signal();
         });
-    } else {
+    latch.Wait();
+  } else {
     fml::AutoResetWaitableEvent latch;
     fml::TaskRunner::RunNowOrPostTask(
         task_runners_.GetRasterTaskRunner(),
@@ -130,8 +131,8 @@ void PlatformViewAndroid::NotifyCreated(
             surface->SetNativeWindow(native_window);
             latch.Signal();
         });
-    }
     latch.Wait();
+    }
     // END
   }
 
