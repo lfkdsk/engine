@@ -87,8 +87,7 @@ bool Boost::CanNotifyIdle() {
 
 void Boost::ForceGC() {
 #if defined(DART_PERFORMANCE_EXTENSION)
-  // TODO: delete temporarily for porting 1.20
-//  Dart_ForceGC();
+  Dart_ForceGC();
 #endif
 }
 

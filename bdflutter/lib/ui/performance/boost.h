@@ -64,7 +64,7 @@ class Boost {
   int64_t ui_message_athead_deadline_;
 
   int64_t notify_idle_deadline_;
-  
+
   FML_DISALLOW_COPY_AND_ASSIGN(Boost);
 };
 
