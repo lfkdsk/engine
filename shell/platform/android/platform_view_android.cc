@@ -121,7 +121,6 @@ void PlatformViewAndroid::NotifyCreated(
           surface->ResourceContextMakeCurrent();
           latch.Signal();
         });
-    latch.Wait();
     } else {
     fml::AutoResetWaitableEvent latch;
     fml::TaskRunner::RunNowOrPostTask(
@@ -132,6 +131,7 @@ void PlatformViewAndroid::NotifyCreated(
             latch.Signal();
         });
     }
+    latch.Wait();
     // END
   }
 
