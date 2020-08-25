@@ -26,10 +26,14 @@ vars = {
   'tt_dart_git': 'ssh://git@code.byted.org/tech_client/dart',
   #END
   'github_git': 'https://github.com',
-  'skia_git': 'https://skia.googlesource.com',
   # OCMock is for testing only so there is no google clone
   'ocmock_git': 'https://github.com/erikdoe/ocmock.git',
-  'skia_revision': 'b4d60f807dbd034edf9fae1233aa1784f6c36d5c',
+ # BD MOD: START
+  # 'skia_git': 'https://skia.googlesource.com',
+  # 'skia_revision': 'b4d60f807dbd034edf9fae1233aa1784f6c36d5c',
+  'skia_git': 'git@code.byted.org:tech_client',
+  'skia_revision': 'dc57484d3ba843cc39106e306bc631a6a70a7b9e',
+  # END
 
   # When updating the Dart revision, ensure that all entries that are
   # dependencies of Dart are also updated to match the entries in the
