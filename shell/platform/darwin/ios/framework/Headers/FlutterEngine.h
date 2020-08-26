@@ -14,7 +14,7 @@
 #include "FlutterPlugin.h"
 #include "FlutterTexture.h"
 // BD ADD:
-#include "flutter/bdflutter/shell/platform/darwin/ios/framework/Headers/FlutterImageLoader.h"
+#include "FlutterImageLoader.h"
 
 @class FlutterViewController;
 
