@@ -79,6 +79,8 @@ typedef enum UIAccessibilityContrast : NSInteger {
   // UIScrollView with height zero and a content offset so we can get those events. See also:
   // https://github.com/flutter/flutter/issues/35050
   fml::scoped_nsobject<UIScrollView> _scrollView;
+  // BD ADD:
+  BOOL _surfaceCreated;
 }
 
 @synthesize displayingFlutterUI = _displayingFlutterUI;
@@ -105,7 +107,8 @@ typedef enum UIAccessibilityContrast : NSInteger {
     _flutterView.reset([[FlutterView alloc] initWithDelegate:_engine opaque:self.isViewOpaque]);
     _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterViewController>>(self);
     _ongoingTouches = [[NSMutableSet alloc] init];
-
+    // BD ADD:
+    _surfaceCreated = NO;
     [self performCommonViewControllerInitialization];
     [engine setViewController:self];
   }
@@ -127,6 +130,8 @@ typedef enum UIAccessibilityContrast : NSInteger {
     [_engine.get() createShell:nil libraryURI:nil];
     _engineNeedsLaunch = YES;
     _ongoingTouches = [[NSMutableSet alloc] init];
+    // BD ADD:
+    _surfaceCreated = NO;
     [self loadDefaultSplashScreenView];
     [self performCommonViewControllerInitialization];
   }
@@ -529,16 +534,18 @@ static void sendFakeTouchEvent(FlutterEngine* engine,
 - (void)surfaceUpdated:(BOOL)appeared {
   // NotifyCreated/NotifyDestroyed are synchronous and require hops between the UI and raster
   // thread.
-  if (appeared) {
+  if (appeared && !_surfaceCreated) {
     [self installFirstFrameCallback];
     [_engine.get() platformViewsController]->SetFlutterView(_flutterView.get());
     [_engine.get() platformViewsController]->SetFlutterViewController(self);
     [_engine.get() platformView]->NotifyCreated();
+    _surfaceCreated = YES;
   } else {
     self.displayingFlutterUI = NO;
     [_engine.get() platformView]->NotifyDestroyed();
     [_engine.get() platformViewsController]->SetFlutterView(nullptr);
     [_engine.get() platformViewsController]->SetFlutterViewController(nullptr);
+    _surfaceCreated = NO;
   }
 }
 
@@ -650,6 +657,9 @@ static void sendFakeTouchEvent(FlutterEngine* engine,
 // BD ADD: START
 #pragma mark - Frame
 
+// BD ADD: START
+//
+//
 - (void)scheduleBackgroundFrame {
   [_engine.get() shell].GetEngine()->ScheduleBackgroundFrame();
 }
@@ -883,6 +893,9 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
 - (void)viewDidLayoutSubviews {
   CGSize viewSize = self.view.bounds.size;
   CGFloat scale = [UIScreen mainScreen].scale;
+  // BD ADD:
+  CGSize originViewportSize =
+      CGSizeMake(_viewportMetrics.physical_width, _viewportMetrics.physical_height);
 
   // Purposefully place this not visible.
   _scrollView.get().frame = CGRectMake(0.0, 0.0, viewSize.width, 0.0);
@@ -921,6 +934,15 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
                     << "complex frame to avoid the timeout.";
     }
   }
+  // 当App处于inactive状态，且期间尺寸改变(iPad上调整多窗口App尺寸)
+  // 当恢复active时在此处提前创建Surface，可避免视图拉伸跳变
+  else if (ABS(originViewportSize.width - _viewportMetrics.physical_width) > 0.01 ||
+           ABS(originViewportSize.height - _viewportMetrics.physical_height) > 0.01) {
+    if ([UIApplication sharedApplication].applicationState == UIApplicationStateInactive) {
+      [self surfaceUpdated:YES];
+    }
+  }
+  // END
 }
 
 - (void)viewSafeAreaInsetsDidChange {
