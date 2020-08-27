@@ -370,6 +370,10 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   return [[FlutterCompressSizeModeManager sharedInstance] needDecompressData];
 }
 
+- (void)setLeakDartVMEnabled:(BOOL)enabled {
+  _settings.leak_vm = enabled;
+}
+
 // END
 
 @end
