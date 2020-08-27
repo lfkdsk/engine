@@ -33,6 +33,9 @@
 #import "flutter/shell/platform/darwin/ios/ios_surface.h"
 #import "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 
+// BD ADD:
+#include "flutter/bdflutter/shell/platform/darwin/common/framework/Headers/FlutterBinaryMessengerProvider.h"
+
 NSString* const FlutterDefaultDartEntrypoint = nil;
 NSString* const FlutterDefaultInitialRoute = nil;
 static constexpr int kNumProfilerSamplesPerSec = 5;
@@ -42,7 +45,9 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
 - (instancetype)initWithPlugin:(NSString*)pluginKey flutterEngine:(FlutterEngine*)flutterEngine;
 @end
 
-@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger>
+// BD MOD:
+// @interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger>
+@interface FlutterEngine () <FlutterTextInputDelegate, FlutterBinaryMessenger, FlutterBinaryMessengerProvider>
 // Maintains a dictionary of plugin names that have registered with the engine.  Used by
 // FlutterEngineRegistrar to implement a FlutterPluginRegistrar.
 @property(nonatomic, readonly) NSMutableDictionary* pluginPublications;
@@ -59,6 +64,9 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   std::unique_ptr<flutter::Shell> _shell;
   NSString* _labelPrefix;
   std::unique_ptr<fml::WeakPtrFactory<FlutterEngine>> _weakFactory;
+  // BD ADD:
+  std::unique_ptr<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>
+      _weakBinaryMessengerFactory;
 
   fml::WeakPtr<FlutterViewController> _viewController;
   fml::scoped_nsobject<FlutterObservatoryPublisher> _publisher;
@@ -109,6 +117,9 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   _labelPrefix = [labelPrefix copy];
 
   _weakFactory = std::make_unique<fml::WeakPtrFactory<FlutterEngine>>(self);
+  // BD ADD:
+  _weakBinaryMessengerFactory =
+      std::make_unique<fml::WeakPtrFactory<NSObject<FlutterBinaryMessenger>>>(self);
 
   if (project == nil)
     _dartProject.reset([[FlutterDartProject alloc] init]);
@@ -981,6 +992,14 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   }
   [self.localizationChannel invokeMethod:@"setLocale" arguments:localeData];
 }
+
+// BD ADD: START
+#pragma mark - FlutterPluginRegistry
+
+- (fml::WeakPtr<NSObject<FlutterBinaryMessenger>>)getWeakBinaryMessengerPtr {
+  return _weakBinaryMessengerFactory->GetWeakPtr();
+}
+// END
 
 @end
 
