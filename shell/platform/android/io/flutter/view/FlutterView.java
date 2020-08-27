@@ -459,6 +459,12 @@ public class FlutterView extends SurfaceView
   }
 
   public void destroy() {
+    // BD ADD: START
+    if (mAccessibilityNodeProvider != null) {
+      mAccessibilityNodeProvider.release();
+      mAccessibilityNodeProvider = null;
+    }
+    // END
     if (!isAttached()) return;
 
     getHolder().removeCallback(mSurfaceCallback);
@@ -759,18 +765,19 @@ public class FlutterView extends SurfaceView
   @Override
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
-
-    PlatformViewsController platformViewsController =
-        getPluginRegistry().getPlatformViewsController();
-    mAccessibilityNodeProvider =
-        new AccessibilityBridge(
-            this,
-            new AccessibilityChannel(dartExecutor, getFlutterNativeView().getFlutterJNI()),
-            (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE),
-            getContext().getContentResolver(),
-            platformViewsController);
-    mAccessibilityNodeProvider.setOnAccessibilityChangeListener(onAccessibilityChangeListener);
-
+    // BD ADD
+    if (mAccessibilityNodeProvider == null) {
+      PlatformViewsController platformViewsController =
+              getPluginRegistry().getPlatformViewsController();
+      mAccessibilityNodeProvider =
+              new AccessibilityBridge(
+                      this,
+                      new AccessibilityChannel(dartExecutor, getFlutterNativeView().getFlutterJNI()),
+                      (AccessibilityManager) getContext().getSystemService(Context.ACCESSIBILITY_SERVICE),
+                      getContext().getContentResolver(),
+                      platformViewsController);
+      mAccessibilityNodeProvider.setOnAccessibilityChangeListener(onAccessibilityChangeListener);
+    }
     resetWillNotDraw(
         mAccessibilityNodeProvider.isAccessibilityEnabled(),
         mAccessibilityNodeProvider.isTouchExplorationEnabled());
@@ -779,9 +786,9 @@ public class FlutterView extends SurfaceView
   @Override
   protected void onDetachedFromWindow() {
     super.onDetachedFromWindow();
-
-    mAccessibilityNodeProvider.release();
-    mAccessibilityNodeProvider = null;
+    // BD DEL:
+    //mAccessibilityNodeProvider.release();
+    //mAccessibilityNodeProvider = null;
   }
 
   // TODO(mattcarroll): Confer with Ian as to why we need this method. Delete if possible, otherwise
