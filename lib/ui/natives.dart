@@ -113,5 +113,14 @@ String getHeapInfo() native 'Performance_heapInfo';
 /// Memory usage of decoded image in dart heap external, in KB
 int getImageMemoryUsage() native 'Performance_imageMemoryUsage';
 
+dynamic reflectLibrary(String libraryUrl) native 'Reflect_reflectLibrary';
+
+dynamic libraryInvoke(dynamic lib, int invokeType, String functionName, List arguments, List names) native 'Reflect_libraryInvoke';
+
+dynamic reflectClass(String libraryUrl, String className) native 'Reflect_reflectClass';
+
+dynamic classInvoke(dynamic cls, int invokeType, String functionName, List arguments, List names) native 'Reflect_classInvoke';
+
+dynamic instanceInvoke(dynamic instance, int invokeType, String functionName, List arguments, List names) native 'Reflect_instanceInvoke';
 
 /// END
