@@ -82,6 +82,17 @@ public class FlutterLoader {
 
   private boolean initialized = false;
   @Nullable private Settings settings;
+
+  // BD ADD START:
+  public interface SoLoader {
+    void loadLibrary(Context context, String libraryName);
+  }
+
+  public interface MonitorCallback {
+    void onMonitor(String event, long cost);
+  }
+  // END
+
   private long initStartTimestampMillis;
 
   private static class InitResult {
@@ -143,8 +154,13 @@ public class FlutterLoader {
           @Override
           public InitResult call() {
             ResourceExtractor resourceExtractor = initResources(appContext);
-
-            System.loadLibrary("flutter");
+            // BD MOD:
+            //System.loadLibrary("flutter");
+            if (settings != null && settings.getSoLoader() != null) {
+              settings.getSoLoader().loadLibrary(appContext, "flutter");
+            } else {
+              System.loadLibrary("flutter");
+            }
 
             // Prefetch the default font manager as soon as possible on a background thread.
             // It helps to reduce time cost of engine setup that blocks the platform thread.
@@ -159,6 +175,10 @@ public class FlutterLoader {
 
             if (resourceExtractor != null) {
               resourceExtractor.waitForCompletion();
+              if (settings != null && settings.monitorCallback != null) {
+                settings.monitorCallback.onMonitor("resourceExtractor.waitForCompletion", SystemClock.uptimeMillis() - initStartTimestampMillis);
+              }
+
             }
             return new InitResult(
                 PathUtils.getFilesDir(appContext),
@@ -190,16 +210,26 @@ public class FlutterLoader {
       throw new IllegalStateException(
           "ensureInitializationComplete must be called after startInitialization");
     }
+
     try {
       InitResult result = initResultFuture.get();
 
       List<String> shellArgs = new ArrayList<>();
       shellArgs.add("--icu-symbol-prefix=_binary_icudtl_dat");
-
+      // BD ADD: START
+      String nativeLibraryDir = settings.getNativeLibraryDir();
+      if (nativeLibraryDir == null) {
+        ApplicationInfo applicationInfo = applicationContext.getPackageManager().getApplicationInfo(
+                applicationContext.getPackageName(), PackageManager.GET_META_DATA);
+        nativeLibraryDir = applicationInfo.nativeLibraryDir;
+      }
+      // END
       ApplicationInfo applicationInfo = getApplicationInfo(applicationContext);
       shellArgs.add(
           "--icu-native-lib-path="
-              + applicationInfo.nativeLibraryDir
+              // BD MOD:
+              //+ applicationInfo.nativeLibraryDir
+              +nativeLibraryDir
               + File.separator
               + DEFAULT_LIBRARY);
       if (args != null) {
@@ -223,7 +253,9 @@ public class FlutterLoader {
             "--"
                 + AOT_SHARED_LIBRARY_NAME
                 + "="
-                + applicationInfo.nativeLibraryDir
+                // BD MOD:
+                //+ applicationInfo.nativeLibraryDir
+                +nativeLibraryDir
                 + File.separator
                 + aotSharedLibraryName);
       }
@@ -239,7 +271,6 @@ public class FlutterLoader {
       // END
 
       long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
-
       // TODO(cyanlaz): Remove this when dynamic thread merging is done.
       // https://github.com/flutter/flutter/issues/59930
       Bundle bundle = applicationInfo.metaData;
@@ -265,6 +296,11 @@ public class FlutterLoader {
           initTimeMillis);
 
       initialized = true;
+      // BD ADD:START
+      if (settings.monitorCallback != null) {
+        settings.monitorCallback.onMonitor("EnsureInitialized", SystemClock.uptimeMillis() - initStartTimestampMillis);
+      }
+      // END
     } catch (Exception e) {
       Log.e(TAG, "Flutter initialization failed.", e);
       throw new RuntimeException(e);
@@ -414,6 +450,9 @@ public class FlutterLoader {
   public static class Settings {
     private String logTag;
     // BD ADD START:
+    private String nativeLibraryDir;
+    private SoLoader soLoader;
+    private MonitorCallback monitorCallback;
     private boolean disableLeakVM = false;
 
     public boolean isDisableLeakVM() {
@@ -423,6 +462,26 @@ public class FlutterLoader {
     // 页面退出后，FlutterEngine默认是不销毁VM的，disableLeakVM设置在所有页面退出后销毁VM
     public void disableLeakVM() {
         disableLeakVM = true;
+    }
+
+    public String getNativeLibraryDir() {
+      return nativeLibraryDir;
+    }
+
+    public SoLoader getSoLoader() {
+      return soLoader;
+    }
+
+    public void setNativeLibraryDir(String dir) {
+      nativeLibraryDir = dir;
+    }
+
+    public void setSoLoader(SoLoader loader) {
+      soLoader = loader;
+    }
+
+    public void setMonitorCallback(MonitorCallback monitorCallback) {
+      this.monitorCallback = monitorCallback;
     }
     // END
 
