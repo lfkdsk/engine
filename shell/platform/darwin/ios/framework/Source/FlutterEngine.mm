@@ -169,6 +169,9 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
                  name:NSCurrentLocaleDidChangeNotification
                object:nil];
 
+  // BD ADD:
+  _isGpuDisabled = ([UIApplication sharedApplication].applicationState != UIApplicationStateActive);
+
   return self;
 }
 
