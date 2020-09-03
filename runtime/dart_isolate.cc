@@ -285,7 +285,7 @@ bool DartIsolate::LoadLibraries() {
 }
 
 // BD ADD:
-bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> mapping) {
+bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece) {
   TRACE_EVENT0("flutter", "DartIsolate::PrepareForRunningFromPrecompiledCode");
   if (phase_ != Phase::LibrariesSetup) {
     return false;
@@ -293,7 +293,15 @@ bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fm
 
   tonic::DartState::Scope scope(this);
 
-  LoadKernelFromDyanmicartKernel(mapping);
+
+  if (!LoadKernelFromDyanmicartKernel(mapping, last_piece)) {
+    return false;
+  }
+
+  if (!last_piece) {
+    // More to come.
+    return true;
+  }
 
   if (Dart_IsNull(Dart_RootLibrary())) {
     return false;
@@ -306,8 +314,9 @@ bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fm
   if (child_isolate_preparer_ == nullptr) {
     child_isolate_preparer_ = [buffers = kernel_buffers_](DartIsolate* isolate) {
       for (unsigned long i = 0; i < buffers.size(); i++) {
+        bool last_piece = i + 1 == buffers.size();
         const std::shared_ptr<const fml::Mapping>& buffer = buffers.at(i);
-        if (!isolate->PrepareForRunningFromDynamicartKernel(buffer)) {
+        if (!isolate->PrepareForRunningFromDynamicartKernel(buffer, last_piece)) {
           return false;
         }
       }
@@ -378,10 +387,7 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
 
 
 // BD ADD: 暂时只支持一个DyanmicartKernel好啦，先跑起来再说
-bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping) {
-  if (!DartVM::IsRunningDynamicCode()) {
-    return false;
-  }
+bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece) {
   if (!mapping || mapping->GetSize() == 0) {
         FML_LOG(ERROR)<<"kb is NULL." << std::endl;
         return false;
@@ -398,11 +404,22 @@ bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapp
 
   Dart_SetRootLibrary(Dart_Null());
 
-  Dart_Handle library =
-      Dart_LoadLibraryFromKernel2(mapping->GetMapping(), mapping->GetSize());
+  Dart_Handle library;
+  if (DartVM::IsRunningPrecompiledCode()) {
+      library =
+              Dart_LoadLibraryFromKernel2(mapping->GetMapping(), mapping->GetSize());
+  }else{
+      library =
+              Dart_LoadLibraryFromKernel(mapping->GetMapping(), mapping->GetSize());
+  }
   if (tonic::LogIfError(library)) {
     FML_LOG(ERROR)<<"kb load failed"<<std::endl;
     return false;
+  }
+
+  if (!last_piece) {
+    // More to come.
+    return true;
   }
 
   Dart_SetRootLibrary(library);

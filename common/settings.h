@@ -69,9 +69,6 @@ struct Settings {
   std::string isolate_snapshot_instr_path;  // deprecated
   MappingCallback isolate_snapshot_instr;
 
-  // BD ADD:
-  std::string package_dill_path; // 本次启动所使用的动态包路径
-
   // Returns the Mapping to a kernel buffer which contains sources for dart:*
   // libraries.
   MappingCallback dart_library_sources_kernel;
@@ -186,11 +183,13 @@ struct Settings {
   // soon as a frame is rasterized.
   FrameRasterizedCallback frame_rasterized_callback;
   // BD ADD: START
+  std::string package_dill_path; // 本次启动所使用的动态包路径
   std::string zip_assets_file_path;
   std::string zip_assets_directory;
   bool high_qos = false;
   bool limit_skia_worker = false;
   bool disable_preload = false;
+  bool dynamicart_host = false;
   // END
 
   // This data will be available to the isolate immediately on launch via the

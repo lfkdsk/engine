@@ -388,6 +388,13 @@ DartVM::DartVM(std::shared_ptr<const DartVMData> vm_data,
     PushBackAll(&args, kDartTraceStartupArgs, fml::size(kDartTraceStartupArgs));
   }
 
+  // 动态化 debug 宿主，需要打开解释器
+  if(!IsRunningPrecompiledCode() && settings_.dynamicart_host){
+    FML_LOG(ERROR)<<"debug dynamic"<<std::endl;
+    args.push_back("--enable_interpreter");
+    args.push_back("--pause_isolates_on_start");
+  }
+
 #if defined(OS_FUCHSIA)
   PushBackAll(&args, kDartFuchsiaTraceArgs, fml::size(kDartFuchsiaTraceArgs));
   PushBackAll(&args, kDartTraceStreamsArgs, fml::size(kDartTraceStreamsArgs));

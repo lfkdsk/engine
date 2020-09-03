@@ -322,6 +322,8 @@ Settings SettingsFromCommandLine(const fml::CommandLine& command_line) {
       command_line.HasOption(FlagForSwitch(Switch::LimitSkiaWorker));
   settings.disable_preload =
       command_line.HasOption(FlagForSwitch(Switch::DisablePreload));
+  settings.dynamicart_host =
+            command_line.HasOption(FlagForSwitch(Switch::DynamicartHost));
   // END
 
   if (settings.icu_initialization_required) {

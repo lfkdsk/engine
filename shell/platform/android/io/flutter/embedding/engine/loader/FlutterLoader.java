@@ -61,6 +61,7 @@ public class FlutterLoader {
     private static final String DEFAULT_ISOLATE_SNAPSHOT_DATA = "isolate_snapshot_data";
     private static final String DEFAULT_LIBRARY = "libflutter.so";
     private static final String DEFAULT_KERNEL_BLOB = "kernel_blob.bin";
+    private static final String DEFAULT_HOST_MANIFEST_JSON = "host_manifest.json";
     private static final String DEFAULT_FLUTTER_ASSETS_DIR = "flutter_assets";
 
     // Mutable because default values can be overridden via config properties
@@ -250,6 +251,11 @@ public class FlutterLoader {
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + nativeLibraryDir + File.separator + aotSharedLibraryName);
             }
 
+            String hostManifestJson = PathUtils.getDataDirectory(applicationContext) + File.separator + flutterAssetsDir + File.separator + DEFAULT_HOST_MANIFEST_JSON;
+            if(new File(hostManifestJson).exists()){
+                shellArgs.add("--dynamicart-host");
+            }
+
             shellArgs.add("--cache-dir-path=" + PathUtils.getCacheDirectory(applicationContext));
             if (settings.getLogTag() != null) {
                 shellArgs.add("--log-tag=" + settings.getLogTag());
@@ -374,7 +380,8 @@ public class FlutterLoader {
             resourceExtractor
                 .addResource(fullAssetPathFrom(vmSnapshotData))
                 .addResource(fullAssetPathFrom(isolateSnapshotData))
-                .addResource(fullAssetPathFrom(DEFAULT_KERNEL_BLOB));
+                .addResource(fullAssetPathFrom(DEFAULT_KERNEL_BLOB))
+                .addResource(fullAssetPathFrom(DEFAULT_HOST_MANIFEST_JSON));
 
             resourceExtractor.start();
         }

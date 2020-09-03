@@ -230,7 +230,7 @@ class DartIsolate : public UIDartState {
 
   // BD ADD:
   FML_WARN_UNUSED_RESULT
-  bool PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> kernel);
+  bool PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fml::Mapping> kernel, bool last_piece = true);
 
   //----------------------------------------------------------------------------
   /// @brief      Returns the ID for an isolate which is used to query the
@@ -416,7 +416,7 @@ class DartIsolate : public UIDartState {
   using ChildIsolatePreparer = std::function<bool(DartIsolate*)>;
 
   // BD ADD:
-  bool LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping);
+  bool LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece);
 
   class AutoFireClosure {
    public:
