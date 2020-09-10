@@ -69,6 +69,10 @@ source_set("ui") {
     # BD ADD: START
     "painting/image_loader.cc",
     "painting/image_loader.h",
+    "painting/native_export_codec.h",
+    "painting/native_export_codec.cc",
+    "painting/native_codec.h",
+    "painting/native_codec.cc",
     # END
     "plugins/callback_cache.cc",
     "plugins/callback_cache.h",
