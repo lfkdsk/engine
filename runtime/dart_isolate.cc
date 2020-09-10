@@ -291,8 +291,15 @@ bool DartIsolate::PrepareForRunningFromDynamicartKernel(std::shared_ptr<const fm
     return false;
   }
 
+  if (!mapping || mapping->GetSize() == 0) {
+    FML_LOG(ERROR)<<"kb is NULL." << std::endl;
+    return false;
+  }
+
   tonic::DartState::Scope scope(this);
 
+  // Use root library provided by kernel in favor of one provided by snapshot.
+  Dart_SetRootLibrary(Dart_Null());
 
   if (!LoadKernelFromDyanmicartKernel(mapping, last_piece)) {
     return false;
@@ -388,21 +395,14 @@ bool DartIsolate::LoadKernel(std::shared_ptr<const fml::Mapping> mapping,
 
 // BD ADD: 暂时只支持一个DyanmicartKernel好啦，先跑起来再说
 bool DartIsolate::LoadKernelFromDyanmicartKernel(std::shared_ptr<const fml::Mapping> mapping, bool last_piece) {
-  if (!mapping || mapping->GetSize() == 0) {
-        FML_LOG(ERROR)<<"kb is NULL." << std::endl;
-        return false;
-  }
-
-  FML_LOG(ERROR)<<"start loading kb..." << std::endl;
-  kernel_buffers_.push_back(mapping);
-
 
   if (!Dart_IsKernel(mapping->GetMapping(), mapping->GetSize())) {
     FML_LOG(ERROR)<<"kb is Invalid." << std::endl;
     return false;
   }
 
-  Dart_SetRootLibrary(Dart_Null());
+  FML_LOG(ERROR)<<"start loading kb..." << std::endl;
+  kernel_buffers_.push_back(mapping);
 
   Dart_Handle library;
   if (DartVM::IsRunningPrecompiledCode()) {
