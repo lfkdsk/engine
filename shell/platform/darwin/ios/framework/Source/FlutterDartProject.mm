@@ -34,6 +34,8 @@ static const char* kApplicationKernelSnapshotFileName = "kernel_blob.bin";
 NSString* const FlutterCompressSizeModeErrorDomain = @"FlutterCompressSizeModeErrorDomain";
 static NSString* const kFLTAssetsPath = @"FLTAssetsPath";
 static NSString* const kFlutterAssets = @"flutter_assets";
+static NSString* const kHostManifestJson = @"host_manifest.json";
+
 static FlutterCompressSizeModeMonitor kFlutterCompressSizeModeMonitor = nil;
 static BOOL highQoS = false;
 // END
@@ -188,8 +190,8 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 
   if (self) {
     _settings = DefaultSettingsForProcess(bundle);
-
     // BD ADD: START
+    [self checkIsDynamicHost];
     [[FlutterCompressSizeModeManager sharedInstance]
         updateSettingsIfNeeded:_settings
                        monitor:kFlutterCompressSizeModeMonitor];
@@ -202,6 +204,22 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
 // BD ADD: START
 - (void)setLeakDartVMEnabled:(BOOL)enabled {
   _settings.leak_vm = enabled;
+}
+
+- (void)checkIsDynamicHost {
+
+  NSBundle *bundle = [NSBundle bundleWithIdentifier:[FlutterDartProject defaultBundleIdentifier]];
+  NSString *flutterBundlePath;
+  if (bundle) {
+    flutterBundlePath = bundle.bundlePath;
+  }
+  else {
+    bundle = [NSBundle mainBundle];
+    flutterBundlePath = [bundle.bundlePath stringByAppendingPathComponent:@"Frameworks/App.framework"];
+  }
+  NSString *hostManifestPath = [flutterBundlePath stringByAppendingPathComponent:kHostManifestJson];
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  _settings.dynamicart_host = [fileManager fileExistsAtPath:hostManifestPath];
 }
 // END
 
@@ -237,9 +255,9 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   if (!(path && [path isKindOfClass:[NSString class]] && path.length > 0)) {
     return;
   }
-  if (flutter::DartVM::IsRunningDynamicCode()) {
+//  if (flutter::DartVM::IsRunningDynamicCode()) {
     _settings.package_dill_path = path.UTF8String;
-  }
+//  }
 }
 
 - (void)setEnginePath:(NSString*)path {

@@ -664,6 +664,8 @@ static flutter::PointerData::Change PointerDataChangeFromUITouchPhase(UITouchPha
       return flutter::PointerData::Change::kUp;
     case UITouchPhaseCancelled:
       return flutter::PointerData::Change::kCancel;
+      default:
+      return flutter::PointerData::Change::kCancel;
   }
 
   return flutter::PointerData::Change::kCancel;
@@ -677,6 +679,9 @@ static flutter::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* touch) 
         return flutter::PointerData::DeviceKind::kTouch;
       case UITouchTypeStylus:
         return flutter::PointerData::DeviceKind::kStylus;
+        default :
+          return flutter::PointerData::DeviceKind::kStylus;
+
     }
   } else {
     return flutter::PointerData::DeviceKind::kTouch;
