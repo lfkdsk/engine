@@ -180,6 +180,7 @@ DEF_SWITCH(LimitSkiaWorker,
 DEF_SWITCH(DisablePreload,
      "disable-preload",
      "Disable preload DartVM and SkFontMgr")
+DEF_SWITCH(DynamicartHost, "dynamicart-host", "indicate is a dynamicart host")
 // END
 DEF_SWITCHES_END
 

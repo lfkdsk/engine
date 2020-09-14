@@ -29,16 +29,26 @@ bool IsolateConfiguration::PrepareIsolate(DartIsolate& isolate) {
 // BD ADD: START
 class DynamicartIsolateConfiguration : public IsolateConfiguration {
  public:
-  DynamicartIsolateConfiguration(std::unique_ptr<const fml::Mapping> kernel)
-      : kernel_(std::move(kernel)) {}
+  DynamicartIsolateConfiguration(std::vector<std::future<std::unique_ptr<const fml::Mapping>>>
+                                 kernel_pieces)
+      : kernel_pieces_(std::move(kernel_pieces)) {}
 
   // |IsolateConfiguration|
   bool DoPrepareIsolate(DartIsolate& isolate) override {
-    return isolate.PrepareForRunningFromDynamicartKernel(std::move(kernel_));
+      for (size_t i = 0; i < kernel_pieces_.size(); i++) {
+          bool last_piece = i + 1 == kernel_pieces_.size();
+
+          if (!isolate.PrepareForRunningFromDynamicartKernel(kernel_pieces_[i].get(),
+                                                   last_piece)) {
+              return false;
+          }
+      }
+
+      return true;
   }
 
  private:
-  std::unique_ptr<const fml::Mapping> kernel_;
+    std::vector<std::future<std::unique_ptr<const fml::Mapping>>> kernel_pieces_;
 
   FML_DISALLOW_COPY_AND_ASSIGN(DynamicartIsolateConfiguration);
 };
@@ -169,7 +179,7 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::InferFromSettings(
 
   // BD ADD:
   // Running in Dynamicart mode. 注意：仅iOS调用
-  if (DartVM::IsRunningDynamicCode() && !settings.package_dill_path.empty()) {
+  if (!settings.package_dill_path.empty()) {
     return CreateForDynamicart(settings, *asset_manager);
   }
   // END
@@ -229,7 +239,7 @@ IsolateConfiguration::CreateForAppSnapshot() {
 std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
     const Settings& settings, AssetManager& asset_manager) {
   // Running in Dynamicart mode.
-  if (DartVM::IsRunningDynamicCode() && !settings.package_dill_path.empty()) {
+  if (!settings.package_dill_path.empty()) {
     // 如果是动态模式，把动态包资源也加入asset_manager的查找范围中，且放在最前面，优先级最高。
     // 根据package_dill_path的后缀判断有不同的处理逻辑：
     // 如果.zip结尾就作为ZipAssetStore处理
@@ -248,11 +258,20 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
     // 然后，从资源中找出kernel文件, 由此生成IsolateConfiguration
     // 后续的逻辑会根据IsolateConfiguration创建isolate
     // isolate.PrepareForRunningFromDynamicartKernel()中加载该kernel文件
-    std::unique_ptr<fml::Mapping> kernel =
+    std::vector<std::unique_ptr<const fml::Mapping>> pieces;
+
+    std::unique_ptr<fml::Mapping> kernel_blob =
               asset_manager.GetAsMapping("kernel_blob.bin");
+    if (kernel_blob != nullptr && kernel_blob->GetSize() > 0) {
+        TT_LOG() << "Created IsolateConfiguration load kernel_blob.bin";
+        pieces.push_back(std::move(kernel_blob));
+    }
+
+    std::unique_ptr<fml::Mapping> kernel =
+              asset_manager.GetAsMapping("kb.origin");
     if (kernel != nullptr && kernel->GetSize() > 0) {
         TT_LOG() << "Created IsolateConfiguration For Dyart.";
-        return IsolateConfiguration::CreateForDyartKernel(std::move(kernel));
+        pieces.push_back(std::move(kernel));
     } else {
         kernel = asset_manager.GetAsMapping("kb");
         if (kernel != nullptr && kernel->GetSize() > 0) {
@@ -283,24 +302,31 @@ std::unique_ptr<IsolateConfiguration> IsolateConfiguration::CreateForDynamicart(
                 long end = ms.count();
                 TT_LOG() << "finish decode kb:" << decodeKernel->GetSize() << ",time:" << (end - start) << std::endl;
                 TT_LOG() << "Created IsolateConfiguration For Dyart.";
-                return IsolateConfiguration::CreateForDyartKernel(std::move(decodeKernel));
+                pieces.push_back(std::move(decodeKernel));
             } else {
                 TT_LOG() << "Created IsolateConfiguration For Dyart.";
-                return IsolateConfiguration::CreateForDyartKernel(std::move(kernel));
+                pieces.push_back(std::move(kernel));
             }
         } else {
             TT_LOG() << "No kb file in package_dill_path "
                      << settings.package_dill_path.c_str();
         }
     }
+    return IsolateConfiguration::CreateForDyartKernel(std::move(pieces));
   }
   return nullptr;
 }
 
 std::unique_ptr<IsolateConfiguration>
 IsolateConfiguration::CreateForDyartKernel(
-    std::unique_ptr<const fml::Mapping> kernel) {
-  return std::make_unique<DynamicartIsolateConfiguration>(std::move(kernel));
+        std::vector<std::unique_ptr<const fml::Mapping>> kernel_pieces) {
+    std::vector<std::future<std::unique_ptr<const fml::Mapping>>> pieces;
+    for (auto& piece : kernel_pieces) {
+        std::promise<std::unique_ptr<const fml::Mapping>> promise;
+        pieces.push_back(promise.get_future());
+        promise.set_value(std::move(piece));
+    }
+  return std::make_unique<DynamicartIsolateConfiguration>(std::move(pieces));
 }
 // END
 
