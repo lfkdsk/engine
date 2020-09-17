@@ -620,22 +620,32 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
       task_runners_.GetGPUTaskRunner() != task_runners_.GetPlatformTaskRunner();
 
   auto ui_task = [engine = engine_->GetWeakPtr(),                      //
-                  gpu_task_runner = task_runners_.GetGPUTaskRunner(),  //
-                  gpu_task, should_post_gpu_task,
+                  // BD MOD: START
+                  // gpu_task_runner = task_runners_.GetGPUTaskRunner(),  //
+                  // gpu_task, should_post_gpu_task,
+                  should_post_gpu_task,
+                  // END
                   &latch  //
   ] {
     if (engine) {
       engine->OnOutputSurfaceCreated();
     }
-    // Step 2: Next, tell the GPU thread that it should create a surface for its
-    // rasterizer.
-    if (should_post_gpu_task) {
-      fml::TaskRunner::RunNowOrPostTask(gpu_task_runner, gpu_task);
-    } else {
+    // BD MOD: START
+    // // Step 2: Next, tell the GPU thread that it should create a surface for its
+    // // rasterizer.
+    // if (should_post_gpu_task) {
+    //   fml::TaskRunner::RunNowOrPostTask(gpu_task_runner, gpu_task);
+    // } else {
+    //   // See comment on should_post_gpu_task, in this case we just unblock
+    //   // the platform thread.
+    //   latch.Signal();
+    // }
+    if (!should_post_gpu_task) {
       // See comment on should_post_gpu_task, in this case we just unblock
       // the platform thread.
       latch.Signal();
     }
+    // END
   };
 
   // Threading: Capture platform view by raw pointer and not the weak pointer.
@@ -647,6 +657,8 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
   FML_DCHECK(platform_view);
 
   auto io_task = [io_manager = io_manager_->GetWeakPtr(), platform_view,
+                  // BD ADD:
+                  gpu_task, should_post_gpu_task, gpu_task_runner = task_runners_.GetGPUTaskRunner(),
                   ui_task_runner = task_runners_.GetUITaskRunner(), ui_task] {
     if (io_manager && !io_manager->GetResourceContext()) {
       io_manager->NotifyResourceContextAvailable(
@@ -655,6 +667,14 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
     // Step 1: Next, post a task on the UI thread to tell the engine that it has
     // an output surface.
     fml::TaskRunner::RunNowOrPostTask(ui_task_runner, ui_task);
+
+    // BD ADD: START
+    // Step 2: Next, tell the GPU thread that it should create a surface for its
+    // rasterizer.
+    if (should_post_gpu_task) {
+      fml::TaskRunner::RunNowOrPostTask(gpu_task_runner, gpu_task);
+    }
+    // END
   };
 
   fml::TaskRunner::RunNowOrPostTask(task_runners_.GetIOTaskRunner(), io_task);
