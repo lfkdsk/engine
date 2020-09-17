@@ -35,6 +35,7 @@ class DynamicartIsolateConfiguration : public IsolateConfiguration {
 
   // |IsolateConfiguration|
   bool DoPrepareIsolate(DartIsolate& isolate) override {
+      FML_LOG(ERROR)<<"kernel_pieces size:"<<kernel_pieces_.size()<<std::endl;
       for (size_t i = 0; i < kernel_pieces_.size(); i++) {
           bool last_piece = i + 1 == kernel_pieces_.size();
 
