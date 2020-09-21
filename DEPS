@@ -24,6 +24,10 @@ vars = {
   'fuchsia_git': 'https://fuchsia.googlesource.com',
   # BD ADD: START
   'tt_dart_git': 'ssh://git@code.byted.org/tech_client/dart',
+  'tt_icu_git': 'ssh://git@code.byted.org/tech_client/icu',
+  'tt_icu_revision': '5078909f83ab153d4ac1576e30fe5592d7633d2e',
+  'tt_harfbuzz_git': 'ssh://git@code.byted.org/tech_client/harfbuzz',
+  'tt_harfbuzz_revision': '589840e72d8fe6ada741e55d304166e678db5bcc',
   #END
   'github_git': 'https://github.com',
   # OCMock is for testing only so there is no google clone
@@ -137,7 +141,9 @@ deps = {
    Var('fuchsia_git') + '/third_party/rapidjson' + '@' + 'ef3564c5c8824989393b87df25355baf35ff544b',
 
   'src/third_party/harfbuzz':
-   Var('fuchsia_git') + '/third_party/harfbuzz' + '@' + 'f5c000538699a4e40649508a44f41d37035e6c35',
+   # BD MOD:
+   # Var('fuchsia_git') + '/third_party/harfbuzz' + '@' + 'f5c000538699a4e40649508a44f41d37035e6c35',
+   Var('tt_harfbuzz_git') + '@' + Var('tt_harfbuzz_revision'),
 
   'src/third_party/libcxx':
    Var('fuchsia_git') + '/third_party/libcxx' + '@' + '7524ef50093a376f334a62a7e5cebf5d238d4c99',
@@ -157,7 +163,9 @@ deps = {
    Var('chromium_git') + '/chromium/src/ios.git' + '@' + Var('ios_tools_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '8d29692df640668ed7e4d1817715440c4e05697a',
+   # BD MOD:
+   # Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '8d29692df640668ed7e4d1817715440c4e05697a',
+   Var('tt_icu_git') + '@' + Var('tt_icu_revision'),
 
   'src/third_party/khronos':
    Var('chromium_git') + '/chromium/src/third_party/khronos.git' + '@' + '7122230e90547962e0f0c627f62eeed3c701f275',
