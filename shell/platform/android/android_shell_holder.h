@@ -23,6 +23,11 @@ class AndroidShellHolder {
   AndroidShellHolder(flutter::Settings settings,
                      fml::jni::JavaObjectWeakGlobalRef java_object,
                      bool is_background_view);
+  // BD ADD: START
+  AndroidShellHolder(flutter::Settings settings,
+                     fml::jni::JavaObjectWeakGlobalRef java_object,
+                     bool is_background_view, bool preLoad);
+  // END
 
   ~AndroidShellHolder();
 
@@ -66,6 +71,11 @@ class AndroidShellHolder {
   static void ThreadDestructCallback(void* value);
 
   FML_DISALLOW_COPY_AND_ASSIGN(AndroidShellHolder);
+
+  // BD ADD:
+  void InitAndroidShellHolder(fml::jni::JavaObjectWeakGlobalRef java_object,
+    bool is_background_view, bool preLoad);
+  // END
 };
 
 }  // namespace flutter

@@ -126,6 +126,15 @@ class Shell final : public PlatformView::Delegate,
       const CreateCallback<PlatformView>& on_create_platform_view,
       const CreateCallback<Rasterizer>& on_create_rasterizer);
 
+  // BD ADD: START
+  static std::unique_ptr<Shell> Create(
+    TaskRunners task_runners,
+    Settings settings,
+    const CreateCallback<PlatformView>& on_create_platform_view,
+    const CreateCallback<Rasterizer>& on_create_rasterizer,
+    bool preLoad);
+  // END
+
   //----------------------------------------------------------------------------
   /// @brief      Creates a shell instance using the provided settings. The
   ///             callbacks to create the various shell subcomponents will be
@@ -164,7 +173,8 @@ class Shell final : public PlatformView::Delegate,
       fml::RefPtr<const DartSnapshot> isolate_snapshot,
       const CreateCallback<PlatformView>& on_create_platform_view,
       const CreateCallback<Rasterizer>& on_create_rasterizer,
-      DartVMRef vm);
+      DartVMRef vm,
+      bool preLoad);
 
   //----------------------------------------------------------------------------
   /// @brief      Destroys the shell. This is a synchronous operation and
@@ -380,23 +390,36 @@ class Shell final : public PlatformView::Delegate,
   // and read from the GPU thread.
   std::atomic<float> display_refresh_rate_ = 0.0f;
 
+  // BD ADD:
+  bool is_preload_ = false;
+
   // How many frames have been timed since last report.
   size_t UnreportedFramesCount() const;
 
   Shell(DartVMRef vm, TaskRunners task_runners, Settings settings);
 
   static std::unique_ptr<Shell> CreateShellOnPlatformThread(
-      DartVMRef vm,
-      TaskRunners task_runners,
-      Settings settings,
-      fml::RefPtr<const DartSnapshot> isolate_snapshot,
-      const Shell::CreateCallback<PlatformView>& on_create_platform_view,
-      const Shell::CreateCallback<Rasterizer>& on_create_rasterizer);
+    DartVMRef vm,
+    TaskRunners task_runners,
+    Settings settings,
+    fml::RefPtr<const DartSnapshot> isolate_snapshot,
+    const Shell::CreateCallback<PlatformView>& on_create_platform_view,
+    const Shell::CreateCallback<Rasterizer>& on_create_rasterizer,
+    // BD ADD:
+    bool preLoad);
 
   bool Setup(std::unique_ptr<PlatformView> platform_view,
              std::unique_ptr<Engine> engine,
              std::unique_ptr<Rasterizer> rasterizer,
              std::unique_ptr<ShellIOManager> io_manager);
+
+  // BD ADD: START
+  bool SetupWithoutEngine(std::unique_ptr<PlatformView> platform_view,
+                          std::unique_ptr<Rasterizer> rasterizer,
+                          std::unique_ptr<ShellIOManager> io_manager);
+
+  bool SetupEngine(std::unique_ptr<Engine> engine);
+  // END
 
   DartVM* GetDartVM();
 
@@ -557,6 +580,9 @@ class Shell final : public PlatformView::Delegate,
                              int fps_type = kAvgFpsType,
                              bool do_clear = false) override;
   // END
+
+  // BD ADD:
+  void SetPreloadState(bool preload);
 
   FML_DISALLOW_COPY_AND_ASSIGN(Shell);
 };

@@ -545,6 +545,10 @@ std::vector<double> Engine::GetFps(int thread_type,
 int64_t Engine::GetEngineMainEnterMicros() {
   return Shell::GetEngineMainEnterMicros();
 }
+
+bool Engine::IsViewportMetricsValid() {
+  return viewport_metrics_.physical_width != 0;
+}
 // END
 
 }  // namespace flutter

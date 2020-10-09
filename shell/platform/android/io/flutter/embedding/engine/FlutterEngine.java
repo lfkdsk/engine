@@ -166,25 +166,52 @@ public class FlutterEngine {
     this(context, flutterLoader, flutterJNI, null, true);
   }
 
+  // BD ADD: START
+  public FlutterEngine(
+        @NonNull Context context,
+        @NonNull FlutterLoader flutterLoader,
+        @NonNull FlutterJNI flutterJNI,
+        boolean isPreload
+  ) {
+    this(context, flutterLoader, flutterJNI, null, true, isPreload);
+  }
+  // END
+
   /**
    * Same as {@link #FlutterEngine(Context, FlutterLoader, FlutterJNI)}, plus Dart VM flags in
    * {@code dartVmArgs}, and control over whether plugins are automatically registered with this
    * {@code FlutterEngine} in {@code automaticallyRegisterPlugins}. If plugins are automatically
    * registered, then they are registered during the execution of this constructor.
    */
+  // BD ADD: START
+  public FlutterEngine(
+       @NonNull Context context,
+       @NonNull FlutterLoader flutterLoader,
+       @NonNull FlutterJNI flutterJNI,
+       @Nullable String[] dartVmArgs,
+       boolean automaticallyRegisterPlugins
+  ) {
+    this(context, flutterLoader, flutterJNI, dartVmArgs, automaticallyRegisterPlugins, false);
+  }
+  // END
+
   public FlutterEngine(
       @NonNull Context context,
       @NonNull FlutterLoader flutterLoader,
       @NonNull FlutterJNI flutterJNI,
       @Nullable String[] dartVmArgs,
-      boolean automaticallyRegisterPlugins
+      boolean automaticallyRegisterPlugins,
+      // BD ADD:
+      boolean isPreload
   ) {
     this.flutterJNI = flutterJNI;
     flutterLoader.startInitialization(context);
     flutterLoader.ensureInitializationComplete(context, dartVmArgs);
 
     flutterJNI.addEngineLifecycleListener(engineLifecycleListener);
-    attachToJni();
+    // BD MOD
+    // attachToJni();
+    attachToJni(isPreload);
 
     this.dartExecutor = new DartExecutor(flutterJNI, context.getAssets());
     this.dartExecutor.onAttachedToJNI();
@@ -216,10 +243,14 @@ public class FlutterEngine {
     }
   }
 
-  private void attachToJni() {
+  // BD MOD:
+  // private void attachToJni() {
+  private void attachToJni(boolean isPreload) {
     Log.v(TAG, "Attaching to JNI.");
     // TODO(mattcarroll): update native call to not take in "isBackgroundView"
-    flutterJNI.attachToNative(false);
+    // BD MOD:
+    // flutterJNI.attachToNative(false, isPreload);
+    flutterJNI.attachToNative(false, isPreload);
 
     if (!isAttachedToJni()) {
       throw new RuntimeException("FlutterEngine failed to attach to its native Object reference.");

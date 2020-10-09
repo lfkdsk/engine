@@ -746,6 +746,9 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
   ///
   const std::string& GetLastEntrypointLibrary() const;
 
+  // BD ADD:
+  bool IsViewportMetricsValid();
+
  private:
   Engine::Delegate& delegate_;
   const Settings settings_;
@@ -816,8 +819,8 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
                              int fps_type,
                              bool do_clear) override;
   int64_t GetEngineMainEnterMicros() override;
-  // END
 
+  // END
 
   FML_DISALLOW_COPY_AND_ASSIGN(Engine);
 };

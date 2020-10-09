@@ -21,11 +21,16 @@
 
 namespace flutter {
 
-AndroidShellHolder::AndroidShellHolder(
-    flutter::Settings settings,
-    fml::jni::JavaObjectWeakGlobalRef java_object,
-    bool is_background_view)
-    : settings_(std::move(settings)), java_object_(java_object) {
+// BD MOD: START
+//AndroidShellHolder::AndroidShellHolder(
+//    flutter::Settings settings,
+//    fml::jni::JavaObjectWeakGlobalRef java_object,
+//    bool is_background_view)
+//    : settings_(std::move(settings)), java_object_(java_object) {
+void AndroidShellHolder::InitAndroidShellHolder(
+  fml::jni::JavaObjectWeakGlobalRef java_object,
+  bool is_background_view, bool preLoad) {
+// END
 // BD ADD: START
 #if defined(SUPPORT_SYSTRACE)
   fml::tracing::InitTraceSymbol();
@@ -139,7 +144,9 @@ AndroidShellHolder::AndroidShellHolder(
       Shell::Create(task_runners,             // task runners
                     settings_,                // settings
                     on_create_platform_view,  // platform view create callback
-                    on_create_rasterizer      // rasterizer create callback
+                    on_create_rasterizer,      // rasterizer create callback
+                    // BD ADD:
+                    preLoad
       );
 
   platform_view_ = weak_platform_view;
@@ -171,6 +178,24 @@ AndroidShellHolder::AndroidShellHolder(
 //  }
 // END
 }
+
+// BD ADD: START
+AndroidShellHolder::AndroidShellHolder(
+  flutter::Settings settings,
+  fml::jni::JavaObjectWeakGlobalRef java_object,
+  bool is_background_view)
+  : settings_(std::move(settings)), java_object_(java_object) {
+  InitAndroidShellHolder(java_object, is_background_view, false);
+}
+
+AndroidShellHolder::AndroidShellHolder(
+  flutter::Settings settings,
+  fml::jni::JavaObjectWeakGlobalRef java_object,
+  bool is_background_view, bool preLoad)
+  : settings_(std::move(settings)), java_object_(java_object) {
+  InitAndroidShellHolder(java_object, is_background_view, preLoad);
+}
+// END
 
 AndroidShellHolder::~AndroidShellHolder() {
   shell_.reset();
