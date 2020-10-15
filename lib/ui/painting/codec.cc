@@ -12,6 +12,7 @@
 
 //BD: ADD @tanhaiyang@bytedance.com
 #include "flutter/fml/make_copyable.h"
+#include "flutter/lib/ui/painting/native_codec.h"
 
 using tonic::DartInvoke;
 using tonic::DartPersistentValue;
