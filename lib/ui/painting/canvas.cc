@@ -486,7 +486,11 @@ void Canvas::Invalidate() {
 
 // BD ADD: START
 bool Canvas::isSkewOrRotate() {
+  #if THIRD_PARTY_SKIA_BD 
   return canvas_ ? canvas_->isSkewOrRotate() : false;
+  #else
+  return false;
+  #endif
 }
 // END
 
