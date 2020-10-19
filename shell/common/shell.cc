@@ -1929,6 +1929,9 @@ bool Shell::SetupWithoutEngine(std::unique_ptr<PlatformView> platform_view,
   if (is_setup_) {
     return false;
   }
+  if (!platform_view || !rasterizer || !io_manager) {
+    return false;
+  }
   platform_view_ = std::move(platform_view);
   rasterizer_ = std::move(rasterizer);
   weak_platform_view_ = platform_view_->GetWeakPtr();
@@ -1940,6 +1943,9 @@ bool Shell::SetupWithoutEngine(std::unique_ptr<PlatformView> platform_view,
 
 bool Shell::SetupEngine(std::unique_ptr<Engine> engine){
   if (is_setup_) {
+    return false;
+  }
+  if (!engine) {
     return false;
   }
   engine_ = std::move(engine);
