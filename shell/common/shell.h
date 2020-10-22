@@ -362,7 +362,12 @@ class Shell final : public PlatformView::Delegate,
                                                         // pair
                      >
       service_protocol_handlers_;
-  bool is_setup_ = false;
+  // BD MOD: START
+  // bool is_setup_ = false;
+  std::atomic<bool> is_setup_{false};
+  std::atomic<bool> is_engine_setup_{false};
+  std::atomic<bool> is_without_engine_setup_{false};
+  // END
   uint64_t next_pointer_flow_id_ = 0;
 
   bool first_frame_rasterized_ = false;

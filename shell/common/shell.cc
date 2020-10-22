@@ -1927,30 +1927,41 @@ bool Shell::SetupWithoutEngine(std::unique_ptr<PlatformView> platform_view,
                                std::unique_ptr<Rasterizer> rasterizer,
                                std::unique_ptr<ShellIOManager> io_manager) {
   if (is_setup_) {
+    FML_LOG(ERROR) << "BDFlutter SetupWithoutEngine return, is_setup_ is true";
     return false;
   }
   if (!platform_view || !rasterizer || !io_manager) {
+    FML_LOG(ERROR) << "BDFlutter SetupWithoutEngine return, platform_view:"
+    << !platform_view << " rasterizer: " << !rasterizer << "io_manager: " << !io_manager;
     return false;
   }
+  is_without_engine_setup_ = true;
   platform_view_ = std::move(platform_view);
   rasterizer_ = std::move(rasterizer);
   weak_platform_view_ = platform_view_->GetWeakPtr();
   weak_rasterizer_ = rasterizer_->GetWeakPtr();
   io_manager_ = std::move(io_manager);
+  is_setup_ = is_setup_ | is_engine_setup_;
+  if (is_setup_) {
+    FML_LOG(ERROR) << "BDFlutter SetupEngine is call before SetupWithoutEngine";
+  }
   return true;
 
 }
 
 bool Shell::SetupEngine(std::unique_ptr<Engine> engine){
   if (is_setup_) {
+    FML_LOG(ERROR) << "BDFlutter SetupEngine return, is_setup_ is true";
     return false;
   }
   if (!engine) {
+    FML_LOG(ERROR) << "BDFlutter SetupEngine return, engine is nullptr";
     return false;
   }
+  is_engine_setup_ = true;
   engine_ = std::move(engine);
   weak_engine_ = engine_->GetWeakPtr();
-  is_setup_ = true;
+  is_setup_ = is_setup_ | is_without_engine_setup_;
 
   vm_->GetServiceProtocol()->AddHandler(this, GetServiceProtocolDescription());
 
