@@ -28,6 +28,17 @@ vars = {
   'ocmock_git': 'https://github.com/erikdoe/ocmock.git',
   'skia_revision': '5eea6aea02d97df1c7c18ee89664f5e1a082801d',
 
+  # BD ADD: START
+  'tt_dart_git': 'ssh://git@code.byted.org/tech_client/dart',
+  'tt_dart_revision': '2d9068f6e15de7da99ac24436c9d7a7f858fcc73',
+  'tt_skia_git': 'git@code.byted.org:tech_client/skia.git',
+  'tt_skia_revision': '3a02ab024272e595a4f047938f67b2624e993397',
+  'tt_icu_git': 'ssh://git@code.byted.org/tech_client/icu',
+  'tt_icu_revision': 'aaef69b8fb55ccc86f1735731eebe36c72c64a1e',
+  'tt_harfbuzz_git': 'ssh://git@code.byted.org/tech_client/harfbuzz',
+  'tt_harfbuzz_revision': '042a928fde990555b8b516d0eb1bdec3a42211c8',
+  # END
+
   # When updating the Dart revision, ensure that all entries that are
   # dependencies of Dart are also updated to match the entries in the
   # Dart SDK's DEPS file for that revision of Dart. The DEPS file for
@@ -125,7 +136,9 @@ deps = {
    Var('fuchsia_git') + '/third_party/rapidjson' + '@' + 'ef3564c5c8824989393b87df25355baf35ff544b',
 
   'src/third_party/harfbuzz':
-   Var('fuchsia_git') + '/third_party/harfbuzz' + '@' + '9c55f4cf3313d68d68f68419e7a57fb0771fcf49',
+   # BD MOD:
+   # Var('fuchsia_git') + '/third_party/harfbuzz' + '@' + '9c55f4cf3313d68d68f68419e7a57fb0771fcf49',
+   Var('tt_harfbuzz_git') + '@' + Var('tt_harfbuzz_revision'),
 
   'src/third_party/libcxx':
    Var('fuchsia_git') + '/third_party/libcxx' + '@' + '7524ef50093a376f334a62a7e5cebf5d238d4c99',
@@ -145,7 +158,9 @@ deps = {
    Var('chromium_git') + '/chromium/src/ios.git' + '@' + Var('ios_tools_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '8d29692df640668ed7e4d1817715440c4e05697a',
+   # BD MOD:
+   # Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '8d29692df640668ed7e4d1817715440c4e05697a',
+   Var('tt_icu_git') + '@' + Var('tt_icu_revision'),
 
   'src/third_party/khronos':
    Var('chromium_git') + '/chromium/src/third_party/khronos.git' + '@' + '7122230e90547962e0f0c627f62eeed3c701f275',
@@ -157,7 +172,9 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' + Var('dart_boringssl_rev'),
 
   'src/third_party/dart':
-   Var('dart_git') + '/sdk.git' + '@' + Var('dart_revision'),
+  # BD MOD:
+  # Var('dart_git') + '/sdk.git' + '@' + Var('dart_revision'),
+   Var('tt_dart_git') + '@' + Var('tt_dart_revision'),
 
   # WARNING: Unused Dart dependencies in the list below till "WARNING:" marker are removed automatically - see create_updated_flutter_deps.py.
 
@@ -365,7 +382,9 @@ deps = {
    Var('dart_git') + '/root_certificates.git' + '@' + Var('dart_root_certificates_rev'),
 
   'src/third_party/skia':
-   Var('skia_git') + '/skia.git' + '@' +  Var('skia_revision'),
+   # BD MOD:
+   # Var('skia_git') + '/skia.git' + '@' +  Var('skia_revision'),
+   Var('tt_skia_git') + '@' +  Var('tt_skia_revision'),
 
   'src/third_party/ocmock':
    Var('ocmock_git') + '@' +  Var('ocmock_tag'),
@@ -377,9 +396,7 @@ deps = {
    Var('chromium_git') + '/webm/libwebp.git' + '@' + '0.6.0',
 
   'src/third_party/wuffs':
-  # BD  MOD
-  #Var('skia_git') + '/external/github.com/google/wuffs.git' + '@' +  '00cc8a50aa0c86b6bcb37e9ece8fb100047cc17b',
-  'https://skia.googlesource.com' + '/external/github.com/google/wuffs.git' + '@' +  '00cc8a50aa0c86b6bcb37e9ece8fb100047cc17',
+   Var('skia_git') + '/external/github.com/google/wuffs.git' + '@' +  '00cc8a50aa0c86b6bcb37e9ece8fb100047cc17b',
 
   'src/third_party/fontconfig/src':
    Var('chromium_git') + '/external/fontconfig.git' + '@' + 'c336b8471877371f0190ba06f7547c54e2b890ba',
