@@ -660,11 +660,6 @@ public class FlutterView extends FrameLayout {
           accessibilityBridge.isTouchExplorationEnabled()
       );
       this.flutterEngine.getPlatformViewsController().attachAccessibilityBridge(accessibilityBridge);
-    } else {
-      resetWillNotDraw(
-          false,
-          accessibilityBridge.isTouchExplorationEnabled()
-      );
     }
     // END
 

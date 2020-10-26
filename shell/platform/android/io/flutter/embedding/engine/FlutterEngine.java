@@ -174,6 +174,15 @@ public class FlutterEngine {
 
   // BD ADD: START
   public FlutterEngine(
+          @NonNull Context context,
+          @NonNull FlutterLoader flutterLoader,
+          @NonNull FlutterJNI flutterJNI,
+          boolean isPreload
+  ) {
+    this(context, flutterLoader, flutterJNI, null, true, isPreload, false);
+  }
+  
+  public FlutterEngine(
         @NonNull Context context,
         @NonNull FlutterLoader flutterLoader,
         @NonNull FlutterJNI flutterJNI,
@@ -198,7 +207,7 @@ public class FlutterEngine {
        @Nullable String[] dartVmArgs,
        boolean automaticallyRegisterPlugins
   ) {
-    this(context, flutterLoader, flutterJNI, dartVmArgs, automaticallyRegisterPlugins, false, true);
+    this(context, flutterLoader, flutterJNI, dartVmArgs, automaticallyRegisterPlugins, false, false);
   }
   // END
 
