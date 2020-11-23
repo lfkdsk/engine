@@ -190,6 +190,11 @@ def to_gn_args(args):
       # There is no point in enabling LTO in unoptimized builds.
       enable_lto = False
 
+    #if args.dynamicart == 'dynamicart' and args.runtime_mode == 'profile':
+    if args.dynamicart and args.runtime_mode == 'profile':
+      print("enable_lto")
+      enable_lto = False
+
     if not sys.platform.startswith('win'):
       # The GN arg is not available in the windows toolchain.
       gn_args['enable_lto'] = enable_lto
